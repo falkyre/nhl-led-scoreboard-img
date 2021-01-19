@@ -2,7 +2,7 @@
 #install base files
 install -v -d "${ROOTFS_DIR}/usr/lib/raspiwifi"
 install -v -d "${ROOTFS_DIR}/etc/raspiwifi"
-cp -a files/libs/* "${ROOTFS_DIR}/usr/lib/raspiwifi/"
+cp -a files/lib/* "${ROOTFS_DIR}/usr/lib/raspiwifi/"
 install -v -m 644 "files/etc/raspiwifi.conf" "${ROOTFS_DIR}/etc/raspiwifi/"
 
 on_chroot << EOF
