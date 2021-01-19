@@ -1,6 +1,9 @@
 #!/bin/bash -e
 
 on_chroot << EOF
+#Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
+apt-get -y remove bluez bluez-firmware pi-bluetooth triggerhappy
+
 #Install pip requirements for scoreboard
 
 pip3 install --upgrade pip
