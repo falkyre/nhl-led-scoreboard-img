@@ -19,6 +19,13 @@ pip3 install lastversion
 pip3 install numpy
 pip3 install supervisor
 
+# Install pip requirements for nhl_setup
+pip3 install fastjsonschema
+pip3 install printtools
+pip3 install PyInstaller
+pip3 install questionary
+pip3 install regex
+
 #Clone scoreboard repo
 cd /home/pi
 git clone https://github.com/riffnshred/nhl-led-scoreboard.git

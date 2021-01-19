@@ -1,0 +1,40 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+
+
+<div class="row justify-content-center">
+    <div class="col-md-6" style="margin-top: 5%">
+        <div class="panel-heading">
+            <h3 class="panel-title">Manual SSID Settings</h3>
+            <hr>
+        </div>
+        <div class="panel-body">
+            <form action="{{ url_for('save_credentials') }}" method=post role="form">
+                <fieldset>
+
+                    <div class="form-group">
+                        <label for="ssid">Enter your netword SSID</label>
+                        <input class="form-control" id="ssid" name="ssid">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wifi_key">Your WiFi password</label>
+                        <input class="form-control" id="wifi_key" name="wifi_key" type="password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary mb-2">Save credentials!</button>
+                    <hr>
+                    <h6><a href="/">Want to scan for SSID?</a></h6>
+                    <hr>
+                    <div class="row justify-content-center">
+                        <h6 style="color: gray">{{ footer_vendor_name }}, {{ footer_year}} - {{ footer_version_nr }}</h6>
+                    </div>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

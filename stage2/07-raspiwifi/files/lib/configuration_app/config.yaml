@@ -1,0 +1,7 @@
+web:
+    footer:
+        vendor_name: NHL LED Scoreboard
+        version_nr: 2.0
+        year: 2021
+    
+    title: NHL LED Scoreboard Startup
