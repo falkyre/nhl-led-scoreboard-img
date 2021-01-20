@@ -12,5 +12,6 @@ on_chroot << EOF
 #Create systemd
 systemctl unmask supervisord
 systemctl enable supervisord 
+systemctl disable supervisord
 
 EOF

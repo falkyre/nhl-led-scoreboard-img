@@ -3,7 +3,7 @@
 install -v -d "${ROOTFS_DIR}/usr/lib/raspiwifi"
 install -v -d "${ROOTFS_DIR}/etc/raspiwifi"
 cp -a files/lib/* "${ROOTFS_DIR}/usr/lib/raspiwifi/"
-install -v -m 644 "files/etc/raspiwifi.conf" "${ROOTFS_DIR}/etc/raspiwifi/"
+install -v -m 644 "files/etc/raspiwifi/raspiwifi.conf" "${ROOTFS_DIR}/etc/raspiwifi/"
 
 on_chroot << EOF
 #Install packages to create hostap
