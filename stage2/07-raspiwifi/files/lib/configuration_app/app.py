@@ -172,10 +172,10 @@ if __name__ == '__main__':
         footer_year = cfg['web']['footer']['year']
         title_vendor_name = cfg['web']['title']
     else:
-        footer_vendor_name = 'Fancy Startup'
-        footer_version_nr = '1.0'
-        footer_year = '2020'
-        title_vendor_name = footer_vendor_name
+        footer_vendor_name = 'NHL LED Scoreboard'
+        footer_version_nr = '2.0'
+        footer_year = '2021'
+        title_vendor_name = 'NHL LED Scoreboard Wifi Setup'
     
     print(footer_vendor_name, footer_year, footer_version_nr)
 
