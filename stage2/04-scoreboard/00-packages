@@ -9,3 +9,4 @@ libatlas-base-dev
 python3-gpiozero
 python3-cairosvg
 libraqm-dev
+neofetch
