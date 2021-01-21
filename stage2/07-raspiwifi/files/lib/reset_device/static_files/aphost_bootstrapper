@@ -1,7 +1,7 @@
 #!/bin/bash
 
-python3 /usr/lib/raspiwifi/reset_device/reset.py &
+/usr/bin/python3 /usr/lib/raspiwifi/reset_device/reset.py &
 
-python3 /usr/lib/raspiwifi/configuration_app/app.py &
+/usr/bin/python3 /usr/lib/raspiwifi/configuration_app/app.py &
 
-hostapd -dd /etc/hostapd/hostapd.conf &
+/usr/sbin/hostapd -dd /etc/hostapd/hostapd.conf &

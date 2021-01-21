@@ -3,4 +3,4 @@
 # Functionality will be moved into the scoreboard and pushbutton to trigger a reset
 #python3 /usr/lib/raspiwifi/reset_device/reset.py &
 
-python3 /usr/lib/raspiwifi/reset_device/connection_monitor.py &
+/usr/bin/python3 /usr/lib/raspiwifi/reset_device/connection_monitor.py &

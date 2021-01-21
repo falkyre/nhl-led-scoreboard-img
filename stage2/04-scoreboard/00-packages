@@ -7,6 +7,6 @@ python3-numpy
 libatlas3-base
 libatlas-base-dev
 python3-gpiozero
-python3-cairosvg
 libraqm-dev
 neofetch
+pastebinit

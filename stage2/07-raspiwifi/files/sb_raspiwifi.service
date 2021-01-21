@@ -1,0 +1,12 @@
+[Unit]
+Description=Setup raspiwifi if wpa_supplicant.conf does not exist
+After=raspberrypi-net-mods.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/raspiwifi/first_run.sh
+ExecStartPost=/etc/cron.raspiwifi/aphost_bootstrapper
+
+[Install]
+WantedBy=multi-user.target
