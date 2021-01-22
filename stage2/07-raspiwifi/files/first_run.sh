@@ -15,5 +15,6 @@ if ! grep -q "network=" "$File"; then
    echo "@reboot root run-parts /etc/cron.raspiwifi/" >> /etc/crontab
    #mv /usr/lib/raspiwifi/reset_device/static_files/raspiwifi.conf /etc/raspiwifi
    touch /etc/raspiwifi/host_mode
+   /usr/sbin/rfkill unblock wifi
 fi
 
