@@ -1,4 +1,7 @@
 #!/bin/bash -e
+install -v -d ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 755 files/checkUpdate.sh ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
 
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
