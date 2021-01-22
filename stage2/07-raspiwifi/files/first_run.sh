@@ -2,6 +2,7 @@
 
 File="/etc/wpa_supplicant/wpa_supplicant.conf"
 if ! grep -q "network=" "$File"; then
+   /usr/sbin/rfkill unblock wifi
    mv /etc/wpa_supplicant/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf.original
    mv /etc/dnsmasq.conf /etc/dnsmasq.conf.original
    cp /usr/lib/raspiwifi/reset_device/static_files/dnsmasq.conf /etc/
@@ -15,6 +16,5 @@ if ! grep -q "network=" "$File"; then
    echo "@reboot root run-parts /etc/cron.raspiwifi/" >> /etc/crontab
    #mv /usr/lib/raspiwifi/reset_device/static_files/raspiwifi.conf /etc/raspiwifi
    touch /etc/raspiwifi/host_mode
-   /usr/sbin/rfkill unblock wifi
 fi
 
