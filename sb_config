@@ -7,6 +7,7 @@ KEYBOARD_KEYMAP=us
 KEYBOARD_LAYOUT="English (US)"
 TIMEZONE_DEFAULT=America/Winnipeg
 ENABLE_SSH=1
-WPA_ESSID=lightningG 
-WPA_PASSWORD=69deedbeef
-WPA_COUNTRY=CA
+FIRST_USER_NAME=pi
+FIRST_USER_PASS=scoreboard
+#set to 1 to use zram-config (for systems higher than a pi zero) or 0 to use log2ram for a pi zero
+LOG2ZRAM=1

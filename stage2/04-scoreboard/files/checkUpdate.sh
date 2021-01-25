@@ -1,12 +1,13 @@
 #!/bin/bash
 
-CURRENTLY_BUILT_VER=`cat /home/pi/nhl-led-scoreboard/VERSION` # stored somewhere, e.g. spec file in my case
+CURRENTLY_BUILT_VER=`cat /home/dietpi/nhl-led-scoreboard/VERSION` # stored somewhere, e.g. spec file in my case
 LASTVER=$(lastversion riffnshred/nhl-led-scoreboard -gt ${CURRENTLY_BUILT_VER})
 if [[ $? -eq 0 ]]; then
   # LASTVER is newer, update and trigger build
   # ....
-  echo "New version available!!"
+  echo "New version V${LASTVER} available!! You are running V${CURRENTLY_BUILT_VER}"
 
 else
-  echo "You are running the latest version ${CURRENTLY_BUILT_VER}"
+  echo "You are running the latest version V${CURRENTLY_BUILT_VER}"
 fi
+

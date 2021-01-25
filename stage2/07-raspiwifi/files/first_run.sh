@@ -7,6 +7,11 @@ if ! grep -q "network=" "$File"; then
    mv /etc/dnsmasq.conf /etc/dnsmasq.conf.original
    cp /usr/lib/raspiwifi/reset_device/static_files/dnsmasq.conf /etc/
    cp /usr/lib/raspiwifi/reset_device/static_files/hostapd.conf.wpa /etc/hostapd/hostapd.conf
+   # Update the base hostapd.conf file with the last 4 characters of the serial for the SSID
+   last4serial=`cat /sys/firmware/devicetree/base/serial-number | awk '{print substr($1,length($1)-3) }'`
+   sed -i "/NHL LED Scoreboard/ s/$/$last4serial/" /etc/hostapd/hostapd.conf
+   #update the hostname of the raspberry pi
+   sed -i "/scoreboard/s/$/-$last4serial/" /etc/hostname
    mv /etc/dhcpcd.conf /etc/dhcpcd.conf.original
    cp /usr/lib/raspiwifi/reset_device/static_files/dhcpcd.conf /etc/
    #cp -f /usr/lib/raspiwifi/reset_device/static_files/aphost_bootstrapper /etc/cron.raspiwifi

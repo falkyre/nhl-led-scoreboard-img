@@ -1,7 +1,9 @@
 #!/bin/bash -e
 install -v -d ${ROOTFS_DIR}/home/pi/sbtools
+install -v -d ${ROOTFS_DIR}/home/pi/.nhlupdate
 install -v -m 755 files/checkUpdate.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 644 files/pi_crontab.txt ${ROOTFS_DIR}/home/pi/sbtools
 
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
@@ -10,6 +12,7 @@ apt-get -y remove bluez bluez-firmware pi-bluetooth triggerhappy
 #Install pip requirements for scoreboard from the requirements.txt
 
 pip3 install --upgrade pip
+pip3 install archey4
 #pip3 install requests
 #pip3 install regex
 #pip3 install geocoder python_tsl2591 ephem
@@ -32,6 +35,7 @@ pip3 install --upgrade pip
 
 #Clone scoreboard repo
 cd /home/pi
+rm -rf nhl-led-scoreboard
 git clone https://github.com/riffnshred/nhl-led-scoreboard.git
 
 cd nhl-led-scoreboard
@@ -53,5 +57,7 @@ make install-python PYTHON=/usr/bin/python3
 
 cd /home/pi
 chown -R pi:pi nhl-led-scoreboard
+
+crontab -u pi /home/pi/sbtools/pi_crontab.txt
 
 EOF

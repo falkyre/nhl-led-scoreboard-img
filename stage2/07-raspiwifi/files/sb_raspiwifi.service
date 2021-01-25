@@ -2,7 +2,7 @@
 Description=Setup raspiwifi if wpa_supplicant.conf does not exist
 ConditionPathExists=!/etc/cron.raspiwifi/apclient_bootstrapper
 ConditionPathExists=!/etc/cron.raspiwifi/aphost_bootstrapper
-After=raspberrypi-net-mods.service
+After=raspberrypi-net-mods.service zram-config.service
 
 [Service]
 Type=oneshot
