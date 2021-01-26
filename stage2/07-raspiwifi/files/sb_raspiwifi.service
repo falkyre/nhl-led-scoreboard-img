@@ -8,7 +8,7 @@ After=raspberrypi-net-mods.service zram-config.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/lib/raspiwifi/first_run.sh
-ExecStartPost=/usr/bin/python3 /usr/lib/raspiwifi/configuration_app/app.py
+#ExecStartPost=/usr/bin/python3 /usr/lib/raspiwifi/configuration_app/app.py
 
 [Install]
 WantedBy=multi-user.target

@@ -57,6 +57,7 @@ make install-python PYTHON=/usr/bin/python3
 
 cd /home/pi
 chown -R pi:pi nhl-led-scoreboard
+chown -R pi:pi .nhlupdate
 
 crontab -u pi /home/pi/sbtools/pi_crontab.txt
 
