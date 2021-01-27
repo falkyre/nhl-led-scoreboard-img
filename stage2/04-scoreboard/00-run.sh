@@ -1,12 +1,12 @@
 #!/bin/bash -e
-install -v -d -o pi -g pi ${ROOTFS_DIR}/home/pi/sbtools
-install -v -d -o pi -g pi ${ROOTFS_DIR}/home/pi/.nhlupdate
-install -v -d -o pi -g pi ${ROOTFS_DIR}/home/pi/.config/neofetch
-install -v -m -o pi -g pi 755 files/checkUpdate.sh ${ROOTFS_DIR}/home/pi/sbtools
-install -v -m -o pi -g pi 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
-install -v -m -o pi -g pi 644 files/pi_crontab.txt ${ROOTFS_DIR}/home/pi/sbtools
+install -v -d ${ROOTFS_DIR}/home/pi/sbtools
+install -v -d ${ROOTFS_DIR}/home/pi/.nhlupdate
+install -v -d ${ROOTFS_DIR}/home/pi/.config/neofetch
+install -v -m 755 files/checkUpdate.sh ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 644 files/pi_crontab.txt ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/neofetch ${ROOTFS_DIR}/usr/bin/
-install -v -m 664 -o pi -g pi files/neofetch_config.conf ${ROOTFS_DIR}/home/pi/.config/neofetch/config.conf
+install -v -m 664 files/neofetch_config.conf ${ROOTFS_DIR}/home/pi/.config/neofetch/config.conf
 
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
@@ -64,6 +64,7 @@ chown -R pi:pi nhl-led-scoreboard
 cp nhl-led-scoreboard/VERSION .nhlupdate/status
 
 chown -R pi:pi .nhlupdate
+chown -R pi:pi .config
 
 crontab -u pi /home/pi/sbtools/pi_crontab.txt
 
