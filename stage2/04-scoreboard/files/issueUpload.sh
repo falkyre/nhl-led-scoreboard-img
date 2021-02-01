@@ -1,6 +1,6 @@
 #!/bin/bash
 # Upload the scoreboard stderr, stdout and config.json to pastebin using pastebinit
-
+cd /home/pi/nhl-led-scoreboard
 #Create temp file with the data
 ROOT=`dirname $(git rev-parse --git-dir)`
 version=`cat ${ROOT}/VERSION`

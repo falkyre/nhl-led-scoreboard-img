@@ -1,5 +1,5 @@
 #!/bin/bash
-
+cd /home/pi/nhl-led-scoreboard
 ROOT=`dirname $(git rev-parse --git-dir)`
 CURRENTLY_BUILT_VER=`cat ${ROOT}/VERSION` # stored somewhere, e.g. spec file in my case
 LASTVER=$(lastversion riffnshred/nhl-led-scoreboard -gt ${CURRENTLY_BUILT_VER})
