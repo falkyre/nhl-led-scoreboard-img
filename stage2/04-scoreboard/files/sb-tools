@@ -1,0 +1,321 @@
+#!/bin/sh
+
+#Set the colors
+
+NEWT_COLORS='
+    root=green,black
+    border=green,black
+    title=green,black
+    roottext=white,black
+    window=green,black
+    textbox=white,black
+    button=black,green
+    compactbutton=white,black
+    listbox=white,black
+    actlistbox=black,white
+    actsellistbox=black,green
+    checkbox=green,black
+    actcheckbox=black,green
+'
+export NEWT_COLORS
+
+INTERACTIVE=True
+ASK_TO_REBOOT=0
+CONFIG=/boot/config.txt
+
+USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
+
+is_pi () {
+  ARCH=$(dpkg --print-architecture)
+  if [ "$ARCH" = "armhf" ] || [ "$ARCH" = "arm64" ] ; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+if is_pi ; then
+  CMDLINE=/boot/cmdline.txt
+else
+  CMDLINE=/proc/cmdline
+fi
+
+is_pione() {
+   if grep -q "^Revision\s*:\s*00[0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo; then
+      return 0
+   elif grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[0-36][0-9a-fA-F]$" /proc/cpuinfo ; then
+      return 0
+   else
+      return 1
+   fi
+}
+
+is_pitwo() {
+   grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]04[0-9a-fA-F]$" /proc/cpuinfo
+   return $?
+}
+
+is_pizero() {
+   grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]0[9cC][0-9a-fA-F]$" /proc/cpuinfo
+   return $?
+}
+
+is_pifour() {
+   grep -q "^Revision\s*:\s*[ 123][0-9a-fA-F][0-9a-fA-F]3[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]$" /proc/cpuinfo
+   return $?
+}
+
+get_pi_type() {
+   if is_pione; then
+      echo 1
+   elif is_pitwo; then
+      echo 2
+   else
+      echo 0
+   fi
+}
+
+is_live() {
+    grep -q "boot=live" $CMDLINE
+    return $?
+}
+
+is_ssh() {
+  if pstree -p | egrep --quiet --extended-regexp ".*sshd.*\($$\)"; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+
+is_installed() {
+    if [ "$(dpkg -l "$1" 2> /dev/null | tail -n 1 | cut -d ' ' -f 1)" != "ii" ]; then
+      return 1
+    else
+      return 0
+    fi
+}
+
+deb_ver () {
+  ver=`cat /etc/debian_version | cut -d . -f 1`
+  echo $ver
+}
+
+calc_wt_size() {
+  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
+  # output from tput. However in this case, tput detects neither stdout or 
+  # stderr is a tty and so only gives default 80, 24 values
+  WT_HEIGHT=18
+  WT_WIDTH=$(tput cols)
+
+  if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
+    WT_WIDTH=80
+  fi
+  if [ "$WT_WIDTH" -gt 178 ]; then
+    WT_WIDTH=120
+  fi
+  WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
+}
+
+do_about() {
+  status=`cat /home/pi/.nhlupdate/status`
+  whiptail --msgbox "\
+This provides a straightforward way of doing initial configuration of the NHL LED Scoreboard as well as some useful tools for troubleshooting.\
+
+
+Installed: V$(cat /home/pi/nhl-led-scoreboard/VERSION)\
+
+
+On Github:  $status \
+" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+}
+
+
+do_set_team() {
+  whiptail --msgbox "You will now be asked to select a preferred team to create the initial config.json" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  /home/pi/nhl-led-scoreboard/nhl_setup -s /home/pi/nhl-led-scoreboard/config &&
+  whiptail --msgbox "config.json successfully created in /home/pi/nhl-led-scoreboard/config" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+}
+
+do_check_update() {
+  whiptail --msgbox "Checking for update" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  output=`/home/pi/nhl-led-scoreboard/scripts/sbtools/checkUpdate.sh` &&
+  whiptail --msgbox "$output" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+}
+
+do_collect() {
+  whiptail --msgbox "Collect logs and config.json for github issue" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+  output=`/home/pi/nhl-led-scoreboard/scripts/sbtools/issueUpload.sh 2>/dev/null` &&
+  whiptail --msgbox "$output" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+}
+
+do_sup_conf() {
+  whiptail --msgbox "Create scoreboard.conf" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+}
+
+do_enable_supervisor() {
+  whiptail --msgbox "Enable supervisor systemd service" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+  output=`sudo systemctl enable supervisor` &&
+  whiptail --msgbox "$output"  $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+}
+
+do_sb_stdout(){
+  whiptail --msgbox "Show last 128kb of scoreboard stdout log - use arrow keys to move log up/down" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  stdout_log=`supervisorctl tail -128000 scoreboard` &&
+  whiptail --msgbox --scrolltext "$stdout_log" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+}
+
+do_sb_stderr(){
+  whiptail --msgbox "Show last 128kb of scoreboard stderr log - use arrow keys to move log up/down" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  stdout_log=`supervisorctl tail -128000 scoreboard stderr` &&
+  whiptail --msgbox --scrolltext "$stderr_log" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+
+}
+
+do_live_tail(){
+  whiptail --msgbox "Show live scoreboard stdout log - use CTRL-C to quit" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  supervisorctl tail -f scoreboard &&
+  whiptail --msgbox "Done" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+
+}
+
+
+do_supervisor() {
+  FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Supervisor" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "SV1 scoreboard.conf" "Create scoreboard.conf based on board" \
+    "SV2 Enable supervisor" "Enable supervisor service" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      SV1\ *) do_sup_conf ;;
+      SV2\ *) do_enable_supervisor ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+
+}
+
+
+
+do_finish() {
+  if [ $ASK_TO_REBOOT -eq 1 ]; then
+    whiptail --yesno "Would you like to reboot now?" 20 60 2
+    if [ $? -eq 0 ]; then # yes
+      sync
+      reboot
+    fi
+  fi
+  exit 0
+}
+
+
+
+nonint() {
+  "$@"
+}
+
+
+
+do_system_menu() {
+  if is_pi ; then
+    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "S1 Preferred Team" "Selected preferred team for simple config.json" \
+      "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
+      3>&1 1>&2 2>&3)
+  elif is_live ; then 
+    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "S1 Preferred Team" "Selected preferred team for simple config.json" \
+      "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
+      3>&1 1>&2 2>&3)
+  else
+    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "S1 Preferred Team" "Selected preferred team for simple config.json" \
+      "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
+      3>&1 1>&2 2>&3)
+  fi
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      S1\ *) do_set_team ;;
+      S2\ *) do_supervisor ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
+do_trouble_menu() {
+  if is_pi ; then
+    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "T1 Collect for issue" "Post config.json and logs to pastebin for github issue" \
+      "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \
+      "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \
+      "T4 Live log" "Watch tail of log.  CTRL-C to quit" \
+      "T5 Check for Update" "Check for newest release on github" \
+      3>&1 1>&2 2>&3)
+  else
+    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "T1 Collect for issue" "Post config.json and logs to pastebin for github issue" \
+      "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \
+      "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \
+      "T4 Live log" "Watch tail of log.  CTRL-C to quit" \
+      "T5 Check for Update" "Check for newest release on github" \
+      3>&1 1>&2 2>&3)
+  fi
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      T1\ *) do_collect ;;
+      T2\ *) do_sb_stdout ;;
+      T3\ *) do_sb_stderr ;;
+      T4\ *) do_live_tail ;;
+      T5\ *) do_check_update ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
+
+
+
+#
+# Interactive use loop
+#
+if [ "$INTERACTIVE" = True ]; then
+  calc_wt_size
+  while true; do
+    if is_pi ; then
+      FUN=$(whiptail --title "NHL Led Scoreboard V"$(cat /home/pi/nhl-led-scoreboard/VERSION)" Tool (sb-tools)" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+        "1 Scoreboard Options" "Configure scoreboard settings" \
+        "2 Troubleshooting" "Troubleshooting and updates" \
+        "3 About sb-tools" "Information about this configuration tool" \
+        3>&1 1>&2 2>&3)
+    else
+      FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+        "1 Scoreboard Options" "Configure scoreboard settings" \
+        "2 Troubleshooting" "Troubleshooting and updates" \
+        "3 About sb-tools" "Information about this set of tools" \
+        3>&1 1>&2 2>&3)
+    fi
+    RET=$?
+    if [ $RET -eq 1 ]; then
+      do_finish
+    elif [ $RET -eq 0 ]; then
+      case "$FUN" in
+        1\ *) do_system_menu ;;
+        2\ *) do_trouble_menu ;;
+        3\ *) do_about ;;
+        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+    else
+      exit 1
+    fi
+  done
+fi

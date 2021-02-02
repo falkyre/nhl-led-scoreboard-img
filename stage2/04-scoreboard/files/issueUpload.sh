@@ -20,12 +20,12 @@ echo "supervisorctl status" >> /tmp/issue.txt
 echo "------------------------------------------------------" >> /tmp/issue.txt
 supervisorctl status >>/tmp/issue.txt
 echo "------------------------------------------------------" >> /tmp/issue.txt
-echo "scoreboard stderr log, first 128kb" >> /tmp/issue.txt
+echo "scoreboard stderr log, last 128kb" >> /tmp/issue.txt
 echo "=================================" >> /tmp/issue.txt
 supervisorctl tail -128000 scoreboard stderr >> /tmp/issue.txt
 echo "" >> /tmp/issue.txt
 echo "------------------------------------------------------" >> /tmp/issue.txt
-echo "scoreboard stdout log, first 128kb" >> /tmp/issue.txt
+echo "scoreboard stdout log, last 128kb" >> /tmp/issue.txt
 echo "=================================" >> /tmp/issue.txt
 supervisorctl tail -128000 scoreboard >> /tmp/issue.txt
 url=`pastebinit -b paste.ubuntu.com -t "nhl-led-scoreboard issue logs and config" < /tmp/issue.txt`
