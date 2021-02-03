@@ -127,7 +127,7 @@ This provides a straightforward way of doing initial configuration of the NHL LE
 Installed: V$(cat /home/pi/nhl-led-scoreboard/VERSION)\
 
 
-On Github:  $status \
+On Github: $status \
 " $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 }
 
@@ -151,7 +151,65 @@ do_collect() {
 }
 
 do_sup_conf() {
-  whiptail --msgbox "Create scoreboard.conf" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+
+  #Set --led-slowdown-gpio based on type of pi.
+  command="command=python3 src/main.py "
+  
+  if is_pione || is_pizero; then
+     gpio_slowdown="--led-slowdown-gpio=0"
+  elif is_pitwo; then
+     gpio_slowdown="--led-slowdown-gpio=2"
+  elif is_pifour; then
+     gpio_slowdown="--led-slowdown-gpio=4"
+  else
+     gpio_slowdown="--led-slowdown-gpio=2"
+  fi
+ 
+  board=$(whiptail --title "Create scoreboard.conf and testMatrix.sh script" --radiolist \
+  "Choose matrix size and gpio mapping - use space bar to select option" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+  "1" "64x32 adafruit no pwm" ON \
+  "2" "64x32 adafruit pwm" OFF \
+  "3" "128x32 adafruit no pwm" OFF\
+  "4" "128x32 adafruit pwm" OFF \
+  "5" "128x64 adafruit no pwm" OFF \
+  "6" "128x64 adafruit pwm" OFF \
+  3>&1 1>&2 2>&3)
+
+  case "$board" in
+	  1) board_command="--led-gpio-mapping=adafruit-hat --led-rows=32 --led-cols=64 --led-brightness=40"
+		  ;;
+	  2) board_command="--led-gpio-mapping=adafruit-hat-pwm --led-rows=32 --led-cols=64 --led-brightness=40"
+		  ;;
+          3) board_command="--led-gpio-mapping=adafruit-hat --led-rows=32 --led-cols=128 --led-brightness=40"
+		  ;;
+	  4) board_command="--led-gpio-mapping=adafruit-hat-pwm --led-rows=32 --led-cols=128 --led-brightness=40"
+		  ;;
+	  5) board_command="--led-gpio-mapping=adafruit-hat --led-rows=64 --led-cols=128 --led-brightness=40"
+		  ;;
+	  6) board_command="--led-gpio-mapping=adafruit-hat-pwm --led-rows=64 --led-cols=128 --led-brightness=40"
+		  ;;
+	  *) board_command="--led-gpio-mapping=adafruit-hat --led-rows=32 --led-cols=64 --led-brightness=40"
+		  ;;
+  esac
+
+  board_command="$gpio_slowdown $board_command"
+  sup_command="$command$board_command --updatecheck"
+
+  #Create a testMatrix.sh in the /home/pi/sbtools directory that contains the command line
+  echo "#!/bin/bash" > /home/pi/sbtools/testMatrix.sh
+  echo "cd /home/pi/nhl-led-scoreboard/submodules/matrix/bindings/python/samples" >> /home/pi/sbtools/testMatrix.sh
+  echo "sudo python3 runtext.py $board_command -t '`cat /home/pi/.nhlupdate/status`'" >> /home/pi/sbtools/testMatrix.sh
+  chmod +x /home/pi/sbtools/testMatrix.sh
+
+  #Update the installed scoreboard.conf file with the sup_command string
+  #delete the line with command=
+  sudo sed -i '/command=/d' /etc/supervisor/conf.d/scoreboard.conf
+  #add the new command to scoreboard.conf
+  sudo sed -i "/program/a $sup_command" /etc/supervisor/conf.d/scoreboard.conf
+
+  whiptail --msgbox -- "Supervisor scoreboard.conf updated:\n\nnew command: $sup_command\n\nAn RGB matrix test script has been created in /home/pi/sbtools/testMatrix.sh"  $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+
+
 }
 
 do_enable_supervisor() {
@@ -183,8 +241,8 @@ do_live_tail(){
 
 do_supervisor() {
   FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Supervisor" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "SV1 scoreboard.conf" "Create scoreboard.conf based on board" \
-    "SV2 Enable supervisor" "Enable supervisor service" \
+    "SV1 scoreboard.conf" "Create scoreboard.conf and testMatrix.sh based on board" \
+    "SV2 Enable supervisor" "Enable supervisor service (only do this if your board runs properly, use testMatrix.sh created in SV1)" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -252,18 +310,18 @@ do_system_menu() {
 do_trouble_menu() {
   if is_pi ; then
     FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "T1 Collect for issue" "Post config.json and logs to pastebin for github issue" \
+      "T1 Show live stdout log" "Watch tail of log.  CTRL-C to quit" \
       "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \
       "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \
-      "T4 Live log" "Watch tail of log.  CTRL-C to quit" \
+      "T4 Collect for issue" "Post config.json and logs to pastebin for github issue" \
       "T5 Check for Update" "Check for newest release on github" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "T1 Collect for issue" "Post config.json and logs to pastebin for github issue" \
-      "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \
-      "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \
-      "T4 Live log" "Watch tail of log.  CTRL-C to quit" \
+      "T1 Show live stdout log" "Watch tail of log.  CTRL-C to quit" \                     
+      "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \    
+      "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \    
+      "T4 Collect for issue" "Post config.json and logs to pastebin for github issue" \
       "T5 Check for Update" "Check for newest release on github" \
       3>&1 1>&2 2>&3)
   fi
@@ -272,10 +330,10 @@ do_trouble_menu() {
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      T1\ *) do_collect ;;
+      T4\ *) do_collect ;;
       T2\ *) do_sb_stdout ;;
       T3\ *) do_sb_stderr ;;
-      T4\ *) do_live_tail ;;
+      T1\ *) do_live_tail ;;
       T5\ *) do_check_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
