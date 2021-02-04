@@ -73,6 +73,7 @@ echo "You are running the latest version V${CURRENTLY_BUILT_VER}" > .nhlupdate/s
 
 chown -R pi:pi .nhlupdate
 chown -R pi:pi .config
+chown -R pi:pi .bashrc
 
 crontab -u pi /home/pi/sbtools/pi_crontab.txt
 
