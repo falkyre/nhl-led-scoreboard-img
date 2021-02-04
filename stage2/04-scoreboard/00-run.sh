@@ -69,10 +69,7 @@ make install-python PYTHON=/usr/bin/python3
 cd /home/pi
 chown -R pi:pi nhl-led-scoreboard
 
-CURRENTLY_BUILT_VER=`cat /home/pi/nhl-led-scoreboard/VERSION`
-echo "You are running the latest version V${CURRENTLY_BUILT_VER}" > .nhlupdate/status
 
-chown -R pi:pi .nhlupdate
 chown -R pi:pi .config
 chown -R pi:pi .bashrc
 
