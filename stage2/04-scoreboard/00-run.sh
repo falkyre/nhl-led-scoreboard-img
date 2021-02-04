@@ -78,6 +78,6 @@ crontab -u pi /home/pi/sbtools/pi_crontab.txt
 
 #Make sure that .bash files are read from /etc/bashrc.d
 
-echo "for i in /etc/bashrc.d/*.sh /etc/bashrc.d/*.bash; do [ -r "$i" ] && . $i; done; unset i" >> /etc/bash.bashrc
+echo 'for i in /etc/bashrc.d/*.sh /etc/bashrc.d/*.bash; do [ -r "$i" ] && . $i; done; unset i' >> /etc/bash.bashrc
 
 EOF
