@@ -257,7 +257,18 @@ do_supervisor() {
 
 }
 
+do_show_changelog() {
 
+    #Get the last two versions committed
+    cd /home/pi/nhl-led-scoreboard
+    latest=`git tag --sort=-v:refname | head -1`
+    previous=`git tag --sort=-v:refname | head -2 | tail -1`
+    git log --oneline --decorate $previous..$latest > /tmp/changelog.txt
+    
+    whiptail --msgbox --scrolltext "$(cat /tmp/changelog.txt)" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+
+    rm /tmp/changelog.txt
+}
 
 do_finish() {
   if [ $ASK_TO_REBOOT -eq 1 ]; then
@@ -314,7 +325,6 @@ do_trouble_menu() {
       "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \
       "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \
       "T4 Collect for issue" "Post config.json and logs to pastebin for github issue" \
-      "T5 Check for Update" "Check for newest release on github" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -322,7 +332,6 @@ do_trouble_menu() {
       "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \    
       "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \    
       "T4 Collect for issue" "Post config.json and logs to pastebin for github issue" \
-      "T5 Check for Update" "Check for newest release on github" \
       3>&1 1>&2 2>&3)
   fi
   RET=$?
@@ -334,12 +343,35 @@ do_trouble_menu() {
       T2\ *) do_sb_stdout ;;
       T3\ *) do_sb_stderr ;;
       T1\ *) do_live_tail ;;
-      T5\ *) do_check_update ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
 }
 
+do_updates_menu () {
+    if is_pi ; then
+    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Updates" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "U1 Check for Update" "Check for newest release on github" \
+      "U2 Show Changelog" "Show changelog for V$(cat /home/pi/nhl-led-scoreboard/VERSION)" \
+      3>&1 1>&2 2>&3)
+  else
+    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Updates" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+      "U1 Check for Update" "Check for newest release on github" \
+      "U2 Show Changelog" "Show changelog for V$(cat /home/pi/nhl-led-scoreboard/VERSION)" \
+      3>&1 1>&2 2>&3)
+  fi
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      U1\ *) do_check_update ;;
+      U2\ *) do_show_changelog ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+
+}
 
 
 
@@ -352,14 +384,16 @@ if [ "$INTERACTIVE" = True ]; then
     if is_pi ; then
       FUN=$(whiptail --title "NHL Led Scoreboard V"$(cat /home/pi/nhl-led-scoreboard/VERSION)" Tool (sb-tools)" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 Scoreboard Options" "Configure scoreboard settings" \
-        "2 Troubleshooting" "Troubleshooting and updates" \
-        "3 About sb-tools" "Information about this configuration tool" \
+        "2 Troubleshooting" "Troubleshooting" \
+	"3 Updates" "Update Info" \
+        "4 About sb-tools" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
     else
       FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 Scoreboard Options" "Configure scoreboard settings" \
-        "2 Troubleshooting" "Troubleshooting and updates" \
-        "3 About sb-tools" "Information about this set of tools" \
+        "2 Troubleshooting" "Troubleshooting" \
+	"3 Updates" "Update Info" \
+        "4 About sb-tools" "Information about this set of tools" \
         3>&1 1>&2 2>&3)
     fi
     RET=$?
@@ -369,7 +403,8 @@ if [ "$INTERACTIVE" = True ]; then
       case "$FUN" in
         1\ *) do_system_menu ;;
         2\ *) do_trouble_menu ;;
-        3\ *) do_about ;;
+	3\ *) do_updates_menu ;;
+        4\ *) do_about ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
