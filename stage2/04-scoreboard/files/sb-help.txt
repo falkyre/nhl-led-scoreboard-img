@@ -1,0 +1,28 @@
+NHL Led Scoreboard command line utilities
+=========================================
+General Tools
+-------------
+sb-help    - This help utility
+sb-tools   - Configuration utility used to setup scoreboard and supervisor, 
+             do troubleshooting, check for updates
+sb-sysinfo - prints system information like the login banner
+
+Update Tools
+------------
+sb-updatecheck - Checks installed version against github to see if new update is available
+sb-changelog   - shows the changelog of the latest version
+
+Troubleshooting Tools
+---------------------
+sb-stderr  - shows the last 50kb of the supervisor scoreboard stderr logfile
+sb-stdout  - shows the last 50kb of the supervisor scoreboard stdout logfile
+sb-livelog - shows the live supervisor scoreboard stdout log file.  Use CTRL-C to exit
+sb-issue   - Gather config.json (with any api keys removed), system info 
+             and supervisor log files and posts to pastebin.  Returns a pastebin URL
+
+Supervisor/Process Tools
+-------------------------
+sb-stop    - stops the supervisor scoreboard process
+sb-start   - starts the supervisor scoreboard process
+sb-restart - basically a combination of sb-stop and sb-start in one command
+sb-status  - shows the supervisor status of the scoreboard process

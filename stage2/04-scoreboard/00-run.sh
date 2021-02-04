@@ -5,7 +5,10 @@ install -v -d ${ROOTFS_DIR}/home/pi/.config/neofetch
 install -v -m 755 files/checkUpdate.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/pi_crontab.txt ${ROOTFS_DIR}/home/pi/sbtools
-#install -v -m 644 files/sb-tools ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 644 files/.bashrc ${ROOTFS_DIR}/home/pi/
+install -v -m 755 files/sb-tools ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 755 files/sb-help ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 644 files/sb-help.txt ${ROOTFS_DIR}/home/pi/sbtools/
 install -v -m 755 files/neofetch ${ROOTFS_DIR}/usr/bin/
 install -v -m 664 files/neofetch_config.conf ${ROOTFS_DIR}/home/pi/.config/neofetch/config.conf
 #Change the systemwide .bashrc by adding a bashrc.d in /etc
