@@ -12,6 +12,7 @@ install -v -m 644 files/sb-help.txt ${ROOTFS_DIR}/home/pi/sbtools/
 install -v -m 755 files/neofetch ${ROOTFS_DIR}/usr/bin/
 install -v -m 664 files/neofetch_config.conf ${ROOTFS_DIR}/home/pi/.config/neofetch/config.conf
 #Change the systemwide .bashrc by adding a bashrc.d in /etc
+install -v -m 644 files/bash.bashrc ${ROOTFS_DIR}/etc/
 install -v -d ${ROOTFS_DIR}/etc/bashrc.d
 install -v -m 644 files/scoreboard.bash ${ROOTFS_DIR}/etc/bashrc.d
 
@@ -68,7 +69,7 @@ make install-python PYTHON=/usr/bin/python3
 cd /home/pi
 chown -R pi:pi nhl-led-scoreboard
 
-CURRENTLY_BUILT_VER=`cat nhl-led-scoreboard/VERSION`
+CURRENTLY_BUILT_VER=`cat /home/pi/nhl-led-scoreboard/VERSION`
 echo "You are running the latest version V${CURRENTLY_BUILT_VER}" > .nhlupdate/status
 
 chown -R pi:pi .nhlupdate
@@ -76,9 +77,5 @@ chown -R pi:pi .config
 chown -R pi:pi .bashrc
 
 crontab -u pi /home/pi/sbtools/pi_crontab.txt
-
-#Make sure that .bash files are read from /etc/bashrc.d
-
-echo 'for i in /etc/bashrc.d/*.sh /etc/bashrc.d/*.bash; do [ -r "$i" ] && . $i; done; unset i' >> /etc/bash.bashrc
 
 EOF
