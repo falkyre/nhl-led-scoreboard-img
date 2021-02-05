@@ -2,6 +2,8 @@
 install -v -d ${ROOTFS_DIR}/home/pi/sbtools
 install -v -d ${ROOTFS_DIR}/home/pi/.nhlupdate
 install -v -d ${ROOTFS_DIR}/home/pi/.config/neofetch
+install -v -d ${ROOTFS_DIR}/etc/cron.scoreboard
+install -v -m 755 files/get_version ${ROOTFS_DIR}/etc/cron.scoreboard
 install -v -m 755 files/checkUpdate.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/pi_crontab.txt ${ROOTFS_DIR}/home/pi/sbtools
@@ -72,7 +74,13 @@ chown -R pi:pi nhl-led-scoreboard
 
 chown -R pi:pi .config
 chown -R pi:pi .bashrc
+chown -R pi:pi .nhlupdate
+chown -R pi:pi sbtools
 
 crontab -u pi /home/pi/sbtools/pi_crontab.txt
+
+echo "# scoreboard version" >> /etc/crontab
+echo "@reboot root run-parts /etc/cron.scoreboard/" >> /etc/crontab
+
 
 EOF
