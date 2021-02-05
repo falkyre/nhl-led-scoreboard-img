@@ -1,0 +1,5 @@
+#!/bin/bash
+
+/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlupdate/status
+
+chown pi:pi /home/pi/.nhlupdate/status
