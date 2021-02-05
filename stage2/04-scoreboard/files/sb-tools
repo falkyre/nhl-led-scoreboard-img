@@ -265,7 +265,7 @@ do_show_changelog() {
     previous=`git tag --sort=-v:refname | head -2 | tail -1`
     git log --oneline --decorate $previous..$latest > /tmp/changelog.txt
     
-    whiptail --title "Changelog for V$latest - use arrow keys to scroll" --msgbox --scrolltext "$(cat /tmp/changelog.txt)" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+    whiptail --title "Changelog for $latest - use arrow keys to scroll" --msgbox --scrolltext "$(cat /tmp/changelog.txt)" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 
     rm /tmp/changelog.txt
 }
