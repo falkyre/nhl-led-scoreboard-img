@@ -119,3 +119,17 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
+Check to see if there is an UPDATE and if there is, ask the user if they want to run it
+status=`cat /home/pi/.nhlupdate/status`
+if [[ $status == *"UPDATE"* ]]; then
+    while true; do
+        read -p "$(tput bold)$(tput setaf 2)$(tput smso)$status $(tput rmso) Upgrade? (y/n)" yn
+        case $yn in
+           [Yy]* ) /home/pi/sbtools/sb-upgrade; break;;
+           [Nn]* ) echo "You can update manually using the sb-upgrade tool"; break;;
+            * ) echo "Please answer yes or no.";;
+        esac
+     done
+fi
+

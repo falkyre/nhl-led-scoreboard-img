@@ -6,6 +6,8 @@ install -v -d ${ROOTFS_DIR}/etc/cron.scoreboard
 install -v -m 755 files/get_version ${ROOTFS_DIR}/etc/cron.scoreboard
 install -v -m 755 files/checkUpdate.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 755 files/changelog.sh ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 755 files/sb-upgrade ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/pi_crontab.txt ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/.bashrc ${ROOTFS_DIR}/home/pi/
 install -v -m 755 files/sb-tools ${ROOTFS_DIR}/home/pi/sbtools
@@ -17,34 +19,15 @@ install -v -m 664 files/neofetch_config.conf ${ROOTFS_DIR}/home/pi/.config/neofe
 install -v -m 644 files/bash.bashrc ${ROOTFS_DIR}/etc/
 install -v -d ${ROOTFS_DIR}/etc/bashrc.d
 install -v -m 644 files/scoreboard.bash ${ROOTFS_DIR}/etc/bashrc.d
+install -v -m 755 files/aptfile ${ROOTFS_DIR}/usr/local/bin
 
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
 apt-get -y remove bluez bluez-firmware pi-bluetooth triggerhappy
 
-#Install pip requirements for scoreboard from the requirements.txt
 
 pip3 install --upgrade pip
 pip3 install archey4
-#pip3 install requests
-#pip3 install regex
-#pip3 install geocoder python_tsl2591 ephem
-#pip3 uninstall -y numpy
-#pip3 install env-canada==0.0.35
-#pip3 install --upgrade pyowm
-#pip3 install noaa_sdk fastjsonschema
-#pip3 install apscheduler
-#pip3 install lastversion
-#pip3 install numpy
-#pip3 install namespace
-
-# Install pip requirements for nhl_setup
-#pip3 install fastjsonschema
-#pip3 install printtools
-#pip3 install PyInstaller
-#pip3 install questionary
-#pip3 install regex
-
 
 #Clone scoreboard repo
 cd /home/pi

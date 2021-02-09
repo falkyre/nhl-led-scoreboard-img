@@ -11,6 +11,7 @@ Update Tools
 ------------
 sb-updatecheck - Checks installed version against github to see if new update is available
 sb-changelog   - shows the changelog of the latest version
+sb-upgrade     - Upgrades the nhl-led-scoreboard install to the latest from github.
 
 Troubleshooting Tools
 ---------------------
