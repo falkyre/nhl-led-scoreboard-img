@@ -36,7 +36,7 @@ git clone https://github.com/riffnshred/nhl-led-scoreboard.git
 
 cd nhl-led-scoreboard
 
-#Install the python requirements from the requiremenst.txt file
+#Install the python requirements from the requirements.txt file
 pip3 install -r requirements.txt 
 
 #Install rgb matrix

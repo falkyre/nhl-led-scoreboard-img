@@ -144,6 +144,18 @@ do_check_update() {
   whiptail --msgbox "$output" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 }
 
+do_upgrade() {
+	status=`cat /home/pi/.nhlupdate/status`
+        if echo $status | grep -q "UPDATE"; then 
+           if (whiptail --yesno "$status Run upgrade?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then
+	        /home/pi/sbtools/sb-upgrade
+	   fi 
+	else
+           whiptail --msgbox "$status No upgrade available" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT	
+	fi
+}
+
+
 do_collect() {
   whiptail --msgbox "Collect logs and config.json for github issue" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
   output=`/home/pi/sbtools/issueUpload.sh 2>/dev/null` &&
@@ -265,7 +277,7 @@ do_show_changelog() {
     previous=`git tag --sort=-v:refname | head -2 | tail -1`
     git log --oneline --decorate $previous..$latest > /tmp/changelog.txt
     
-    whiptail --title "Changelog for $latest - use arrow keys to scroll" --msgbox --scrolltext "$(cat /tmp/changelog.txt)" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+    whiptail --title "Changelog for V$latest - use arrow keys to scroll" --msgbox --scrolltext "$(cat /tmp/changelog.txt)" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 
     rm /tmp/changelog.txt
 }
@@ -353,11 +365,13 @@ do_updates_menu () {
     FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Updates" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "U1 Check for Update" "Check for newest release on github" \
       "U2 Show Changelog" "Show changelog for V$(cat /home/pi/nhl-led-scoreboard/VERSION)" \
+      "U3 Upgrade" "Upgrade to latest version if one available" \
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Updates" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "U1 Check for Update" "Check for newest release on github" \
       "U2 Show Changelog" "Show changelog for V$(cat /home/pi/nhl-led-scoreboard/VERSION)" \
+      "U3 Upgrade" "Upgrade to latest version if one available" \
       3>&1 1>&2 2>&3)
   fi
   RET=$?
@@ -367,6 +381,7 @@ do_updates_menu () {
     case "$FUN" in
       U1\ *) do_check_update ;;
       U2\ *) do_show_changelog ;;
+      U3\ *) do_upgrade ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
