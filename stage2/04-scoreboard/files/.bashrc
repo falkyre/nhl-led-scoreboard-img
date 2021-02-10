@@ -120,7 +120,7 @@ if ! shopt -oq posix; then
   fi
 fi
 
-Check to see if there is an UPDATE and if there is, ask the user if they want to run it
+#Check to see if there is an UPDATE and if there is, ask the user if they want to run it
 status=`cat /home/pi/.nhlupdate/status`
 if [[ $status == *"UPDATE"* ]]; then
     while true; do

@@ -10,6 +10,7 @@ install -v -m 755 files/changelog.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/sb-upgrade ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/pi_crontab.txt ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/.bashrc ${ROOTFS_DIR}/home/pi/
+install -v -m 644 files/.gitconfig ${ROOTFS_DIR}/home/pi/
 install -v -m 755 files/sb-tools ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/sb-help ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/sb-help.txt ${ROOTFS_DIR}/home/pi/sbtools/
@@ -56,7 +57,8 @@ chown -R pi:pi nhl-led-scoreboard
 
 
 chown -R pi:pi .config
-chown -R pi:pi .bashrc
+chown pi:pi .bashrc
+chown pi:pi .gitconfig
 chown -R pi:pi .nhlupdate
 chown -R pi:pi sbtools
 
