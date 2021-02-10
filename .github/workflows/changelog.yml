@@ -1,0 +1,2 @@
+- name: Generate changelog
+  uses: heinrichreimer/action-github-changelog-generator@v2.2
