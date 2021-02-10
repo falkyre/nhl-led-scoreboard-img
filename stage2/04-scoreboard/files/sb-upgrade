@@ -103,6 +103,8 @@ if git pull --rebase --stat origin master; then
     fi
   fi
 
+  fi
+
   printf "${BLUE}%s${RESET}\n" "$message"
 else
   ret=$?
