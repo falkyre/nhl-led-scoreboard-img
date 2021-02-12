@@ -6,6 +6,7 @@ sb-help    - This help utility
 sb-tools   - Configuration utility used to setup scoreboard and supervisor, 
              do troubleshooting, check for updates
 sb-sysinfo - prints system information like the login banner
+sb-resetwifi - reboots raspberry pi back to hot spot mode to setup wifi again.
 
 Update Tools
 ------------

@@ -1,0 +1,14 @@
+[Unit]
+Description=Setup timezone automatically based on IP address
+ConditionPathExists=/home/pi/.nhlupdate/setTZ
+ConditionPathExists=!/etc/cron.raspiwifi/aphost_bootstrapper
+After=network-online.target dhcpcd.service
+Wants=network-online.target dhcpcd.service
+
+[Service]
+WorkingDirectory=/home/pi/sbtools
+ExecStartPre=/bin/sh -c 'until ping -c1 google.com; do sleep 1; done;'
+ExecStart=/bin/sh /home/pi/sbtools/autoset_tz.sh
+
+[Install]
+WantedBy=multi-user.target

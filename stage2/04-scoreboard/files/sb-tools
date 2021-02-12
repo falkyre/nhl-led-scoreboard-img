@@ -25,6 +25,9 @@ CONFIG=/boot/config.txt
 
 USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
 
+STATUS=`cat /home/pi/.nhlupdate/status`
+VERSION=`cat /home/pi/nhl-led-scoreboard/VERSION`
+
 is_pi () {
   ARCH=$(dpkg --print-architecture)
   if [ "$ARCH" = "armhf" ] || [ "$ARCH" = "arm64" ] ; then
@@ -119,15 +122,14 @@ calc_wt_size() {
 }
 
 do_about() {
-  status=`cat /home/pi/.nhlupdate/status`
   whiptail --msgbox "\
 This provides a straightforward way of doing initial configuration of the NHL LED Scoreboard as well as some useful tools for troubleshooting.\
 
 
-Installed: V$(cat /home/pi/nhl-led-scoreboard/VERSION)\
+Installed: V$VERSION\
 
 
-On Github: $status \
+On Github: $STATUS \
 " $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 }
 
@@ -145,13 +147,12 @@ do_check_update() {
 }
 
 do_upgrade() {
-	status=`cat /home/pi/.nhlupdate/status`
-        if echo $status | grep -q "UPDATE"; then 
-           if (whiptail --yesno "$status Run upgrade?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then
+        if echo $STATUS | grep -q "UPDATE"; then 
+           if (whiptail --yesno "$STATUS Run upgrade?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then
 	        /home/pi/sbtools/sb-upgrade
 	   fi 
 	else
-           whiptail --msgbox "$status No upgrade available" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT	
+           whiptail --msgbox "$STATUS No upgrade available" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT	
 	fi
 }
 
@@ -252,7 +253,7 @@ do_live_tail(){
 
 
 do_supervisor() {
-  FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Supervisor" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Supervisor)" --menu "Supervisor" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "SV1 scoreboard.conf" "Create scoreboard.conf and testMatrix.sh based on board" \
     "SV2 Enable supervisor" "Enable supervisor service (only do this if your board runs properly, use testMatrix.sh created in SV1)" \
     3>&1 1>&2 2>&3)
@@ -282,6 +283,15 @@ do_show_changelog() {
     rm /tmp/changelog.txt
 }
 
+do_resetwifi() {
+
+    whiptail --title "NHL Led Scoreboard V$VERSION Tools (Reset Wifi)" --yesno "Would you like to reset your wifi now? Once your pi has rebooted, look for a WiFi network starting with NHL LED Scoreboard and connect to it to reset your wifi" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+    if [ $? -eq 0 ]; then # yes
+       sudo python3 /usr/lib/raspiwifi/reset_device/manual_reset.py
+    fi
+
+}
+
 do_finish() {
   if [ $ASK_TO_REBOOT -eq 1 ]; then
     whiptail --yesno "Would you like to reboot now?" 20 60 2
@@ -303,17 +313,17 @@ nonint() {
 
 do_system_menu() {
   if is_pi ; then
-    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Scoreboard Options)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "S1 Preferred Team" "Selected preferred team for simple config.json" \
       "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
       3>&1 1>&2 2>&3)
   elif is_live ; then 
-    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Scoreboard Options)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "S1 Preferred Team" "Selected preferred team for simple config.json" \
       "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
       3>&1 1>&2 2>&3)
   else
-    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Scoreboard Options)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "S1 Preferred Team" "Selected preferred team for simple config.json" \
       "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
       3>&1 1>&2 2>&3)
@@ -332,14 +342,14 @@ do_system_menu() {
 
 do_trouble_menu() {
   if is_pi ; then
-    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+	  FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Troubleshooting)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "T1 Show live stdout log" "Watch tail of log.  CTRL-C to quit" \
       "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \
       "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \
       "T4 Collect for issue" "Post config.json and logs to pastebin for github issue" \
       3>&1 1>&2 2>&3)
   else
-    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+	  FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Troubleshooting)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "T1 Show live stdout log" "Watch tail of log.  CTRL-C to quit" \                     
       "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \    
       "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \    
@@ -362,15 +372,15 @@ do_trouble_menu() {
 
 do_updates_menu () {
     if is_pi ; then
-    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Updates" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+	    FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Updates)" --menu "Updates" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "U1 Check for Update" "Check for newest release on github" \
-      "U2 Show Changelog" "Show changelog for V$(cat /home/pi/nhl-led-scoreboard/VERSION)" \
+      "U2 Show Changelog" "Show changelog for V$VERSION" \
       "U3 Upgrade" "Upgrade to latest version if one available" \
       3>&1 1>&2 2>&3)
   else
-    FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Updates" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+	  FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Updates)" --menu "Updates" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "U1 Check for Update" "Check for newest release on github" \
-      "U2 Show Changelog" "Show changelog for V$(cat /home/pi/nhl-led-scoreboard/VERSION)" \
+      "U2 Show Changelog" "Show changelog for V$VERSION" \
       "U3 Upgrade" "Upgrade to latest version if one available" \
       3>&1 1>&2 2>&3)
   fi
@@ -397,18 +407,20 @@ if [ "$INTERACTIVE" = True ]; then
   calc_wt_size
   while true; do
     if is_pi ; then
-      FUN=$(whiptail --title "NHL Led Scoreboard V"$(cat /home/pi/nhl-led-scoreboard/VERSION)" Tool (sb-tools)" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+      FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (sb-tools)" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 Scoreboard Options" "Configure scoreboard settings" \
         "2 Troubleshooting" "Troubleshooting" \
 	"3 Updates" "Update Info" \
-        "4 About sb-tools" "Information about this configuration tool" \
+	"4 Reset Wifi" "Connect pi to a new wifi network" \
+        "5 About sb-tools" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
     else
-      FUN=$(whiptail --title "NHL Led Scoreboard Tools (sb-tools)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+      FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (sb-tools)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 Scoreboard Options" "Configure scoreboard settings" \
         "2 Troubleshooting" "Troubleshooting" \
 	"3 Updates" "Update Info" \
-        "4 About sb-tools" "Information about this set of tools" \
+	"4 Reset Wifi" "Connect pi to a new wifi network" \
+        "5 About sb-tools" "Information about this set of tools" \
         3>&1 1>&2 2>&3)
     fi
     RET=$?
@@ -419,7 +431,8 @@ if [ "$INTERACTIVE" = True ]; then
         1\ *) do_system_menu ;;
         2\ *) do_trouble_menu ;;
 	3\ *) do_updates_menu ;;
-        4\ *) do_about ;;
+	4\ *) do_resetwifi ;;
+        5\ *) do_about ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else

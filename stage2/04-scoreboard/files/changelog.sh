@@ -421,7 +421,7 @@ function main {
   fi
 }
 
-#cd "$ZSH"
+cd "$NHL"
 
 # Use raw output if stdout is not a tty
 if [[ ! -t 1 && -z "$3" ]]; then

@@ -21,6 +21,9 @@ install -v -m 644 files/bash.bashrc ${ROOTFS_DIR}/etc/
 install -v -d ${ROOTFS_DIR}/etc/bashrc.d
 install -v -m 644 files/scoreboard.bash ${ROOTFS_DIR}/etc/bashrc.d
 install -v -m 755 files/aptfile ${ROOTFS_DIR}/usr/local/bin
+#Set up service file for autosetting timezone based on IP
+install -v -m 755 files/autoset_tz.sh ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 644 files/sb_autosettz.service "${ROOTFS_DIR}/etc/systemd/system/"
 
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
@@ -55,17 +58,24 @@ make install-python PYTHON=/usr/bin/python3
 cd /home/pi
 chown -R pi:pi nhl-led-scoreboard
 
+crontab -u pi /home/pi/sbtools/pi_crontab.txt
 
+echo "# scoreboard version" >> /etc/crontab
+echo "@reboot root run-parts /etc/cron.scoreboard/" >> /etc/crontab
+
+#Set up for automatic timezone setup based on IP address
+touch /home/pi/.nhlupdate/setTZ
+
+systemctl unmask sb_autosettz.service
+systemctl enable sb_autosettz.service
+
+#make the pi user the owner
 chown -R pi:pi .config
 chown pi:pi .bashrc
 chown pi:pi .gitconfig
 chown -R pi:pi .nhlupdate
 chown -R pi:pi sbtools
 
-crontab -u pi /home/pi/sbtools/pi_crontab.txt
-
-echo "# scoreboard version" >> /etc/crontab
-echo "@reboot root run-parts /etc/cron.scoreboard/" >> /etc/crontab
 
 
 EOF
