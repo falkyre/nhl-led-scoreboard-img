@@ -120,6 +120,9 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# Path to your nhl-led-scoreboard installation.
+export NHL="/home/pi/nhl-led-scoreboard"
+
 #Check to see if there is an UPDATE and if there is, ask the user if they want to run it
 status=`cat /home/pi/.nhlupdate/status`
 if [[ $status == *"UPDATE"* ]]; then
