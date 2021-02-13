@@ -55,6 +55,10 @@ make install-python PYTHON=/usr/bin/python3
 #cd bindings
 #pip3 install -e python/
 
+#Build the utilities so we can use the led-image-viewer for a splash screen
+cd utils
+make 
+
 cd /home/pi
 chown -R pi:pi nhl-led-scoreboard
 

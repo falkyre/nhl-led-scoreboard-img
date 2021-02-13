@@ -13,3 +13,5 @@ pastebinit
 jq
 neovim
 zsh
+libgraphicsmagick++-dev
+ libwebp-dev

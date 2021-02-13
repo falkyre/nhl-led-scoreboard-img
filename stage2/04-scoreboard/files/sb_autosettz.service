@@ -2,7 +2,7 @@
 Description=Setup timezone automatically based on IP address
 ConditionPathExists=/home/pi/.nhlupdate/setTZ
 ConditionPathExists=!/etc/cron.raspiwifi/aphost_bootstrapper
-After=network-online.target dhcpcd.service
+After=multi-user.target
 Wants=network-online.target dhcpcd.service
 
 [Service]
