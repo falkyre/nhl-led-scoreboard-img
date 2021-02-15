@@ -21,12 +21,19 @@ export NEWT_COLORS
 
 INTERACTIVE=True
 ASK_TO_REBOOT=0
-CONFIG=/boot/config.txt
+#CONFIG=/boot/config.txt
 
 USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
 
-STATUS=`cat /home/pi/.nhlupdate/status`
-VERSION=`cat /home/pi/nhl-led-scoreboard/VERSION`
+STATUS=$(cat /home/pi/.nhlledportal/status)
+VERSION=$(cat /home/pi/nhl-led-scoreboard/VERSION)
+
+#Check to see if the user has initially tested the matrix with sample code
+if [ -f /home/pi/.nhlledportal/TESTED ]; then
+   TESTMATRIXRUN=True
+else
+   TESTMATRIXRUN=False
+fi
 
 is_pi () {
   ARCH=$(dpkg --print-architecture)
@@ -84,7 +91,7 @@ is_live() {
 }
 
 is_ssh() {
-  if pstree -p | egrep --quiet --extended-regexp ".*sshd.*\($$\)"; then
+  if pstree -p | grep -E --quiet --extended-regexp ".*sshd.*\($$\)"; then
     return 0
   else
     return 1
@@ -101,7 +108,7 @@ is_installed() {
 }
 
 deb_ver () {
-  ver=`cat /etc/debian_version | cut -d . -f 1`
+  ver=$(cat /etc/debian_version | cut -d . -f 1)
   echo $ver
 }
 
@@ -142,7 +149,7 @@ do_set_team() {
 
 do_check_update() {
   #whiptail --msgbox "Checking for update" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
-  output=`/home/pi/sbtools/checkUpdate.sh` &&
+  output=$(/home/pi/sbtools/checkUpdate.sh) &&
   whiptail --msgbox "$output" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 }
 
@@ -159,7 +166,7 @@ do_upgrade() {
 
 do_collect() {
   whiptail --msgbox "Collect logs and config.json for github issue" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
-  output=`/home/pi/sbtools/issueUpload.sh 2>/dev/null` &&
+  output=$(/home/pi/sbtools/issueUpload.sh 2>/dev/null) &&
   whiptail --msgbox "$output" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
 }
 
@@ -211,8 +218,13 @@ do_sup_conf() {
   #Create a testMatrix.sh in the /home/pi/sbtools directory that contains the command line
   echo "#!/bin/bash" > /home/pi/sbtools/testMatrix.sh
   echo "cd /home/pi/nhl-led-scoreboard/submodules/matrix/bindings/python/samples" >> /home/pi/sbtools/testMatrix.sh
-  echo "sudo python3 runtext.py $board_command -t '`cat /home/pi/.nhlupdate/status`'" >> /home/pi/sbtools/testMatrix.sh
+  echo "sudo python3 runtext.py $board_command -t '$(cat /home/pi/.nhlledportal/status)'" >> /home/pi/sbtools/testMatrix.sh
   chmod +x /home/pi/sbtools/testMatrix.sh
+
+  # Create a splash.sh that loads on boot
+  echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
+  echo "/home/pi/nhl-led-scoreboard/submodules/matrix/utils/led-image-viewer $board_command -t10 /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
+  chmod +x /home/pi/sbtools/splash.sh
 
   #Update the installed scoreboard.conf file with the sup_command string
   #delete the line with command=
@@ -222,24 +234,52 @@ do_sup_conf() {
 
   whiptail --msgbox -- "Supervisor scoreboard.conf updated:\n\nnew command: $sup_command\n\nAn RGB matrix test script has been created in /home/pi/sbtools/testMatrix.sh"  $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 
-
+  # Ask to run test script
+  whiptail --yesno "Run /home/pi/sbtools/testMatrix.sh?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+  if [ $? -eq 0 ]; then # yes
+     /home/pi/sbtools/testMatrix.sh 
+     whiptail --yesno "Did you see yellow text saying '$VERSION' on your display?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+     if [ $? -eq 0 ]; then 
+        TESTMATRIXRUN=True
+	touch /home/pi/.nhlledportal/TESTED
+	if [ -f /home/pi/.nhlledportal/SETUP ]; then
+		rm /home/pi/.nhlledportal/SETUP
+	fi 
+     else
+        TESTMATRIXRUN=False
+     fi
+  else
+     TESTMATRIXRUN=False
+  fi
+  
+  if [ "$TESTMATRIXRUN" = False ]; then
+      whiptail --msgbox "Make sure your board can run the testMatrix.sh before doing anything else.   Once you've successfully run the testMatrix.sh and you get a display, you can enable the supervisor to launch the NHL LED Scoreboard" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  fi
 }
 
 do_enable_supervisor() {
-  whiptail --msgbox "Enable supervisor systemd service" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
-  output=`sudo systemctl enable supervisor` &&
-  whiptail --msgbox "$output"  $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+   if [ "$TESTMATRIXRUN" = True ]; then
+      whiptail --yesno "Enable supervisor systemd service.  This will reboot your pi after enabling service" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+      if [ $? -eq 0 ]; then # yes
+         sudo systemctl enable supervisor
+         sync
+         reboot
+      fi 
+   else 
+      whiptail --msgbox "testMatrix.sh has not been run successfully, please ensure your display works first" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+   fi
+  #whiptail --msgbox "$output"  $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 }
 
 do_sb_stdout(){
   whiptail --msgbox "Show last 128kb of scoreboard stdout log - use arrow keys to move log up/down" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
-  stdout_log=`supervisorctl tail -128000 scoreboard` &&
+  stdout_log=$(supervisorctl tail -128000 scoreboard) &&
   whiptail --msgbox --scrolltext "$stdout_log" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 }
 
 do_sb_stderr(){
   whiptail --msgbox "Show last 128kb of scoreboard stderr log - use arrow keys to move log up/down" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
-  stdout_log=`supervisorctl tail -128000 scoreboard stderr` &&
+  stderr_log=$(supervisorctl tail -128000 scoreboard stderr) &&
   whiptail --msgbox --scrolltext "$stderr_log" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 
 }
@@ -273,11 +313,13 @@ do_supervisor() {
 do_show_changelog() {
 
     #Get the last two versions committed
-    cd /home/pi/nhl-led-scoreboard
-    latest=`git tag --sort=-v:refname | head -1`
-    previous=`git tag --sort=-v:refname | head -2 | tail -1`
+    cd /home/pi/nhl-led-scoreboard || return
+    latest=$(git tag --sort=-v:refname | head -1)
+    previous=$(git tag --sort=-v:refname | head -2 | tail -1)
     git log --oneline --decorate $previous..$latest > /tmp/changelog.txt
-    
+   
+    #changes=$(/home/pi/sbtools/changelog.sh HEAD ${previous})
+    #whiptail --title "Changelog for V$latest - use arrow keys to scroll" --msgbox --scrolltext "$changes" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
     whiptail --title "Changelog for V$latest - use arrow keys to scroll" --msgbox --scrolltext "$(cat /tmp/changelog.txt)" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 
     rm /tmp/changelog.txt
@@ -350,9 +392,9 @@ do_trouble_menu() {
       3>&1 1>&2 2>&3)
   else
 	  FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Troubleshooting)" --menu "Troubleshooting" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "T1 Show live stdout log" "Watch tail of log.  CTRL-C to quit" \                     
-      "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \    
-      "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \    
+      "T1 Show live stdout log" "Watch tail of log.  CTRL-C to quit" \
+      "T2 Show stdout log" "Show last 128kb of stdout for scoreboard" \
+      "T3 Show stderr log" "Show last 128kb of sterr for scoreboard" \
       "T4 Collect for issue" "Post config.json and logs to pastebin for github issue" \
       3>&1 1>&2 2>&3)
   fi

@@ -1,0 +1,14 @@
+[Unit]
+Description=NHL LED Splash Startup Animation
+ConditionPathExists=/home/pi/sbtools/splash.sh
+ConditionPathExists=/home/pi/sbtools/splash.gif
+Before=basic.target
+After=local-fs.target sysinit.target
+DefaultDependencies=no
+
+[Service]
+Type=simple
+ExecStart=/home/pi/sbtools/splash.sh
+
+[Install]
+WantedBy=basic.target

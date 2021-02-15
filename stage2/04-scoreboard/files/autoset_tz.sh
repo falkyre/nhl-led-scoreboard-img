@@ -7,8 +7,8 @@ if [ "$zone" != "" ] && [ "$zone" != "$current_tz" ] ;then
     /usr/bin/timedatectl set-timezone $zone 
     #Check to see if the setTZ file exists and delete it 
     #This is for when run from the autostart service on boot
-    if [ -f "/home/pi/.nhlupdate/setTZ" ]; then
-       rm /home/pi/.nhlupdate/setTZ
+    if [ -f "/home/pi/.nhlledportal/setTZ" ]; then
+       rm /home/pi/.nhlledportal/setTZ
     fi
     echo "Timezone set to $zone for your location"
 else

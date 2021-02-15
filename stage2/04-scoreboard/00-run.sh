@@ -1,6 +1,6 @@
 #!/bin/bash -e
 install -v -d ${ROOTFS_DIR}/home/pi/sbtools
-install -v -d ${ROOTFS_DIR}/home/pi/.nhlupdate
+install -v -d ${ROOTFS_DIR}/home/pi/.nhlledportal
 install -v -d ${ROOTFS_DIR}/home/pi/.config/neofetch
 install -v -d ${ROOTFS_DIR}/etc/cron.scoreboard
 install -v -m 755 files/get_version ${ROOTFS_DIR}/etc/cron.scoreboard
@@ -24,6 +24,8 @@ install -v -m 755 files/aptfile ${ROOTFS_DIR}/usr/local/bin
 #Set up service file for autosetting timezone based on IP
 install -v -m 755 files/autoset_tz.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/sb_autosettz.service "${ROOTFS_DIR}/etc/systemd/system/"
+#Startup splash screen service
+install -v -m 644 files/sb_splash.service "${ROOTFS_DIR}/etc/systemd/system/"
 
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
@@ -68,16 +70,23 @@ echo "# scoreboard version" >> /etc/crontab
 echo "@reboot root run-parts /etc/cron.scoreboard/" >> /etc/crontab
 
 #Set up for automatic timezone setup based on IP address
-touch /home/pi/.nhlupdate/setTZ
+touch /home/pi/.nhlledportal/setTZ
 
 systemctl unmask sb_autosettz.service
 systemctl enable sb_autosettz.service
+
+#Make user run sb-tools on first login
+touch /home/pi/.nhlledportal/SETUP
+
+#Splash screen service.  Will only work after user sets up scoreboard.conf
+systemctl unmask sb_splash.service
+systemctl enable sb_splash.service
 
 #make the pi user the owner
 chown -R pi:pi .config
 chown pi:pi .bashrc
 chown pi:pi .gitconfig
-chown -R pi:pi .nhlupdate
+chown -R pi:pi .nhlledportal
 chown -R pi:pi sbtools
 
 

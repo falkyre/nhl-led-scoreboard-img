@@ -124,7 +124,7 @@ fi
 export NHL="/home/pi/nhl-led-scoreboard"
 
 #Check to see if there is an UPDATE and if there is, ask the user if they want to run it
-status=`cat /home/pi/.nhlupdate/status`
+status=$(cat /home/pi/.nhlledportal/status)
 if [[ $status == *"UPDATE"* ]]; then
     while true; do
         read -p "$(tput bold)$(tput setaf 2)$(tput smso)$status $(tput rmso) Upgrade? (y/n)" yn
@@ -136,3 +136,7 @@ if [[ $status == *"UPDATE"* ]]; then
      done
 fi
 
+# Add in first run to force running the sb-tools to setup the board config
+if [ -f /home/pi/.nhlledportal/SETUP ]; then
+	/home/pi/sbtools/sb-tools
+fi
