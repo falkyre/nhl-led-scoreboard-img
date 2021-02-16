@@ -21,18 +21,27 @@ export NEWT_COLORS
 
 INTERACTIVE=True
 ASK_TO_REBOOT=0
-#CONFIG=/boot/config.txt
-
-USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
 
 STATUS=$(cat /home/pi/.nhlledportal/status)
 VERSION=$(cat /home/pi/nhl-led-scoreboard/VERSION)
+
+if [ -f /home/pi/nhl-led-scoreboard/config/config.json ]; then
+        TEAMSET=True
+else
+	TEAMSET=False
+fi
 
 #Check to see if the user has initially tested the matrix with sample code
 if [ -f /home/pi/.nhlledportal/TESTED ]; then
    TESTMATRIXRUN=True
 else
    TESTMATRIXRUN=False
+fi
+
+if [ -f /home/pi/.nhlledportal/SETUP ]; then
+   FIRSTRUN=True
+else
+   FIRSTRUN=False
 fi
 
 is_pi () {
@@ -142,9 +151,18 @@ On Github: $STATUS \
 
 
 do_set_team() {
-  whiptail --msgbox "You will now be asked to select a preferred team to create the initial config.json" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  if [ "$FIRSTRUN" = True ]; then
+      whiptail --msgbox "You will now be asked to select a preferred team to create the initial config.json." $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  fi
+  echo "Loading $(tput setaf 1)nhl_setup$(tput sgr0) to select your inital team$(tput blink).........$(tput sgr0)"
   /home/pi/nhl-led-scoreboard/nhl_setup -s /home/pi/nhl-led-scoreboard/config &&
-  whiptail --msgbox "config.json successfully created in /home/pi/nhl-led-scoreboard/config" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  clear
+  if [ $? -ne 0 ]; then
+     TEAMSET=False 
+  else 
+     TEAMSET=True
+     whiptail --msgbox "config.json successfully created in /home/pi/nhl-led-scoreboard/config" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  fi
 }
 
 do_check_update() {
@@ -168,6 +186,34 @@ do_collect() {
   whiptail --msgbox "Collect logs and config.json for github issue" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
   output=$(/home/pi/sbtools/issueUpload.sh 2>/dev/null) &&
   whiptail --msgbox "$output" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+}
+
+do_test_matrix() {
+
+  # Ask to run test script
+  whiptail --yesno "Run /home/pi/sbtools/testMatrix.sh?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+  if [ $? -eq 0 ]; then # yes
+     /home/pi/sbtools/testMatrix.sh &&
+     whiptail --yesno "Did you see yellow text saying '$STATUS' on your display?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
+     if [ $? -eq 0 ]; then 
+        TESTMATRIXRUN=True
+        touch /home/pi/.nhlledportal/TESTED
+         if [ -f /home/pi/.nhlledportal/SETUP ]; then
+                rm /home/pi/.nhlledportal/SETUP
+        fi
+
+        # Create a splash.sh that loads on boot
+        echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
+        echo "/home/pi/nhl-led-scoreboard/submodules/matrix/utils/led-image-viewer $board_command -t10 /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
+        chmod +x /home/pi/sbtools/splash.sh
+
+     else
+        TESTMATRIXRUN=False
+     fi
+  else
+     TESTMATRIXRUN=False
+  fi
+
 }
 
 do_sup_conf() {
@@ -217,14 +263,12 @@ do_sup_conf() {
 
   #Create a testMatrix.sh in the /home/pi/sbtools directory that contains the command line
   echo "#!/bin/bash" > /home/pi/sbtools/testMatrix.sh
+  echo "echo 'Watch your display for $(tput setaf 3)$(cat /home/pi/.nhlledportal/status)$(tput sgr0) to be displayed'" >> /home/pi/sbtools/testMatrix.sh
+  echo "echo 'This will run for about 15 seconds and then exit itself'" >> /home/pi/sbtools/testMatrix.sh
   echo "cd /home/pi/nhl-led-scoreboard/submodules/matrix/bindings/python/samples" >> /home/pi/sbtools/testMatrix.sh
-  echo "sudo python3 runtext.py $board_command -t '$(cat /home/pi/.nhlledportal/status)'" >> /home/pi/sbtools/testMatrix.sh
+  echo "sudo python3 runtext.py $board_command -t '$(cat /home/pi/.nhlledportal/status)' >/dev/null 2>&1" >> /home/pi/sbtools/testMatrix.sh
+  echo "clear" >> /home/pi/sbtools/testMatrix.sh
   chmod +x /home/pi/sbtools/testMatrix.sh
-
-  # Create a splash.sh that loads on boot
-  echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
-  echo "/home/pi/nhl-led-scoreboard/submodules/matrix/utils/led-image-viewer $board_command -t10 /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
-  chmod +x /home/pi/sbtools/splash.sh
 
   #Update the installed scoreboard.conf file with the sup_command string
   #delete the line with command=
@@ -234,24 +278,8 @@ do_sup_conf() {
 
   whiptail --msgbox -- "Supervisor scoreboard.conf updated:\n\nnew command: $sup_command\n\nAn RGB matrix test script has been created in /home/pi/sbtools/testMatrix.sh"  $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
 
-  # Ask to run test script
-  whiptail --yesno "Run /home/pi/sbtools/testMatrix.sh?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
-  if [ $? -eq 0 ]; then # yes
-     /home/pi/sbtools/testMatrix.sh 
-     whiptail --yesno "Did you see yellow text saying '$VERSION' on your display?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
-     if [ $? -eq 0 ]; then 
-        TESTMATRIXRUN=True
-	touch /home/pi/.nhlledportal/TESTED
-	if [ -f /home/pi/.nhlledportal/SETUP ]; then
-		rm /home/pi/.nhlledportal/SETUP
-	fi 
-     else
-        TESTMATRIXRUN=False
-     fi
-  else
-     TESTMATRIXRUN=False
-  fi
-  
+  do_test_matrix
+
   if [ "$TESTMATRIXRUN" = False ]; then
       whiptail --msgbox "Make sure your board can run the testMatrix.sh before doing anything else.   Once you've successfully run the testMatrix.sh and you get a display, you can enable the supervisor to launch the NHL LED Scoreboard" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
   fi
@@ -293,20 +321,24 @@ do_live_tail(){
 
 
 do_supervisor() {
-  FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Supervisor)" --menu "Supervisor" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "SV1 scoreboard.conf" "Create scoreboard.conf and testMatrix.sh based on board" \
-    "SV2 Enable supervisor" "Enable supervisor service (only do this if your board runs properly, use testMatrix.sh created in SV1)" \
-    3>&1 1>&2 2>&3)
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    return 0
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      SV1\ *) do_sup_conf ;;
-      SV2\ *) do_enable_supervisor ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-  fi
+	if [ "$TEAMSET" = True ]; then
+           FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Supervisor)" --menu "Supervisor" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+          "SV1 scoreboard.conf" "Create scoreboard.conf and testMatrix.sh based on board" \
+          "SV2 Enable supervisor" "Enable supervisor service (only do this if your board runs properly, use testMatrix.sh created in SV1)" \
+          3>&1 1>&2 2>&3)
+          RET=$?
+          if [ $RET -eq 1 ]; then
+             return 0
+          elif [ $RET -eq 0 ]; then
+             case "$FUN" in
+               SV1\ *) do_sup_conf ;;
+               SV2\ *) do_enable_supervisor ;;
+               *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+              esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+          fi
+        else 
+              whiptail --msgbox "Preferred team not selected, select your team first to create a config.json" 20 60 1
+        fi
 
 }
 
@@ -342,10 +374,42 @@ do_finish() {
       reboot
     fi
   fi
+  if [ -f /home/pi/.nhlledportal/SETUP ]; then
+     whiptail --msgbox "scoreboard not setup completely yet, rerun sb-tools again" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+  fi
   exit 0
 }
 
 
+#Force the user to setup scoreboard.conf for supervisor, test the matrix and then reboot once complete
+do_firstrun() {
+   calc_wt_size
+   while true; do 
+      #do_scoreboard_menu
+      if [ "$TEAMSET" = False ]; then
+        do_set_team
+      fi 
+
+      if [ "$TEAMSET" = True ]; then
+	 do_sup_conf
+         if [ "$TESTMATRIXRUN" = True ]; then
+            do_enable_supervisor 
+	    #Should only get here if user did not enable supervisor
+	    exit 1
+         else
+             if (! whiptail --yesno "You need to make sure your matrix works first, try again?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then
+              exit 1
+             else
+	       do_test_matrix
+             fi
+         fi
+      else
+           if (! whiptail --yesno "You need to select a team, try again?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then	      
+              exit 1 
+           fi
+      fi
+   done
+}
 
 nonint() {
   "$@"
@@ -353,23 +417,18 @@ nonint() {
 
 
 
-do_system_menu() {
-  if is_pi ; then
-    FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Scoreboard Options)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "S1 Preferred Team" "Selected preferred team for simple config.json" \
-      "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
-      3>&1 1>&2 2>&3)
-  elif is_live ; then 
-    FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Scoreboard Options)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "S1 Preferred Team" "Selected preferred team for simple config.json" \
-      "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
-      3>&1 1>&2 2>&3)
-  else
-    FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Scoreboard Options)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "S1 Preferred Team" "Selected preferred team for simple config.json" \
-      "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
-      3>&1 1>&2 2>&3)
-  fi
+do_scoreboard_menu() {
+   if [ "$FIRSTRUN" = False ]; then
+       FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Scoreboard Options)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+       "S1 Preferred Team" "Select preferred team for simple config.json" \
+       "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
+       3>&1 1>&2 2>&3)
+   else
+       FUN=$(whiptail --title "NHL Led Scoreboard V$VERSION Tools (Scoreboard Options)" --menu "Scoreboard Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Exit --ok-button Select\
+       "S1 Preferred Team" "Select preferred team for simple config.json" \
+       "S2 Supervisor Config" "Set up supervisor to control scoreboard"\
+       3>&1 1>&2 2>&3)
+   fi 
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
@@ -441,6 +500,13 @@ do_updates_menu () {
 }
 
 
+#Check to see if called with an option on the command line
+case "$1" in
+        "") ;;                       
+        do_firstrun) "$@"; exit;;
+        *) echo "Unknown function: $1()"; exit 2;;
+esac
+
 
 #
 # Interactive use loop
@@ -470,7 +536,7 @@ if [ "$INTERACTIVE" = True ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        1\ *) do_system_menu ;;
+        1\ *) do_scoreboard_menu ;;
         2\ *) do_trouble_menu ;;
 	3\ *) do_updates_menu ;;
 	4\ *) do_resetwifi ;;
@@ -482,3 +548,4 @@ if [ "$INTERACTIVE" = True ]; then
     fi
   done
 fi
+

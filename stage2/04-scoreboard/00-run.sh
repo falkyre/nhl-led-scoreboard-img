@@ -9,6 +9,7 @@ install -v -m 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/changelog.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/sb-upgrade ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/pi_crontab.txt ${ROOTFS_DIR}/home/pi/sbtools
+install -v -m 644 files/runtext.py ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/.bashrc ${ROOTFS_DIR}/home/pi/
 install -v -m 644 files/.gitconfig ${ROOTFS_DIR}/home/pi/
 install -v -m 755 files/sb-tools ${ROOTFS_DIR}/home/pi/sbtools
@@ -26,6 +27,7 @@ install -v -m 755 files/autoset_tz.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 644 files/sb_autosettz.service "${ROOTFS_DIR}/etc/systemd/system/"
 #Startup splash screen service
 install -v -m 644 files/sb_splash.service "${ROOTFS_DIR}/etc/systemd/system/"
+install -v -m 755 files/splash.gif ${ROOTFS_DIR}/home/pi/sbtools
 
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
@@ -56,6 +58,9 @@ make build-python PYTHON=/usr/bin/python3
 make install-python PYTHON=/usr/bin/python3
 #cd bindings
 #pip3 install -e python/
+
+mv bindings/python/samples/runtext.py bindings/python/samples/runtext.py.ori
+mv /home/pi/sbtools/runtext.py bindings/python/samples/
 
 #Build the utilities so we can use the led-image-viewer for a splash screen
 cd utils
@@ -88,7 +93,5 @@ chown pi:pi .bashrc
 chown pi:pi .gitconfig
 chown -R pi:pi .nhlledportal
 chown -R pi:pi sbtools
-
-
 
 EOF

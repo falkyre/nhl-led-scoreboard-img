@@ -138,5 +138,6 @@ fi
 
 # Add in first run to force running the sb-tools to setup the board config
 if [ -f /home/pi/.nhlledportal/SETUP ]; then
-	/home/pi/sbtools/sb-tools
+	whiptail --msgbox "Welcome to the nhl-led-scoreboard initial setup. You will be asked to select a team and your board size for initial configuration.\n\nThis configuration will reboot after you do your setup.\n\nYou can do a more complex setup after by using the /home/pi/nhl-led-scoreboard/nhl_setup app after the reboot" 20 60 1
+	/home/pi/sbtools/sb-tools do_firstrun
 fi
