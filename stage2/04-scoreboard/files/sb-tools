@@ -204,7 +204,7 @@ do_test_matrix() {
 
         # Create a splash.sh that loads on boot
         echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
-        echo "/home/pi/nhl-led-scoreboard/submodules/matrix/utils/led-image-viewer $board_command -t10 /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
+        echo "/home/pi/nhl-led-scoreboard/submodules/matrix/utils/led-image-viewer $board_command -t15 /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
         chmod +x /home/pi/sbtools/splash.sh
 
      else
@@ -233,12 +233,12 @@ do_sup_conf() {
  
   board=$(whiptail --title "Create scoreboard.conf and testMatrix.sh script" --radiolist \
   "Choose matrix size and gpio mapping - use space bar to select option" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-  "1" "64x32 adafruit no pwm" ON \
-  "2" "64x32 adafruit pwm" OFF \
-  "3" "128x32 adafruit no pwm" OFF\
-  "4" "128x32 adafruit pwm" OFF \
-  "5" "128x64 adafruit no pwm" OFF \
-  "6" "128x64 adafruit pwm" OFF \
+  "1" "64x32 adafruit no flicker mod" ON \
+  "2" "64x32 adafruit flicker mod" OFF \
+  "3" "128x32 adafruit no flicker mod" OFF\
+  "4" "128x32 adafruit flicker mod" OFF \
+  "5" "128x64 adafruit no flicker mod" OFF \
+  "6" "128x64 adafruit flicker mod" OFF \
   3>&1 1>&2 2>&3)
 
   case "$board" in
@@ -289,7 +289,7 @@ do_enable_supervisor() {
    if [ "$TESTMATRIXRUN" = True ]; then
       whiptail --yesno "Enable supervisor systemd service.  This will reboot your pi after enabling service" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
       if [ $? -eq 0 ]; then # yes
-         sudo systemctl enable supervisor
+         sudo systemctl enable supervisord
          sync
          reboot
       fi 

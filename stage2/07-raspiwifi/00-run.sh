@@ -26,7 +26,7 @@ systemctl unmask sb_wap_app
 systemctl enable sb_wap_app
 
 #Speed up booting
-rm /etc/systemd/system/dhcpdcd.service.d/wait.conf
+rm /etc/systemd/system/dhcpcd.service.d/wait.conf
 echo "noarp" >> /etc/dhcpcd.conf
 echo "ipv4only" >> /etc/dhcpcd.conf
 echo "noipv6" >> /etc/dhcpcd.conf

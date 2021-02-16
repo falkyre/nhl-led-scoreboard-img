@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /home/pi/nhl-led-scoreboard
+
 /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
 
 chown pi:pi /home/pi/.nhlledportal/status
