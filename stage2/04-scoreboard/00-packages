@@ -1,8 +1,9 @@
-git python3-pip
+git 
+python3-pip
 python3-dev
 python3-setuptools
 build-essential
-python3-pillow
+python3-pil
 python3-numpy
 libatlas3-base
 libatlas-base-dev
@@ -13,6 +14,4 @@ pastebinit
 jq
 neovim
 zsh
-libgraphicsmagick++-dev
-libwebp-dev
 python3-cairosvg

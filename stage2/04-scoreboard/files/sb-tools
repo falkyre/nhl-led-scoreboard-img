@@ -204,7 +204,7 @@ do_test_matrix() {
 
         # Create a splash.sh that loads on boot
         echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
-        echo "/home/pi/nhl-led-scoreboard/submodules/matrix/utils/led-image-viewer $board_command -t15 /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
+        echo "/home/pi/sbtools/led-image-viewer $board_command -t20 /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
         chmod +x /home/pi/sbtools/splash.sh
 
      else

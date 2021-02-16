@@ -4,6 +4,7 @@ install -v -d ${ROOTFS_DIR}/home/pi/.nhlledportal
 install -v -d ${ROOTFS_DIR}/home/pi/.config/neofetch
 install -v -d ${ROOTFS_DIR}/etc/cron.scoreboard
 install -v -m 755 files/get_version ${ROOTFS_DIR}/etc/cron.scoreboard
+install -v -m 755 files/led-image-viewer ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/checkUpdate.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/issueUpload.sh ${ROOTFS_DIR}/home/pi/sbtools
 install -v -m 755 files/changelog.sh ${ROOTFS_DIR}/home/pi/sbtools
@@ -44,6 +45,9 @@ git clone https://github.com/riffnshred/nhl-led-scoreboard.git
 
 cd nhl-led-scoreboard
 
+#Force pillow install to be 7.1.2 until requirements.txt is updated
+pip3 install pillow==7.1.2
+
 #Install the python requirements from the requirements.txt file
 pip3 install -r requirements.txt 
 
@@ -63,8 +67,8 @@ mv bindings/python/samples/runtext.py bindings/python/samples/runtext.py.ori
 mv /home/pi/sbtools/runtext.py bindings/python/samples/
 
 #Build the utilities so we can use the led-image-viewer for a splash screen
-cd utils
-make 
+#cd utils
+#make 
 
 cd /home/pi
 chown -R pi:pi nhl-led-scoreboard
