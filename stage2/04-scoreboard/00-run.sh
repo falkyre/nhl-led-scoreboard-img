@@ -30,6 +30,11 @@ install -v -m 644 files/sb_autosettz.service "${ROOTFS_DIR}/etc/systemd/system/"
 install -v -m 644 files/sb_splash.service "${ROOTFS_DIR}/etc/systemd/system/"
 install -v -m 755 files/splash.gif ${ROOTFS_DIR}/home/pi/sbtools
 
+#What repo to clone
+REPO="https://github.com/falkyre/nhl-led-scoreboard.git"
+#Checkout beta after clone? 1=yes, 0 = no
+BETA=1
+
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
 apt-get -y remove bluez bluez-firmware pi-bluetooth triggerhappy
