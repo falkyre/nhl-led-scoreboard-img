@@ -14,9 +14,9 @@ on_chroot << EOF
 apt install dnsmasq hostapd -y
 
 #Install pip requirements for web app
-pip3 install pyyaml
+python3 -m pip install pyyaml
 #pip3 install flask pyopenssl
-pip3 install flask
+python3 -m pip install flask
 
 #Set up hostap for initial run
 # This is done with the sb_raspiwifi.service

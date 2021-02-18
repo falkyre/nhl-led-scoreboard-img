@@ -103,6 +103,7 @@ def reset_to_host_mode():
         os.system(
             'cp /usr/lib/raspiwifi/reset_device/static_files/dhcpcd.conf /etc/')
         os.system('systemctl enable dnsmasq')
+        os.system('systemctl enable hostapd')
         # TODO: Configure IPTABLES and DNSMASQ for hotspot mode
         os.system('touch /etc/raspiwifi/host_mode')
     os.system('reboot')

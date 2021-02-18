@@ -35,21 +35,25 @@ on_chroot << EOF
 apt-get -y remove bluez bluez-firmware pi-bluetooth triggerhappy
 
 
-pip3 install --upgrade pip
-pip3 install archey4
+python3 -m pip install --upgrade pip
+python3 -m pip install archey4
 
 #Clone scoreboard repo
 cd /home/pi
 rm -rf nhl-led-scoreboard
-git clone https://github.com/riffnshred/nhl-led-scoreboard.git
+#git clone https://github.com/riffnshred/nhl-led-scoreboard.git
+git clone ${REPO}
 
 cd nhl-led-scoreboard
+if [ "${BETA}" == "1" ]; then
+   git checkout beta
+fi
 
 #Force pillow install to be 7.1.2 until requirements.txt is updated
-pip3 install pillow==7.1.2
+python3 -m pip install pillow==7.1.2
 
 #Install the python requirements from the requirements.txt file
-pip3 install -r requirements.txt 
+python3 -m pip install -r requirements.txt 
 
 #Install rgb matrix
 # Pull submodule and ignore changes from script
@@ -69,6 +73,10 @@ mv /home/pi/sbtools/runtext.py bindings/python/samples/
 #Build the utilities so we can use the led-image-viewer for a splash screen
 #cd utils
 #make 
+
+#Install the python3-cairosvg
+python3 -m pip uninstall cairosvg -y
+apt-get -y install python3-cairosvg
 
 cd /home/pi
 chown -R pi:pi nhl-led-scoreboard

@@ -5,9 +5,13 @@ LOCALE_DEFAULT=en_US.UTF-8
 TARGET_HOSTNAME=scoreboard
 KEYBOARD_KEYMAP=us
 KEYBOARD_LAYOUT="English (US)"
-TIMEZONE_DEFAULT=America/Winnipeg
+TIMEZONE_DEFAULT=America/Toronto
 ENABLE_SSH=1
 FIRST_USER_NAME=pi
 FIRST_USER_PASS=scoreboard
 #set to 1 to use zram-config (for systems higher than a pi zero) or 0 to use log2ram for a pi zero
 LOG2ZRAM=1
+#What repo to clone 
+REPO="https://github.com/falkyre/nhl-led-scoreboard.git"
+#Checkout beta after clone? 1=yes, 0 = no
+BETA=1

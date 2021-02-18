@@ -10,7 +10,7 @@ install -v -m 644 files/supervisord.service                 "${ROOTFS_DIR}/etc/s
 
 on_chroot << EOF
 #Install supervisor
-pip3 install supervisor
+python3 -m pip install supervisor
 
 #Create systemd
 systemctl unmask supervisord

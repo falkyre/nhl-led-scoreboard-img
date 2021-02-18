@@ -128,6 +128,7 @@ def set_ap_client_mode():
     os.system('mv /etc/dnsmasq.conf.original /etc/dnsmasq.conf')
     os.system('mv /etc/dhcpcd.conf.original /etc/dhcpcd.conf')
     os.system('systemctl disable dnsmasq')
+    os.system('systemctl disable hostapd')
     # TODO: Configure IPTABLES and DNSMASQ for client mode
     os.system('reboot')
 

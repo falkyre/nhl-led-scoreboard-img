@@ -14,4 +14,5 @@ pastebinit
 jq
 neovim
 zsh
-python3-cairosvg
+libgraphicsmagick++-dev
+libwebp-dev 

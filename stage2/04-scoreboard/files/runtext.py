@@ -19,7 +19,7 @@ class RunText(SampleBase):
         my_text = self.args.text
         
         i = 0
-        while i < 200:
+        while i < 250:
             offscreen_canvas.Clear()
             len = graphics.DrawText(offscreen_canvas, font, pos, 10, textColor, my_text)
             pos -= 1

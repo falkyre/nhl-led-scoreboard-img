@@ -203,8 +203,10 @@ do_test_matrix() {
         fi
 
         # Create a splash.sh that loads on boot
+	# The t60 will run the animation for 60 seconds but it will be killed by the newest scoreboard code
+	# So no conflicts happen with the scoreboard
         echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
-        echo "/home/pi/sbtools/led-image-viewer $board_command -t20 /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
+        echo "/home/pi/sbtools/led-image-viewer $board_command -t60 -C /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh
         chmod +x /home/pi/sbtools/splash.sh
 
      else
@@ -290,8 +292,8 @@ do_enable_supervisor() {
       whiptail --yesno "Enable supervisor systemd service.  This will reboot your pi after enabling service" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
       if [ $? -eq 0 ]; then # yes
          sudo systemctl enable supervisord
-         sync
-         reboot
+         sudo sync
+         sudo reboot
       fi 
    else 
       whiptail --msgbox "testMatrix.sh has not been run successfully, please ensure your display works first" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
@@ -370,8 +372,8 @@ do_finish() {
   if [ $ASK_TO_REBOOT -eq 1 ]; then
     whiptail --yesno "Would you like to reboot now?" 20 60 2
     if [ $? -eq 0 ]; then # yes
-      sync
-      reboot
+      sudo sync
+      sudo reboot
     fi
   fi
   if [ -f /home/pi/.nhlledportal/SETUP ]; then
