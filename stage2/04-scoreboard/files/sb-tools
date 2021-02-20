@@ -203,7 +203,7 @@ do_test_matrix() {
         fi
 
         # Create a splash.sh that loads on boot
-	# The t60 will run the animation for 60 seconds but it will be killed by the newest scoreboard code
+	# The t60 will run the animation for 30 seconds but it will be killed by the newest scoreboard code
 	# So no conflicts happen with the scoreboard
         echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
         echo "/home/pi/sbtools/led-image-viewer $board_command -t60 -C /home/pi/sbtools/splash.gif" >> /home/pi/sbtools/splash.sh

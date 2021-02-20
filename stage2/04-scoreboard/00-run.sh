@@ -31,9 +31,12 @@ install -v -m 644 files/sb_splash.service "${ROOTFS_DIR}/etc/systemd/system/"
 install -v -m 755 files/splash.gif ${ROOTFS_DIR}/home/pi/sbtools
 
 #What repo to clone
-REPO="https://github.com/falkyre/nhl-led-scoreboard.git"
+REPO="https://github.com/riffnshred/nhl-led-scoreboard.git"
+#REPO="https://github.com/falkyre/nhl-led-scoreboard.git"
 #Checkout beta after clone? 1=yes, 0 = no
 BETA=1
+#What's the beta branch named if not beta?
+BRANCH="beta"
 
 on_chroot << EOF
 #Remove packages that might impact performance as per https://github.com/hzeller/rpi-rgb-led-matrix
@@ -46,12 +49,11 @@ python3 -m pip install archey4
 #Clone scoreboard repo
 cd /home/pi
 rm -rf nhl-led-scoreboard
-#git clone https://github.com/riffnshred/nhl-led-scoreboard.git
-git clone ${REPO}
+git clone --recursive ${REPO}
 
 cd nhl-led-scoreboard
 if [ "${BETA}" == "1" ]; then
-   git checkout beta
+   git checkout ${BRANCH}
 fi
 
 #Force pillow install to be 7.1.2 until requirements.txt is updated

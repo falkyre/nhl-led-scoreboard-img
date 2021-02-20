@@ -1,3 +1,22 @@
+#Set the colors
+
+NEWT_COLORS='
+    root=green,black
+    border=green,black
+    title=green,black
+    roottext=white,black
+    window=green,black
+    textbox=white,black
+    button=black,green
+    compactbutton=white,black
+    listbox=white,black
+    actlistbox=black,white
+    actsellistbox=black,green
+    checkbox=green,black
+    actcheckbox=black,green
+'
+export NEWT_COLORS
+
 # Aliases
 # - sudo alias that allows running other aliases with "sudo": https://github.com/MichaIng/DietPi/issues/424
 alias sudo='sudo '
