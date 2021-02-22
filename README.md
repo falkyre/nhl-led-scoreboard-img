@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://github.com/riffnshred/nhl-led-scoreboard">
-<img src="https://raw.githubusercontent.com/homebridge/branding/master/logos/homebridge-color-round-stylized.png" height="150">
+<img src="https://github.com/riffnshred/nhl-led-scoreboard/blob/master/assets/images/scoreboard.jpg" height="150">
 </a>
 </p>
 
