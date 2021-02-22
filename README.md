@@ -7,8 +7,7 @@
 <span align="center">
 
 # NHL LED Scoreboard Raspberry Pi Image
-
-[![Build](https://github.com/falkyre/nhl-led-portal-img/workflows/CI/badge.svg)](https://github.com/falkyre/nhl-led-portal-img/actions)
+[![.github/workflows/main.yml](https://github.com/falkyre/nhl-led-portal-img/actions/workflows/main.yml/badge.svg)](https://github.com/falkyre/nhl-led-portal-img/actions/workflows/main.yml)
 [![GitHub release (latest by date)](https://badgen.net/github/release/falkyre/nhl-led-portal-img?label=Version)](https://github.com/falkyre/nhl-led-portal-img/releases/latest)
 [![GitHub All Releases](https://img.shields.io/github/downloads/falkyre/nhl-led-portal-img/total)](https://somsubhra.com/github-release-stats/?username=homebridge&repository=homebridge-raspbian-image)
 
@@ -41,7 +40,7 @@ The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD 
 </p>
 
 1. Download and install the latest version of [Etcher](https://www.balena.io/etcher/).
-2. Open Etcher and select the `Homebridge-Raspbian-v0.0.0.zip` file you have [downloaded](https://github.com/homebridge/homebridge-raspbian-image/releases/latest). There is no need to extract the `.zip` file first.
+2. Open Etcher and select the `rpios-scoreboard-v0.0.0.zip` file you have [downloaded](https://github.com/falkyre/nhl-led-portal-img/releases/latest). There is no need to extract the `.zip` file first.
 3. Choose the drive your SD card has been inserted into.
 4. Click Flash.
 
@@ -56,7 +55,7 @@ Follow these steps to connect your device to WiFi:
 1. Power on your device without an Ethernet cable attached.
 2. Wait 1-2 minutes
 3. Use your mobile phone to scan for new WiFi networks
-4. Connect to the hotspot named **NHL Led Scoreboard #### Setup** where `####` is the last 4 digits of the serial number of your raspberry pi.
+4. Connect to the hotspot named **NHL Led Scoreboard #### Setup** where `####` is the last 4 digits of the serial number of your raspberry pi or `http://10.0.0.1`
 6. Wait a few moments until the captive portal opens, this portal will allow you to connect the Raspberry Pi to your local WiFi network.
 
 If you enter your WiFi credentials incorrectly the **NHL Led Scoreboard #### Setup** hotspot will reappear allowing you to try again.
@@ -66,11 +65,6 @@ If you enter your WiFi credentials incorrectly the **NHL Led Scoreboard #### Set
 3. Download the [Fing](https://www.fing.com/) app for [iOS](https://itunes.apple.com/us/app/fing-network-scanner/id430921107?mt=8) or [Android](https://play.google.com/store/apps/details?id=com.overlook.android.fing&hl=en_GB) to scan your network to find the IP address of your Raspberry Pi.
 4. As a last resort, if you plug a monitor into your Raspberry Pi, the IP address will be displayed on the attached screen once it has finished booting.
 
-Once you've found your IP address, login to the web interface by going to `http://<ip address of your server>` or `http://10.0.0.1`
-
-<p align="center">
-  <img width="600px" src="https://user-images.githubusercontent.com/3979615/71886653-b16d3f80-3190-11ea-9ff8-49dc4ae4fff0.png">
-</p>
 
 You should take a moment to review the [Configuration Reference](#configuration-reference) at the bottom of this guide.
 
@@ -79,11 +73,6 @@ You should take a moment to review the [Configuration Reference](#configuration-
 SSH is enabled by default. The default username is `pi` with password `scoreboard`.
 
 * [How To Connect Via SSH](https://github.com/homebridge/homebridge-raspbian-image/wiki/How-To-Connect-Via-SSH)
-
-## Security and Privacy
-
-* **Security:** The *Homebridge Raspbian Image* is kept up-to-date with the latest [official Raspbian builds](https://github.com/RPi-Distro/pi-gen). To find out more, or to report a security issue or vulnerability, please see the project's [SECURITY](.github/SECURITY.md) policy.
-* **Transparency:** The *Homebridge Raspbian Image* project is open source and each image is built using the public GitHub Action runners. The build logs for each release are publicly available on the project's [GitHub Actions](https://github.com/homebridge/homebridge-raspbian-image/actions) page and every release contains a SHA-256 checksum of the image you can use to verify the integrity of your download.
 
 ## Community
 
