@@ -28,8 +28,8 @@ jobs:
     - name: Calculate Checksum
       id: get_sha256_checksum
       run: |
-        export IMAGE_SHA256_CHECKSUM=$(shasum -a 256 deploy/image_rpios-scoreboard-lite.zip | awk '{print $1}')
-        echo "$IMAGE_SHA256_CHECKSUM deploy/image_rpios-scoreboard-lite.zip"
+        export IMAGE_SHA256_CHECKSUM=$(shasum -a 256 deploy/image_rpios-scoreboard.zip | awk '{print $1}')
+        echo "$IMAGE_SHA256_CHECKSUM deploy/image_rpios-scoreboard.zip"
         echo ::set-output name=IMAGE_SHA256_CHECKSUM::${IMAGE_SHA256_CHECKSUM}
     - name: Build Changelog
         id: github_release
@@ -73,6 +73,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: deploy/image_rpios-scoreboard-lite.zip
+        asset_path: deploy/image_rpios-scoreboard.zip
         asset_name: rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.zip
         asset_content_type: application/zip
