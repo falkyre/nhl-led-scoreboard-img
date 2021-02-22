@@ -32,10 +32,10 @@ jobs:
         echo "$IMAGE_SHA256_CHECKSUM deploy/image_rpios-scoreboard.zip"
         echo ::set-output name=IMAGE_SHA256_CHECKSUM::${IMAGE_SHA256_CHECKSUM}
     - name: Build Changelog
-        id: github_release
-        uses: mikepenz/release-changelog-builder-action@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      id: github_release
+      uses: mikepenz/release-changelog-builder-action@main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
