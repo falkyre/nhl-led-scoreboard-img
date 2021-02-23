@@ -1,22 +1,67 @@
-## v2.0.0-beta4
+# Changelog
 
-### Features
+## [v2.0.0-beta5](https://github.com/falkyre/nhl-led-portal-img/tree/v2.0.0-beta5) (2021-02-22)
 
- - [`8dd3371`](https://github.com/falkyre/nhl-led-portal-img/commits/8dd3371) [stage2/04-scoreboard] Add firstrun in .bashrc to force user to setup the scoreboard config and test their matrix.  This will also enable the supervisor and the statup splash animation
- - [`58c3d0d`](https://github.com/falkyre/nhl-led-portal-img/commits/58c3d0d) [stage2/04-scoreboard] Add sb_resetwifi bash alias and entry in sb_tools to reset the pi to a hot spot and reselect your wifi.  Created a service that will set the timezone automatically based on your IP address
+## [v2.0.0-beta4](https://github.com/falkyre/nhl-led-portal-img/tree/v2.0.0-beta4) (2021-02-20)
 
-### Bug fixes
+## [v2.0.0-beta3](https://github.com/falkyre/nhl-led-portal-img/tree/v2.0.0-beta3) (2021-02-11)
 
- - [`e09082e`](https://github.com/falkyre/nhl-led-portal-img/commits/e09082e) [stage2/04-scoreboard] Change .nhlupdate to .nhlledportal everywhere it's used.  Cleaned up issueUpload, checkUpdate scripts with shellcheck
- - [`0cd4705`](https://github.com/falkyre/nhl-led-portal-img/commits/0cd4705) [stage2/07-raspiwifi]  Disable the dnsmasq service after the hot spot sets up the wifi, renable on reset.  Tweak the dhcpcd.conf to only use ipv4 and remove the wait.conf so the boot doesn't wait for full network
- - [`3e3b5e5`](https://github.com/falkyre/nhl-led-portal-img/commits/3e3b5e5) [stage2/all]           Tweak for faster boots.  Remove connection_watcher.py when running normally, new splash.gif
+## [v2.0.0-beta2](https://github.com/falkyre/nhl-led-portal-img/tree/v2.0.0-beta2) (2021-02-05)
 
-### Other changes
+## [v2.0-beta](https://github.com/falkyre/nhl-led-portal-img/tree/v2.0-beta) (2021-01-27)
 
- - [`aff2b1a`](https://github.com/falkyre/nhl-led-portal-img/commits/aff2b1a)                        Fix(stage2/04-scoreboard) add variables at start of 00-run.sh to choose repo and if you want beta
- - [`9e8f44b`](https://github.com/falkyre/nhl-led-portal-img/commits/9e8f44b)                        Fix(stage2/04-scoreboard) clean up some typos, add in the led-image-viewer so no need to compile it on build
- - [`c13e27b`](https://github.com/falkyre/nhl-led-portal-img/commits/c13e27b)                        Fix(stage2/04-scoreboard) updated splash.gih, modifed the runtext.py to center the text on the panel and to run it longer before exit
- - [`024d926`](https://github.com/falkyre/nhl-led-portal-img/commits/024d926)                        Fix(stage2/various) Typo in 00-run.sh in 07-raspiwifi.  Missing python3-cairo apr install in 04-scoreboard packages.  Fix get_version and tweaked the time for the splash screen to run
- - [`3c576b8`](https://github.com/falkyre/nhl-led-portal-img/commits/3c576b8)                        Merge branch 'master' of github.com:falkyre/nhl-led-portal-img
- - [`488b8e5`](https://github.com/falkyre/nhl-led-portal-img/commits/488b8e5)                        Update .bashrc and resize partition to include the isolcpus=3 for cmdline.txt
+## [v2.0beta](https://github.com/falkyre/nhl-led-portal-img/tree/v2.0beta) (2021-01-27)
 
+## [2020-12-02-raspbian-buster](https://github.com/falkyre/nhl-led-portal-img/tree/2020-12-02-raspbian-buster) (2020-11-27)
+
+## [2020-08-20-raspbian-buster](https://github.com/falkyre/nhl-led-portal-img/tree/2020-08-20-raspbian-buster) (2020-06-22)
+
+## [2020-05-27-raspbian-buster](https://github.com/falkyre/nhl-led-portal-img/tree/2020-05-27-raspbian-buster) (2020-05-19)
+
+## [2020-02-13-raspbian-buster](https://github.com/falkyre/nhl-led-portal-img/tree/2020-02-13-raspbian-buster) (2020-02-13)
+
+## [2020-02-05-raspbian-buster](https://github.com/falkyre/nhl-led-portal-img/tree/2020-02-05-raspbian-buster) (2020-02-05)
+
+## [2019-09-26-raspbian-buster](https://github.com/falkyre/nhl-led-portal-img/tree/2019-09-26-raspbian-buster) (2019-09-25)
+
+## [2019-07-10-raspbian-buster](https://github.com/falkyre/nhl-led-portal-img/tree/2019-07-10-raspbian-buster) (2019-07-08)
+
+## [2019-06-20-raspbian-buster](https://github.com/falkyre/nhl-led-portal-img/tree/2019-06-20-raspbian-buster) (2019-06-17)
+
+## [2019-04-08-raspbian-stretch](https://github.com/falkyre/nhl-led-portal-img/tree/2019-04-08-raspbian-stretch) (2019-04-02)
+
+## [2018-11-13-raspbian-stretch](https://github.com/falkyre/nhl-led-portal-img/tree/2018-11-13-raspbian-stretch) (2018-11-14)
+
+## [2018-10-09-raspbian-stretch](https://github.com/falkyre/nhl-led-portal-img/tree/2018-10-09-raspbian-stretch) (2018-10-09)
+
+## [2018-06-27-raspbian-stretch](https://github.com/falkyre/nhl-led-portal-img/tree/2018-06-27-raspbian-stretch) (2018-06-19)
+
+## [2018-03-13-raspbian-stretch](https://github.com/falkyre/nhl-led-portal-img/tree/2018-03-13-raspbian-stretch) (2018-03-15)
+
+## [2017-11-29-raspbian-stretch](https://github.com/falkyre/nhl-led-portal-img/tree/2017-11-29-raspbian-stretch) (2017-11-24)
+
+## [2017-09-07-raspbian-stretch](https://github.com/falkyre/nhl-led-portal-img/tree/2017-09-07-raspbian-stretch) (2017-09-05)
+
+## [2017-08-16-raspbian-stretch](https://github.com/falkyre/nhl-led-portal-img/tree/2017-08-16-raspbian-stretch) (2017-08-14)
+
+## [2017-08-16-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2017-08-16-raspbian-jessie) (2017-08-14)
+
+## [2017-07-05-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2017-07-05-raspbian-jessie) (2017-07-05)
+
+## [2017-06-21-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2017-06-21-raspbian-jessie) (2017-06-21)
+
+## [2017-04-10-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2017-04-10-raspbian-jessie) (2017-04-05)
+
+## [2017-03-02-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2017-03-02-raspbian-jessie) (2017-03-06)
+
+## [2016-11-25-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2016-11-25-raspbian-jessie) (2016-11-29)
+
+## [2016-09-23-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2016-09-23-raspbian-jessie) (2016-09-20)
+
+## [2016-05-27-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2016-05-27-raspbian-jessie) (2016-05-27)
+
+## [2016-05-10-raspbian-jessie](https://github.com/falkyre/nhl-led-portal-img/tree/2016-05-10-raspbian-jessie) (2016-05-09)
+
+
+
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*
