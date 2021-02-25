@@ -31,45 +31,14 @@ jobs:
         export IMAGE_SHA256_CHECKSUM=$(shasum -a 256 deploy/image_rpios-scoreboard.zip | awk '{print $1}')
         echo "$IMAGE_SHA256_CHECKSUM deploy/image_rpios-scoreboard.zip"
         echo ::set-output name=IMAGE_SHA256_CHECKSUM::${IMAGE_SHA256_CHECKSUM}
-    - name: Build Changelog
-      id: github_release
-      uses: mikepenz/release-changelog-builder-action@main
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-         toTag: "${{ steps.get_version.outputs.VERSION }}"
-         commitMode: true
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
-        body: |
-          Click the link below to start your download:
+    - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          #files: |
+          #  deploy/image_rpios-scoreboard.zip
 
-          <span align="center">
-
-          ### [rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.zip](https://github.com/falkyre/nhl-led-portal-img/releases/download/${{ steps.get_version.outputs.VERSION }}/rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.zip)
-
-          <sup>[Getting Started Guide](https://github.com/falkyre/nhl-led-portal-img/README.md</sup>
-
-          </span>
-
-          ---
-
-          * **SHA-256:** ${{ steps.get_sha256_checksum.outputs.IMAGE_SHA256_CHECKSUM }}
-          * **Base Image:**
-          * **Kernel version:**
-          * **NHL LED Scoreboard Version:**
-          
-          ---
-          ${{steps.github_release.outputs.changelog}}
-        draft: false
-        prerelease: true
-    - name: Upload Image
+- name: Upload Image
       id: upload-release-asset 
       uses: actions/upload-release-asset@v1
       env:

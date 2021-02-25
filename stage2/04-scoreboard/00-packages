@@ -16,3 +16,4 @@ neovim
 zsh
 libgraphicsmagick++-dev
 libwebp-dev 
+dnsutils

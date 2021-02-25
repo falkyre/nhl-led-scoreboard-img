@@ -9,7 +9,7 @@
 # NHL LED Scoreboard Raspberry Pi Image
 [![.github/workflows/main.yml](https://github.com/falkyre/nhl-led-portal-img/actions/workflows/main.yml/badge.svg)](https://github.com/falkyre/nhl-led-portal-img/actions/workflows/main.yml)
 [![GitHub release (latest by date)](https://badgen.net/github/release/falkyre/nhl-led-portal-img?label=Version)](https://github.com/falkyre/nhl-led-portal-img/releases/latest)
-[![GitHub All Releases](https://img.shields.io/github/downloads/falkyre/nhl-led-portal-img/total)](https://somsubhra.com/github-release-stats/?username=homebridge&repository=homebridge-raspbian-image)
+
 
 </span>
 
@@ -17,9 +17,9 @@ This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/ra
 
 * Works on all Raspberry Pi models
 * Built on Raspbian Lite (no desktop)
-* Simple WiFi Setup
+* Simple WiFi Setup 
 
-This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  
+This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list
 
 ## Download
 
@@ -48,6 +48,19 @@ The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD 
 
 Now that you have flashed your SD card, you can insert it into your Raspberry Pi.
 
+## Default Settings
+
+|                               |                 |
+|-------------------------------|------------------------------------------|
+| **Default Hostname**          | `scoreboard-####.local`                       |
+| **Default SSH Username**      | `pi`                                     |
+| **Default SSH Password**      | `scoreboard`                              |
+| **Hot Spot Wifi SSID**        | `NHL LED Scoreboard ####`                 |
+| **Hot Spot Wifi Password**    | `12345678` |
+
+`####` will be set to the last 4 characters of the serial number of your raspberry pi.
+
+
 ### WiFi Setup
 
 Follow these steps to connect your device to WiFi:
@@ -67,8 +80,6 @@ After you set your WiFi connection, the raspberry pi will reboot and connect to 
 3. Try to `ping scoreboard-####.local` where `####` comes from point 4 in the wifi hot spot above.  The ping will show the IP address of your pi.
 4. As a last resort, if you plug a monitor into your Raspberry Pi, the IP address will be displayed on the attached screen once it has finished booting.
 
-
-You should take a moment to review the [Configuration Reference](#configuration-reference) at the bottom of this guide.
 
 ## SSH Access
 
@@ -119,12 +130,5 @@ This table contains important information about the command line tools you can u
 | **Start Command**             | `sb-start`                  |
 
 
-## Defaults
-|                               |                 |
-|-------------------------------|------------------------------------------|
-| **Default Hostname**          | `scoreboard-####.local`                       |
-| **Default SSH Username**      | `pi`                                     |
-| **Default SSH Password**      | `scoreboard`                              |
-| **Hot Spot Wifi SSID**        | `NHL LED Scoreboard ####`                 |
-| **Hot Spot Wifi Password**    | `12345678` |
 
+## Raspberty Pi OS Settings
