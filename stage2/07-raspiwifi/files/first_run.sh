@@ -12,7 +12,7 @@ if ! grep -q "network=" "$File"; then
    sed -i "/NHL LED Scoreboard/ s/$/ $last4serial/" /etc/hostapd/hostapd.conf
    #update the hostname of the raspberry pi
    sed -i "/scoreboard/s/$/-$last4serial/" /etc/hostname
-   ed -i "/scoreboard/s/$/-$last4serial/" /etc/hosts
+   sed -i "/scoreboard/s/$/-$last4serial/" /etc/hosts
    mv /etc/dhcpcd.conf /etc/dhcpcd.conf.original
    cp /usr/lib/raspiwifi/reset_device/static_files/dhcpcd.conf /etc/
    #cp -f /usr/lib/raspiwifi/reset_device/static_files/aphost_bootstrapper /etc/cron.raspiwifi
