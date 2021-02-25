@@ -53,16 +53,18 @@ Now that you have flashed your SD card, you can insert it into your Raspberry Pi
 Follow these steps to connect your device to WiFi:
 
 1. Power on your device without an Ethernet cable attached.
-2. Wait 1-2 minutes
+2. Wait 1-2 minutes (if first boot, the SD card will need to be expanded so this may take longer)
 3. Use your mobile phone to scan for new WiFi networks
-4. Connect to the hotspot named **NHL Led Scoreboard #### Setup** where `####` is the last 4 digits of the serial number of your raspberry pi or `http://10.0.0.1`
+4. Connect to the hotspot named **NHL Led Scoreboard ####** where `####` is the last 4 digits of the serial number of your raspberry pi (take note of these 4 digits as your new hostname will contain them) or `http://10.0.0.1`  The wifi password is `12345678` for the hot spot.
 6. Wait a few moments until the captive portal opens, this portal will allow you to connect the Raspberry Pi to your local WiFi network.
 
-If you enter your WiFi credentials incorrectly the **NHL Led Scoreboard #### Setup** hotspot will reappear allowing you to try again.
+If you enter your WiFi credentials incorrectly the **NHL Led Scoreboard ####** hotspot will reappear allowing you to try again.
+
+After you set your WiFi connection, the raspberry pi will reboot and connect to your router.  To find your raspberry pi, the following can be attempted: 
 
 1. Login to your router and find the "connected devices" or "dhcp clients" page to find the IP address that was assigned to the Raspberry Pi.
-2. Use an iPhone to access `http://homebridge.local`, once you login using the default username and password (admin/admin) you can find the IP address under System Information.
-3. Download the [Fing](https://www.fing.com/) app for [iOS](https://itunes.apple.com/us/app/fing-network-scanner/id430921107?mt=8) or [Android](https://play.google.com/store/apps/details?id=com.overlook.android.fing&hl=en_GB) to scan your network to find the IP address of your Raspberry Pi.
+2. Download the [Fing](https://www.fing.com/) app for [iOS](https://itunes.apple.com/us/app/fing-network-scanner/id430921107?mt=8) or [Android](https://play.google.com/store/apps/details?id=com.overlook.android.fing&hl=en_GB) to scan your network to find the IP address of your Raspberry Pi.
+3. Try to `ping scoreboard-####.local` where `####` comes from point 4 in the wifi hot spot above.  The ping will show the IP address of your pi.
 4. As a last resort, if you plug a monitor into your Raspberry Pi, the IP address will be displayed on the attached screen once it has finished booting.
 
 
@@ -72,39 +74,57 @@ You should take a moment to review the [Configuration Reference](#configuration-
 
 SSH is enabled by default. The default username is `pi` with password `scoreboard`.
 
-* [How To Connect Via SSH](https://github.com/homebridge/homebridge-raspbian-image/wiki/How-To-Connect-Via-SSH)
 
 ## Community
 
-The official Homebridge Discord server and Reddit community are where users can discuss Homebridge and ask for help.
+The official NHL LED Scoreboard Discord server where users can discuss NHL LED Scoreboard and ask for help.
 
 <span align="center">
 
-[![Homebridge Discord](https://discordapp.com/api/guilds/432663330281226270/widget.png?style=banner2)](https://discord.gg/kqNCe2D) [![Homebridge Reddit](.github/homebridge-reddit.svg?sanitize=true)](https://www.reddit.com/r/homebridge/)
+[![NHL LED Scoreboard Discord](https://discordapp.com/api/guilds/648168455450656798/widget.png?style=banner2)](https://discord.gg/CWa5CzK) 
 
 </span>
 
-## Configuration Reference
+## NHL Led Scoreboard command line utilities
 
-This table contains important information about your setup. You can use the information provided here as a reference when configuring or troubleshooting your environment.
+This table contains important information about the command line tools you can use. 
 
-|                               | File Location / Command                  |
+|    General Tools                           | Command                  |
 |-------------------------------|------------------------------------------|
-| **Config File Path**          | `/var/lib/homebridge/config.json`        |
-| **Storage Path**              | `/var/lib/homebridge`                    |
-| **Restart Command**           | `sudo hb-service restart`                |
-| **Stop Command**              | `sudo hb-service stop`                   |
-| **Start Command**             | `sudo hb-service start`                  |
-| **View Logs Command**         | `sudo hb-service logs`                   |
-| **Manage Homebridge Server**  | `sudo hb-config`                         |
-| **Systemd Service File**      | `/etc/systemd/system/homebridge.service` |
-| **Systemd Env File**          | `/etc/default/homebridge`                |
-| **Default Hostname**          | `homebridge.local`                       |
+| **Help Command**           | `sb-help`                |
+| **Manage NHL LED Scoreboard**  | `sb-tools`                         |
+| **system info Command**           | `sb-sysinfo`                |
+| **Reset Wifi to Hot Spot**           | `sb-resetwifi`                |
+
+
+
+|    Troubleshooting Tools                           | Command                  |
+|-------------------------------|------------------------------------------|
+| **View Live Logs Command**         | `sb-livelog`                    |
+| **View output, last 50kb**         | `sb-stdout`                    |
+| **View errors, last 50kb**         | `sb-stderr`                    |
+| **Collect files for github issue**         | `sb-issue`                    |
+
+|    Update Tools                           | Command                  |
+|-------------------------------|------------------------------------------|
+| **Check for Update**         | `sb-updatecheck`                    |
+| **Show changelog for latest version**         | `sb-changelog`                    |
+| **Upgrade to latest version**         | `sb-upgrade`                    |
+
+|    Supervisor/Process Tools                           | Command                  |
+|-------------------------------|------------------------------------------|
+| **Status Command**           | `sb-status`                |
+| **Restart Command**           | `sb-restart`                |
+| **Stop Command**              | `sb-stop`                   |
+| **Start Command**             | `sb-start`                  |
+
+
+## Defaults
+|                               |                 |
+|-------------------------------|------------------------------------------|
+| **Default Hostname**          | `scoreboard-####.local`                       |
 | **Default SSH Username**      | `pi`                                     |
-| **Default SSH Password**      | `raspberry`                              |
-| **Default Web Username**      | `admin`                                  |
-| **Default Web Password**      | `admin`                                  |
+| **Default SSH Password**      | `scoreboard`                              |
+| **Hot Spot Wifi SSID**        | `NHL LED Scoreboard ####`                 |
+| **Hot Spot Wifi Password**    | `12345678` |
 
-The *Homebridge Raspberry Pi Image* wiki contains more information and instructions on how to further customise your install:
-
-https://github.com/homebridge/homebridge-raspbian-image/wiki
