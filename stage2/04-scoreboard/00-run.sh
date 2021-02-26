@@ -34,7 +34,7 @@ install -v -m 755 files/splash.gif ${ROOTFS_DIR}/home/pi/sbtools
 REPO="https://github.com/riffnshred/nhl-led-scoreboard.git"
 #REPO="https://github.com/falkyre/nhl-led-scoreboard.git"
 #Checkout beta after clone? 1=yes, 0 = no
-BETA=1
+BETA=0
 #What's the beta branch named if not beta?
 BRANCH="beta"
 
