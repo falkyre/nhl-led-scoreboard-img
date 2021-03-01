@@ -82,12 +82,12 @@ After you set your WiFi connection, the raspberry pi will reboot and connect to 
 2. Download the [Fing](https://www.fing.com/) app for [iOS](https://itunes.apple.com/us/app/fing-network-scanner/id430921107?mt=8) or [Android](https://play.google.com/store/apps/details?id=com.overlook.android.fing&hl=en_GB) to scan your network to find the IP address of your Raspberry Pi.
 3. Try to `ping scoreboard-####.local` where `####` comes from point 4 in the wifi hot spot above.  The ping will show the IP address of your pi.
 
-See the wiki [How to Find IP Address](https://github.com/nhl-led-scoreboard-img/wiki/How-To-Find-IP-Address)
+See the wiki [How to Find IP Address](https://github.com/falkyre/nhl-led-scoreboard-img/wiki/How-To-Find-IP-Address)
 
 ## SSH Access
 
 SSH is enabled by default. The default username is `pi` with password `scoreboard`.
-See the wiki [Connect with SSH](https://github.com/nhl-led-scoreboard-img/wiki/Connect-with-SSH) for more information and links.
+See the wiki [Connect with SSH](https://github.com/falkyre/nhl-led-scoreboard-img/wiki/Connect-with-SSH) for more information and links.
 
 
 ## Community
