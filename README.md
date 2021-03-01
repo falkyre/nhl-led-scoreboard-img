@@ -13,7 +13,7 @@
 
 </span>
 
-This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) pre-installed.
+This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) pre-installed.  This is built with the same process that the official Raspberry Pi OS images are built [RPi-Distro](https://github.com/RPi-Distro/raspi-config)
 
 * Works on all Raspberry Pi models
 * Built on Raspbian Lite (no desktop)
@@ -89,6 +89,10 @@ See the wiki [How to Find IP Address](https://github.com/falkyre/nhl-led-scorebo
 SSH is enabled by default. The default username is `pi` with password `scoreboard`.
 See the wiki [Connect with SSH](https://github.com/falkyre/nhl-led-scoreboard-img/wiki/Connect-with-SSH) for more information and links.
 
+## First login
+You will need to SSH to your Raspberry Pi to finalize some settings for getting the NHL LED Scoreboard to work.  On first login, you will be prompted to select a single team (to create a basic config.json), the size of your board and if you have the antiflicker mod for the adafruit boards, then it will run a test script that will display the latest version of the NHL LED Scoreboard software.  If that passes, you will be asked to enable the supervisor and then the raspberry pi will reboot.
+
+On reboot, if everything is working you will see a splash screen, then a loading image and the NHL LED Scoreboard will run wth the basic config.json created on the first initial log in.  If you want to change the config.json, either edit the file by hand or use the /home/pi/nhl-led-scoreboard/nhl_setup tool.
 
 ## Community
 
