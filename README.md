@@ -7,8 +7,8 @@
 <span align="center">
 
 # NHL LED Scoreboard Raspberry Pi Image
-[![.github/workflows/main.yml](https://github.com/falkyre/nhl-led-portal-img/actions/workflows/main.yml/badge.svg)](https://github.com/falkyre/nhl-led-portal-img/actions/workflows/main.yml)
-[![GitHub release (latest by date)](https://badgen.net/github/release/falkyre/nhl-led-portal-img?label=Version)](https://github.com/falkyre/nhl-led-portal-img/releases/latest)
+[![.github/workflows/main.yml](https://github.com/falkyre/nhl-led-scoreboard-img/actions/workflows/main.yml/badge.svg)](https://github.com/falkyre/nhl-led-scoreboard-img/actions/workflows/main.yml)
+[![GitHub release (latest by date)](https://badgen.net/github/release/falkyre/nhl-led-scoreboard-img?label=Version)](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest)
 
 
 </span>
@@ -27,7 +27,7 @@ Downloading the *NHL LED Scoreboard Raspberry Pi Image* is completely free (no s
 
 <span align="center">
   
-### [Download Latest Version](https://github.com/falkyre/nhl-led-portal-img/releases/latest)
+### [Download Latest Version](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest)
   
 </span>
 
@@ -40,11 +40,9 @@ The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD 
 </p>
 
 1. Download and install the latest version of [Etcher](https://www.balena.io/etcher/).
-2. Open Etcher and select the `rpios-scoreboard-v0.0.0.zip` file you have [downloaded](https://github.com/falkyre/nhl-led-portal-img/releases/latest). There is no need to extract the `.zip` file first.
+2. Open Etcher and select the `rpios-scoreboard-v0.0.0.zip` file you have [downloaded](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest). There is no need to extract the `.zip` file first.
 3. Choose the drive your SD card has been inserted into.
 4. Click Flash.
-
-## First Boot / Network Setup
 
 ## First Boot / Network Setup
 
@@ -84,12 +82,12 @@ After you set your WiFi connection, the raspberry pi will reboot and connect to 
 2. Download the [Fing](https://www.fing.com/) app for [iOS](https://itunes.apple.com/us/app/fing-network-scanner/id430921107?mt=8) or [Android](https://play.google.com/store/apps/details?id=com.overlook.android.fing&hl=en_GB) to scan your network to find the IP address of your Raspberry Pi.
 3. Try to `ping scoreboard-####.local` where `####` comes from point 4 in the wifi hot spot above.  The ping will show the IP address of your pi.
 
-See the wiki [How to Find IP Address](https://github.com/nhl-led-portal/image/wiki/How-To-Find-IP-Address)
+See the wiki [How to Find IP Address](https://github.com/nhl-led-scoreboard-img/wiki/How-To-Find-IP-Address)
 
 ## SSH Access
 
 SSH is enabled by default. The default username is `pi` with password `scoreboard`.
-See the wiki [Connect with SSH](https://github.com/nhl-led-portal/image/wiki/Connect-with-SSH) for more information and links.
+See the wiki [Connect with SSH](https://github.com/nhl-led-scoreboard-img/wiki/Connect-with-SSH) for more information and links.
 
 
 ## Community
