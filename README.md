@@ -44,9 +44,9 @@ The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD 
 3. Choose the drive your SD card has been inserted into.
 4. Click Flash.
 
-## First Boot / Network Setup
+## First Boot 
 
-Now that you have flashed your SD card, you can insert it into your Raspberry Pi.  Your Raspberry Pi will expand the size of your SD card to utilize it fully.  This can take some time depending on the size and health of your card.
+Now that you have flashed your SD card, you can insert it into your Raspberry Pi.  Your Raspberry Pi will expand the size of your SD card to utilize it fully.  This can take some time depending on the size and health of your card.  Once the Raspberry Pi has expanded the filesystem, it will launch a Captive Portal that you can log into to set your WiFi.  On an iPhone, this should open safari automatically.  On Android 10 and 11, it shows up as manage your router in the WiFi details in the settings.
 
 
 ## Default Settings
@@ -140,10 +140,10 @@ This table contains important information about the command line tools you can u
 
 This raspberry pi image is built on top of the latest Raspberry Pi OS lite.  Added to this version is the following:
 
-* Auto set timezone based on geolocation of your IP address. 
+* Auto set timezone based on geolocation of your IP address. Initial time zone is America/Toronto because we all know that's the center of the universe.
 * There is a login banner that shows various system info for your raspberry pi (including timezone).  It can manually be run by using the `sb-sysinfo`
 * /var/log, swap and /home/pi are all set to exist in zram.  /var/log and /homepi will get written back to the SD card on boot or under a filesystem sync.  Settings for the sizes are in /etc/ztab
 * The size for zram of the /home/pi directory is currently set to 350M compressed.  There is room for another repository to be installed if you wish.  If you don't want the /home/pi to be run from zram, then edit the /etc/ztab as root user and comment out the line with /home/pi.
 * raspi-config is still available with all options as a normal raspberry pi.  So if your time zone is not set correctly or you don't like your hostname, you can still use raspi-config for changes
 * Locale is set to en_US.UTF_8 which is needed for the weather icons to work correctly.
-* Inital timezone is America/Toronto
+
