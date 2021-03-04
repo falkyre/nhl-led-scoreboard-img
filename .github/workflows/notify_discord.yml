@@ -5,11 +5,11 @@ name: Notify - Discord
 # Controls when the action will run. 
 on:
    workflow_dispatch:
-   inputs:
-      detail:
-        description: 'Extra Notes'
-        required: false
-        default: 'Excelsior!'
+     inputs:
+       detail:
+         description: 'Extra Notes'
+         required: false
+         default: 'Excelsior!'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
