@@ -6,6 +6,10 @@ name: Notify - Discord
 on:
    workflow_dispatch:
      inputs:
+       version:
+         description: 'Version Release'
+         required: true
+         default: 'v1.6.0'
        detail:
          description: 'Extra Notes'
          required: false
@@ -20,19 +24,13 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - uses: actions/checkout@v2
-    - name: Get the version (git tag)
-      id: get_version
-      run: |
-        echo ${GITHUB_REF/refs\/tags\//}
-        echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
     - uses: sarisia/actions-status-discord@v1
       with:
         webhook: ${{ secrets.DISCORD_WEBHOOK }}
         nodetail: true
         title: New version of `NHL LED Scoreboard image` is ready!
         description: |
-          Version `${{ steps.get_version.outputs.VERSION }}`
+          Version `${{ github.event.inputs.version }}`
           Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
           ----
           Extra Notes: 
