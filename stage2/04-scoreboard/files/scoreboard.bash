@@ -48,7 +48,7 @@ if [ $USER != "root" ]; then
    neofetch --off
    #Check to see if there is an UPDATE and if there is, ask the user if they want to run it
    status=$(cat /home/pi/.nhlledportal/status)
-   if [[ $status == *"UPDATE"* ]]; then
+   if [[ $status == *"New"* ]]; then
     while true; do
         read -p "$(tput bold)$(tput setaf 2)$(tput smso)$status $(tput rmso) Upgrade? (y/n)" yn
         case $yn in
