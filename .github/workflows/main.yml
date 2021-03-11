@@ -42,22 +42,22 @@ jobs:
         files: |
           rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.zip
 
-    - uses: sarisia/actions-status-discord@v1
-      with:
-        webhook: ${{ secrets.DISCORD_WEBHOOK }}
-        nodetail: true
-        title: New version of `NHL LED Scoreboard image` is ready!
-        description: |
-          Version `${{ steps.get_version.outputs.VERSION }}`
-          Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
-    - uses: sarisia/actions-status-discord@v1
-      with:
-        webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
-        nodetail: true
-        title: New version of `NHL LED Scoreboard image` is ready!
-        description: |
-          Version `${{ steps.get_version.outputs.VERSION }}`
-          Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
+    #- uses: sarisia/actions-status-discord@v1
+    #  with:
+    #    webhook: ${{ secrets.DISCORD_WEBHOOK }}
+    #    nodetail: true
+    #    title: New version of `NHL LED Scoreboard image` is ready!
+    #    description: |
+    #      Version `${{ steps.get_version.outputs.VERSION }}`
+    #      Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
+    #- uses: sarisia/actions-status-discord@v1
+    #  with:
+    #    webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
+    #    nodetail: true
+    #    title: New version of `NHL LED Scoreboard image` is ready!
+    #    description: |
+    #      Version `${{ steps.get_version.outputs.VERSION }}`
+    #      Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
     # - name: Upload Image
     #   id: upload-release-asset 
     #   uses: actions/upload-release-asset@v1
