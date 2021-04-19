@@ -18,7 +18,7 @@ This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/ra
 
 * Works on all Raspberry Pi models
 * Built on Raspbian Lite (no desktop)
-* Simple WiFi Setup 
+* Simple WiFi Setup (Ethernet setup not tested and should only be done by advanced users)
 
 This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list
 
