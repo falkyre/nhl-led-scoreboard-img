@@ -57,7 +57,7 @@ if [ "${BETA}" == "1" ]; then
 fi
 
 #Force pillow install to be 7.1.2 until requirements.txt is updated
-python3 -m pip install pillow==7.1.2
+#python3 -m pip install pillow==7.1.2
 
 #Install the python requirements from the requirements.txt file
 python3 -m pip install -r requirements.txt 
