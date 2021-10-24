@@ -114,6 +114,10 @@ if git pull --rebase --stat origin master; then
   # comment the line below if running from the repo
   /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
   printf "${BLUE}%s${RESET}\n" "$message"
+  
+  # Force reboot to sync update to SD card
+  whiptail --title "Sync Update to SD Card" --msgbox "Pressing OK will reboot your pi and sync the update to the SD card" 8 78
+  sudo reboot
 else
   ret=$?
   printf "${RED}%s${RESET}\n" 'There was an error updating. Try again later?'
