@@ -115,6 +115,7 @@ if git pull --rebase --stat origin master; then
   /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
   printf "${BLUE}%s${RESET}\n" "$message"
   
+  sudo zram-config stop
   # Force reboot to sync update to SD card
   whiptail --title "Sync Update to SD Card" --msgbox "Pressing OK will reboot your pi and sync the update to the SD card" 20 60 2
   sudo reboot
