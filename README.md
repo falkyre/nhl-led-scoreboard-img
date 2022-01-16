@@ -32,6 +32,11 @@ Downloading the *NHL LED Scoreboard Raspberry Pi Image* is completely free (no s
   
 </span>
 
+If you'd like to support me:
+
+<a href="https://www.buymeacoffee.com/falkyre" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/arial-red.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+
 ## Flash to SD Card
 
 The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD card is to use [Etcher](https://www.balena.io/etcher/).
