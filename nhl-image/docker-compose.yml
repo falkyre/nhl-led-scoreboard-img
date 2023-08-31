@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  packer:
+    image: packer-builder-arm-ansible:vlatest
+    build: .
+    privileged: true
+    volumes:
+      - /dev:/dev
+      - .:/build
+    command:
+      - build
+      - raspios.pkr.hcl 

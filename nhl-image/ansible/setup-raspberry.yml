@@ -1,0 +1,334 @@
+-
+  name: Setup RPi - Scoreboard setup
+  hosts: all
+  become: true
+  become_user: pi
+  vars:
+    gh_repo: "https://github.com/riffnshred/nhl-led-scoreboard.git"
+    use_beta: false
+    gh_branch: "beta"
+
+  # roles:
+  #   - { role: chzerv.log2ram, become_user: root}
+  roles:
+    - { role: geerlingguy.pip, become_user: root }
+    - role: geerlingguy.supervisor
+      become_user: root
+      vars:
+        supervisor_started: false
+        supervisor_enabled: true
+        supervisor_unix_http_server_socket_path: /var/run/supervisor.sock
+        supervisor_inet_http_server_enable: true
+        supervisor_inet_http_server_port: '*:9001'
+        supervisor_programs:
+          - name: 'scoreboard'
+            command: python3 ./src/main.py --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2 --led-rows=32 --led-cols=64 --updatecheck
+            state: present
+            configuration: |
+              directory=/home/pi/nhl-led-scoreboard
+              autostart=true
+              autorestart=true
+              stderr_logfile=/var/log/scoreboard.stderr.log
+              stderr_logfile_maxbytes=1MB
+              stderr_logfile_backups=10
+              stdout_logfile=/var/log/scoreboard.stdout.log
+              stdout_logfile_maxbytes=1MB
+              stdout_logfile_backups=10
+             
+
+  tasks:
+    # use only become_user: root if task should be run as superuser
+
+    - name: Install git and build essential
+      become_user: root
+      apt:
+        update_cache: yes
+        name:
+          - git 
+          - build-essential
+        state: present
+
+    - name: Change hostname
+      become_user: root
+      hostname:
+        name: scoreboard
+
+    - name: Enable SSH
+      become_user: root
+      file:
+        path: /boot/ssh
+        state: touch
+
+    - name: Add temporary password for pi user
+      become_user: root
+      user:
+        name: pi
+        password: "{{ 'scoreboard' | password_hash('sha512') }}"
+
+    - name: Force isocpus=3 in the cmdline.txt so matrix code runs smoother
+      become_user: root
+      replace:
+        path: /boot/cmdline.txt
+        regexp: '[^#\n]$'
+        replace: ' isolcpus=3'
+
+    - name: Blacklist snd_bcm module (as per hzeller's instructions)
+      become_user: root
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/blacklist-rgb-matrix.conf
+        content: |
+          blacklist snd_bcm2835
+    
+    - name: Download resize2fs_once binary
+      become_user: root
+      get_url:
+        url: https://raw.githubusercontent.com/RPi-Distro/pi-gen/master/stage2/01-sys-tweaks/files/resize2fs_once
+        dest: /etc/init.d/resize2fs_once
+        mode: 0755
+
+    - name: Force automatic rootfs expansion on first boot
+      become_user: root
+      systemd:
+        service: resize2fs_once
+        enabled: true
+
+    - name: Copy global bash.bashrc
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/sb_image/bash.bashrc
+        dest: /etc/
+        mode: "0644"
+
+    - name: Copy scoreboard.bash to bashrc.d
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/sb_image/scoreboard.bash
+        dest: /etc/bashrc.d/
+        mode: "0644"
+
+    - name: Setup cron.scoreboard
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/sb_image/get_version
+        dest: /etc/cron.scoreboard
+        mode: "0755"
+
+    - name: Setup crontab to call cron.scoreboard on reboots
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/sb_image/crontab
+        dest: /etc/
+        backup: true
+        mode: preserve
+
+    - name: Setup pi user crontab for daily check of version
+      become_user: root
+      ansible.builtin.cron:
+        user: pi
+        name: "Check scoreboard version"
+        minute: 0
+        hour: 3
+        job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
+
+    - name: Download zram-config
+      become_user: root
+      ansible.builtin.git:
+        repo: https://github.com/ecdye/zram-config
+        dest: /root/zram-config
+        recursive: true        
+
+    - name: Replace zram-config install.bash
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/zram-config/install.bash
+        dest: /root/zram-config/
+        backup: true
+        mode: "0755"
+
+    - name: Install zram-config
+      become_user: root
+      ansible.builtin.command: /root/zram-config/install.bash
+      args:
+        chdir: /root/zram-config
+    
+    - name: Install ztab
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/zram-config/ztab
+        dest: /etc/
+        mode: "0644"
+
+    #- meta: end_play
+    - name: Install aptfile
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/sb_image/aptfile
+        dest: /usr/local/bin
+        mode: "0755"
+
+    - name: Install scoreboard services
+      become_user: root
+      ansible.builtin.copy:
+        src: "./files/sb_image/{{ item }}"
+        dest: /etc/systemd/system
+        mode: "0644"
+      with_items:
+        - sb_splash.service
+        - sb_autosettz.service
+
+    - name: Enable scoreboard services
+      become_user: root
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        masked: no
+      with_items:
+        - sb_splash.service
+        - sb_autosettz.service
+
+    - name: Install packages needed for scoreboard
+      register: updatesys
+      become_user: root
+      apt:
+        update_cache: yes
+        name:
+          - dnsmasq
+          - hostapd
+          - network-manager
+          - python3-pip
+          - python3-dev
+          - python3-setuptools
+          - python3-numpy
+          - python3-pandas
+          - python3-pil
+          - python3-numpy
+          - python3-pygame
+          - python3-tk
+          - python3-gpiozero
+          - libatlas-base-dev
+          - neofetch
+          - pastebinit
+          - jq
+          - neovim
+          - zsh
+          - libwebp-dev 
+          - dbus
+          - libsixel-bin
+        state: present
+      
+    - name: Remove packages that will cause issues with scoreboard
+      become_user: root
+      apt:
+        name:
+        - bluez 
+        - bluez-firmware 
+        - pi-bluetooth 
+        - triggerhappy
+        state: absent
+
+    
+    - name: Install python packages for scoreboard
+      become_user: root
+      ansible.builtin.pip:
+        name:
+          - archey4
+          - tzlocal
+          - cairosvg
+          - env-canada
+          - ephem
+          - iso6709
+          - paho-mqtt
+          - rich
+          - RGBMatrixEmulator
+          - tk
+          - fastjsonschema>=2.14.4
+          - geocoder>=1.38.1
+          - gpiozero==1.5.1
+          - noaa-sdk>=0.1.18
+          - pyowm>=3.0.0
+          - python-tsl2591==0.2.0
+          - regex>=2020.4.4
+          - RPi.GPIO>=0.7.0
+          - APScheduler>=3.9.3
+          - lastversion>=1.1.6
+          - nameparser>=1.0.6
+          - pillow>=9.5.0
+          - dbus-python
+          - pyyaml
+          - flask
+
+    - name: Copy sbtools directory
+      ansible.builtin.copy:
+        src: ./files/sb_image/sbtools
+        dest: ~/
+        mode: preserve
+
+    - name: Copy config neofetch directory
+      ansible.builtin.copy:
+        src: ./files/sb_image/config
+        dest: ~/.config
+        mode: "0755"
+ 
+    - name: Create .nhlledportal directory
+      ansible.builtin.file:
+        path: ~/.nhlledportal
+        state: directory
+        mode: "0755"
+
+    - name: Create startup files in .nhlledportal
+      ansible.builtin.file:
+        path: "~/.nhlledportal/{{ item }}"
+        state: touch
+        mode: "0755"
+      with_items:
+       - setTZ
+       - SETUP
+    
+    - name: Setup pi user bash and gitconfig
+      ansible.builtin.copy:
+        src: "./files/sb_image/{{ item }}"
+        dest: ~/
+        mode: "0644"
+      with_items:
+        - .gitconfig
+        - .bashrc
+
+    - name: Download scoreboard release repo "{{ gh_repo }}"
+      ansible.builtin.git:
+        repo: "{{ gh_repo }}"
+        dest: ~/nhl-led-scoreboard
+        recursive: true
+        depth: 1
+        track_submodules: true
+      when: not use_beta
+
+    - name: Download scoreboard beta repo "{{ gh_repo }}"
+      ansible.builtin.git:
+        repo: "{{ gh_repo }}"
+        dest: ~/nhl-led-scoreboard
+        recursive: true
+        depth: 1
+        track_submodules: true
+        version: "{{gh_branch}}"
+      when: use_beta
+
+    - name: Copy rgb matrix install_bindings.sh
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/sb_image/install_bindings.sh
+        dest: /home/pi/nhl-led-scoreboard
+        mode: "0755"
+
+    - name: Install rgb matrix python bindings
+      become_user: root
+      ansible.builtin.command: /home/pi/nhl-led-scoreboard/install_bindings.sh
+      args:
+        chdir: /home/pi/nhl-led-scoreboard
+
+    - name: Remove install_bindings.sh  
+      become_user: root
+      ansible.builtin.file:
+        path: /home/pi/nhl-led-scoreboard/install_bindings.sh
+        state: absent
+
+        

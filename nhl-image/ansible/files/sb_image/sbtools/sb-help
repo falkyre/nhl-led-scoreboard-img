@@ -1,0 +1,42 @@
+#!/bin/bash
+# Show quick help for each command line tool
+#echo "$(tput smul)scoreboard commands:$(tput rmul) $(tput bold)sb-tools sb-issue sb-updatecheck sb-changelog sb-stderr sb-stdout sb-livelog sb-stop sb-start sb-restart sb-status sb-sysinfo$(tput sgr0)"
+
+#Set the colors
+  
+NEWT_COLORS='   
+    root=green,black
+    border=green,black
+    title=green,black
+    roottext=white,black
+    window=green,black
+    textbox=white,black
+    button=black,green
+    compactbutton=white,black
+    listbox=white,black
+    actlistbox=black,white
+    actsellistbox=black,green
+    checkbox=green,black
+    actcheckbox=black,green
+'
+export NEWT_COLORS
+
+calc_wt_size() {
+  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
+  # output from tput. However in this case, tput detects neither stdout or 
+  # stderr is a tty and so only gives default 80, 24 values
+  WT_HEIGHT=18
+  WT_WIDTH=$(tput cols)
+
+  if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
+    WT_WIDTH=80
+  fi
+  if [ "$WT_WIDTH" -gt 178 ]; then
+    WT_WIDTH=120
+  fi
+  WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
+}
+
+calc_wt_size
+
+whiptail --backtitle "NHL LED Scoreboard Command Line Utilities Help" --title "sb-help (use arrow keys to scroll)" --scrolltext --textbox /home/pi/sbtools/sb-help.txt $WT_HEIGHT $WT_WIDTH 
