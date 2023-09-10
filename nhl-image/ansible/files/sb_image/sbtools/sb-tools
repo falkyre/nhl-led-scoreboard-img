@@ -363,7 +363,7 @@ do_resetwifi() {
 
     whiptail --title "NHL Led Scoreboard V$VERSION Tools (Reset Wifi)" --yesno "Would you like to reset your wifi now? Once your pi has rebooted, look for a WiFi network starting with NHL LED Scoreboard and connect to it to reset your wifi" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
     if [ $? -eq 0 ]; then # yes
-       sudo python3 /usr/lib/raspiwifi/reset_device/manual_reset.py
+       sudo /root/wificonnect/reset_wifi.sh
     fi
 
 }

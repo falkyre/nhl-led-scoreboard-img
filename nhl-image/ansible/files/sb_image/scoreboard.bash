@@ -35,11 +35,11 @@ alias sb-tools='/home/pi/sbtools/sb-tools'
 alias sb-changelog='cd /home/pi/nhl-led-scoreboard;latest=$(git tag --sort=-v:refname | head -1);previous=$(git tag --sort=-v:refname | head -2 | tail -1);echo "$(tput bold)$(tput smul)Changes since $previous$(tput sgr0)";git log --oneline --decorate $previous..$latest;cd ~'
 alias sb-sysinfo='neofetch --off'
 alias sb-upgrade='/home/pi/sbtools/sb-upgrade'
-alias sb-resetwifi='sudo python3 /usr/lib/raspiwifi/reset_device/manual_reset.py'
+alias sb-resetwifi='sudo /root/wificonnect/reset_wifi.sh'
 
 #Output sysinfo only if not the root user
 
-if [ "$USER" != "root" ]; then
+if [ "$EUID" -ne 0 ]; then
    # Add in first run to force running the sb-tools to setup the board config
    if [ -f /home/pi/.nhlledportal/SETUP ]; then
         whiptail --msgbox "Welcome to the nhl-led-scoreboard initial setup. You will be asked to select a team and your board size for initial configuration.\n\nThis configuration will reboot after you do your setup.\n\nYou can do a more complex setup after by using the /home/pi/nhl-led-scoreboard/nhl_setup app after the reboot" 20 60 1

@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   packer:
+    #platform: linux/amd64
     image: packer-builder-arm-ansible:vlatest
     build: .
     privileged: true

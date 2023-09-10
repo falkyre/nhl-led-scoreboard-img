@@ -22,7 +22,7 @@
         supervisor_inet_http_server_port: '*:9001'
         supervisor_programs:
           - name: 'scoreboard'
-            command: python3 ./src/main.py --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2 --led-rows=32 --led-cols=64 --updatecheck
+            command: ./venv/bin/python3 ./src/main.py --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2 --led-rows=32 --led-cols=64 --updatecheck
             state: present
             configuration: |
               directory=/home/pi/nhl-led-scoreboard
@@ -65,13 +65,14 @@
         name: pi
         password: "{{ 'scoreboard' | password_hash('sha512') }}"
 
-    - name: Force isocpus=3 in the cmdline.txt so matrix code runs smoother
+    - name: Force isocpus=3 in cmdline.txt so matrix code runs smoother
       become_user: root
-      replace:
-        path: /boot/cmdline.txt
-        regexp: '[^#\n]$'
-        replace: ' isolcpus=3'
-
+      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/cmdline.txt
+      args:
+        chdir: /boot/
+    
+    #- meta: end_play
+    
     - name: Blacklist snd_bcm module (as per hzeller's instructions)
       become_user: root
       ansible.builtin.copy:
@@ -158,8 +159,8 @@
         dest: /etc/
         mode: "0644"
 
-    #- meta: end_play
-    - name: Install aptfile
+   
+    - name: Install aptfile (used for updates)
       become_user: root
       ansible.builtin.copy:
         src: ./files/sb_image/aptfile
@@ -186,14 +187,12 @@
         - sb_splash.service
         - sb_autosettz.service
 
-    - name: Install packages needed for scoreboard
+    - name: Install OS packages needed for scoreboard
       register: updatesys
       become_user: root
       apt:
         update_cache: yes
         name:
-          - dnsmasq
-          - hostapd
           - network-manager
           - python3-pip
           - python3-dev
@@ -205,6 +204,7 @@
           - python3-pygame
           - python3-tk
           - python3-gpiozero
+          - python3-virtualenv
           - libatlas-base-dev
           - neofetch
           - pastebinit
@@ -216,7 +216,7 @@
           - libsixel-bin
         state: present
       
-    - name: Remove packages that will cause issues with scoreboard
+    - name: Remove OS packages that will cause issues with scoreboard
       become_user: root
       apt:
         name:
@@ -224,39 +224,73 @@
         - bluez-firmware 
         - pi-bluetooth 
         - triggerhappy
+        clean: yes
         state: absent
 
-    
-    - name: Install python packages for scoreboard
+    - name: Disable dhcpcd service so we can use NetworkManager
       become_user: root
-      ansible.builtin.pip:
-        name:
-          - archey4
-          - tzlocal
-          - cairosvg
-          - env-canada
-          - ephem
-          - iso6709
-          - paho-mqtt
-          - rich
-          - RGBMatrixEmulator
-          - tk
-          - fastjsonschema>=2.14.4
-          - geocoder>=1.38.1
-          - gpiozero==1.5.1
-          - noaa-sdk>=0.1.18
-          - pyowm>=3.0.0
-          - python-tsl2591==0.2.0
-          - regex>=2020.4.4
-          - RPi.GPIO>=0.7.0
-          - APScheduler>=3.9.3
-          - lastversion>=1.1.6
-          - nameparser>=1.0.6
-          - pillow>=9.5.0
-          - dbus-python
-          - pyyaml
-          - flask
+      ansible.builtin.systemd:
+        name: dhcpcd
+        enabled: false
 
+    - name: Enable NetworkManager service
+      become_user: root
+      ansible.builtin.systemd:
+        name: NetworkManager
+        enabled: true
+        masked: false
+   
+    - name: Copy wifi-connect web ui
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/wifi-connect/scoreboard_wc_ui
+        dest: /root/wificonnect
+        mode: preserve
+
+    - name: Copy wifi-connect scripts for service and install.bash
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/wifi-connect/{{ item }}
+        dest: /root/wificonnect
+        mode: "0755"
+      with_items:
+        - first_run.sh
+        - raspbian-install.sh
+        - reset_wifi.sh
+
+    - name: Install wifi-connect
+      become_user: root
+      ansible.builtin.command: "/root/wificonnect/raspbian-install.sh -y"
+      args:
+        chdir: /root/wificonnect
+
+    - name: Install wifi-connect service
+      become_user: root
+      ansible.builtin.copy:
+        src: "./files/wifi-connect/sb_wificonnect.service"
+        dest: /etc/systemd/system
+        mode: "0644"
+
+    - name: Enable wifi-connect service
+      become_user: root
+      ansible.builtin.systemd:
+        name: sb_wificonnect.service
+        enabled: true
+        masked: false 
+
+    - name: Create /etc/widficonnect directory
+      become_user: root
+      ansible.builtin.file:
+        path: /etc/wificonnect
+        state: directory
+        mode: "0755"
+
+    - name: Enable AP mode for wifi-connect
+      become_user: root
+      file:
+        path: /etc/wificonnect/ap_mode
+        state: touch
+    
     - name: Copy sbtools directory
       ansible.builtin.copy:
         src: ./files/sb_image/sbtools
@@ -330,5 +364,23 @@
       ansible.builtin.file:
         path: /home/pi/nhl-led-scoreboard/install_bindings.sh
         state: absent
-
         
+    - name: Install extra python packages for scoreboard
+      become_user: root
+      ansible.builtin.pip:
+        name:
+          - archey4
+          - tzlocal
+          - cairosvg
+
+    - name: Install required python packages for scoreboard
+      ansible.builtin.pip:
+        virtualenv: /home/pi/nhl-led-scoreboard/venv
+        virtualenv_python: python3   
+        virtualenv_site_packages: true 
+        requirements: /home/pi/nhl-led-scoreboard/requirements.txt
+
+    - name: Update .nhlledportal/status file
+      ansible.builtin.command: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
+      args:
+        chdir: /home/pi/sb-tools
