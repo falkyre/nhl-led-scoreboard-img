@@ -51,7 +51,7 @@ build {
 
   provisioner "ansible" {
     extra_arguments = [
-      "-vvv",
+     # "-vvv",
       "--connection=chroot",
       "-e ansible_host=/tmp/rpi_chroot"
       ]
@@ -59,7 +59,9 @@ build {
   }
 
   post-processor "compress" {
-    output = "${var.sb_img}-${var.sb_version}.zip"
+    keep_input_artifact = true
+    compression_level = 9
+    output = "${var.sb_img}-${var.sb_version}.gz"
   }
 
 }

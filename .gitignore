@@ -187,6 +187,7 @@ config/custom_logos.json
 # Packing-only formats
 *.iso
 *.tar
+*.img
 
 # Package management formats
 *.dmg

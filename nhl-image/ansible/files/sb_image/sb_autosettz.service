@@ -1,9 +1,8 @@
 [Unit]
 Description=Setup timezone automatically based on IP address
 ConditionPathExists=/home/pi/.nhlledportal/setTZ
-ConditionPathExists=!/etc/cron.raspiwifi/aphost_bootstrapper
 After=multi-user.target
-Wants=network-online.target dhcpcd.service
+Wants=network-online.target
 
 [Service]
 WorkingDirectory=/home/pi/sbtools

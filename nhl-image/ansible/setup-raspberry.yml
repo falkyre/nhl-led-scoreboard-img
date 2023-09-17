@@ -7,6 +7,10 @@
     gh_repo: "https://github.com/riffnshred/nhl-led-scoreboard.git"
     use_beta: false
     gh_branch: "beta"
+    system_hostname: scoreboard
+    apt_proxy: "http://192.168.100.99:3142"
+    use_apt_proxy: true
+    pypi_proxy: "--index-url=http://192.168.100.99:5000/index/ --trusted-host 192.168.100.99"
 
   # roles:
   #   - { role: chzerv.log2ram, become_user: root}
@@ -16,13 +20,10 @@
       become_user: root
       vars:
         supervisor_started: false
-        supervisor_enabled: true
-        supervisor_unix_http_server_socket_path: /var/run/supervisor.sock
-        supervisor_inet_http_server_enable: true
-        supervisor_inet_http_server_port: '*:9001'
+        supervisor_enabled: false
         supervisor_programs:
           - name: 'scoreboard'
-            command: ./venv/bin/python3 ./src/main.py --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2 --led-rows=32 --led-cols=64 --updatecheck
+            command: /home/pi/nhl-led-scoreboard/venv/bin/python3 ./src/main.py --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2 --led-rows=32 --led-cols=64 --updatecheck
             state: present
             configuration: |
               directory=/home/pi/nhl-led-scoreboard
@@ -38,11 +39,43 @@
 
   tasks:
     # use only become_user: root if task should be run as superuser
+    - name: Copy scoreboard supervisord.conf
+      become_user: root
+      ansible.builtin.copy:
+         src: ./files/sb_image/supervisord.conf
+         dest: /etc/supervisor/
+         backup: true
+         mode: preserve
+
+    # - meta: end_play
+
+    - name: Setup apt proxy
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/sb_image/51cache
+        dest: /etc/apt/apt.conf.d/
+        mode: "0644"
+      when: use_apt_proxy
+    
+    - name: Update apt proxy in 51cache file
+      become_user: root
+      ansible.builtin.replace:
+        path: /etc/apt/apt.conf.d/51cache
+        regexp: 'APT_PROXY'
+        replace: "{{ apt_proxy }}"
+      when: use_apt_proxy
+
+    - name: Upgrade all apt packages
+      become_user: root
+      ansible.builtin.apt: 
+        name: "*" 
+        state: latest 
+        update_cache: yes 
+        force_apt_get: yes
 
     - name: Install git and build essential
       become_user: root
       apt:
-        update_cache: yes
         name:
           - git 
           - build-essential
@@ -51,13 +84,42 @@
     - name: Change hostname
       become_user: root
       hostname:
-        name: scoreboard
+        name: "{{ system_hostname }}"
+
+    - name: updating hostname {{ system_hostname }} 
+      become_user: root
+      ansible.builtin.copy:
+        content: "{{ system_hostname }}{{'\n'}}"
+        dest: /etc/hostname
+        backup: true
+      register: hostname_change
+
+    - name: update /etc/hosts
+      become_user: root
+      ansible.builtin.lineinfile:
+        dest: /etc/hosts
+        regexp: '^127\.0\.0\.1'
+        line: "127.0.0.1{{'\t'}}{{ system_hostname }}"
+        backup: true
+        state: present
 
     - name: Enable SSH
       become_user: root
       file:
         path: /boot/ssh
         state: touch
+
+    - name: Disable "Please note that SSH may not work until a valid user has been set up." message
+      become_user: root
+      ansible.builtin.file:
+        path: /etc/ssh/sshd_config.d/rename_user.conf
+        state: absent
+
+    - name: Add temporary password for root user
+      become_user: root
+      user:
+        name: root
+        password: "{{ 'letiretlebut' | password_hash('sha512') }}"
 
     - name: Add temporary password for pi user
       become_user: root
@@ -71,7 +133,6 @@
       args:
         chdir: /boot/
     
-    #- meta: end_play
     
     - name: Blacklist snd_bcm module (as per hzeller's instructions)
       become_user: root
@@ -176,6 +237,7 @@
       with_items:
         - sb_splash.service
         - sb_autosettz.service
+        - supervisord.service
 
     - name: Enable scoreboard services
       become_user: root
@@ -188,10 +250,8 @@
         - sb_autosettz.service
 
     - name: Install OS packages needed for scoreboard
-      register: updatesys
       become_user: root
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
         name:
           - network-manager
           - python3-pip
@@ -214,6 +274,7 @@
           - libwebp-dev 
           - dbus
           - libsixel-bin
+          - libgraphicsmagick++-q16-12
         state: present
       
     - name: Remove OS packages that will cause issues with scoreboard
@@ -227,12 +288,18 @@
         clean: yes
         state: absent
 
-    - name: Disable dhcpcd service so we can use NetworkManager
+    - name: Disable and mask services so we can use comitup for wifi setup
       become_user: root
       ansible.builtin.systemd:
-        name: dhcpcd
-        enabled: false
-
+        name: "{{ item }}"
+        masked: true
+      with_items:
+        - dhcpcd
+        - dnsmasq
+        - systemd-resolved
+        - dhcpd
+        - wpa-supplicant
+        
     - name: Enable NetworkManager service
       become_user: root
       ansible.builtin.systemd:
@@ -240,67 +307,64 @@
         enabled: true
         masked: false
    
-    - name: Copy wifi-connect web ui
-      become_user: root
-      ansible.builtin.copy:
-        src: ./files/wifi-connect/scoreboard_wc_ui
-        dest: /root/wificonnect
-        mode: preserve
-
-    - name: Copy wifi-connect scripts for service and install.bash
-      become_user: root
-      ansible.builtin.copy:
-        src: ./files/wifi-connect/{{ item }}
-        dest: /root/wificonnect
-        mode: "0755"
-      with_items:
-        - first_run.sh
-        - raspbian-install.sh
-        - reset_wifi.sh
-
-    - name: Install wifi-connect
-      become_user: root
-      ansible.builtin.command: "/root/wificonnect/raspbian-install.sh -y"
-      args:
-        chdir: /root/wificonnect
-
-    - name: Install wifi-connect service
-      become_user: root
-      ansible.builtin.copy:
-        src: "./files/wifi-connect/sb_wificonnect.service"
-        dest: /etc/systemd/system
-        mode: "0644"
-
-    - name: Enable wifi-connect service
-      become_user: root
-      ansible.builtin.systemd:
-        name: sb_wificonnect.service
-        enabled: true
-        masked: false 
-
-    - name: Create /etc/widficonnect directory
+    - name: Delete network inetrfaces file 
       become_user: root
       ansible.builtin.file:
-        path: /etc/wificonnect
-        state: directory
-        mode: "0755"
+        path: /etc/network/interface
+        state: absent
 
-    - name: Enable AP mode for wifi-connect
+    - name: Install comitup deb package from the internet
       become_user: root
-      file:
-        path: /etc/wificonnect/ap_mode
-        state: touch
-    
+      ansible.builtin.apt:
+        deb: https://davesteele.github.io/comitup/latest/davesteele-comitup-apt-source_latest.deb
+        dpkg_options: "force-all"
+   
+    - name: Install comitup and comitup-web packages
+      become_user: root
+      ansible.builtin.apt:
+        update_cache: yes
+        name: "{{ item }}"
+      with_items:
+        - comitup
+        - comitup-watch
+
+    - name: Copy scoreboard comitup.conf file
+      become_user: root
+      ansible.builtin.copy:
+        src: ./files/comitup-conf/comitup.conf
+        dest: /etc/
+        backup: true
+        
+    - name: Extract scoreboard template into the comitup flask template directory
+      become_user: root
+      ansible.builtin.unarchive:
+        src: ./files/comitup-conf/scoreboard_ui.tar.gz
+        dest: /usr/share/comitup/web/templates
+
+    - name: Update template path variable in comitupweb.py to use scoreboard template
+      become_user: root
+      ansible.builtin.lineinfile:
+        path: /usr/share/comitup/web/comitupweb.py
+        regexp: '^TEMPLATE_PATH ='
+        line: TEMPLATE_PATH = "/usr/share/comitup/web/templates/scoreboard"
+
     - name: Copy sbtools directory
       ansible.builtin.copy:
         src: ./files/sb_image/sbtools
         dest: ~/
         mode: preserve
 
-    - name: Copy config neofetch directory
+    - name: Create .config/neofetch directory in pi home
+      ansible.builtin.file:
+        path: ~/.config/neofetch
+        state: directory
+        mode: "0755"
+
+
+    - name: Copy scoreboard neofetch config
       ansible.builtin.copy:
-        src: ./files/sb_image/config
-        dest: ~/.config
+        src: ./files/sb_image/.config/neofetch/neofetch_config.conf
+        dest: ~/.config/neofetch/config.conf
         mode: "0755"
  
     - name: Create .nhlledportal directory
@@ -368,19 +432,29 @@
     - name: Install extra python packages for scoreboard
       become_user: root
       ansible.builtin.pip:
+        extra_args: "{{ pypi_proxy }}"
         name:
           - archey4
           - tzlocal
           - cairosvg
-
+          - lastversion
+      
     - name: Install required python packages for scoreboard
       ansible.builtin.pip:
         virtualenv: /home/pi/nhl-led-scoreboard/venv
         virtualenv_python: python3   
         virtualenv_site_packages: true 
+        extra_args: "{{ pypi_proxy }}"
         requirements: /home/pi/nhl-led-scoreboard/requirements.txt
 
     - name: Update .nhlledportal/status file
-      ansible.builtin.command: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
+      ansible.builtin.shell: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
       args:
-        chdir: /home/pi/sb-tools
+        chdir: /home/pi/sbtools
+
+    - name: Remove 51cache file (delete file)
+      become_user: root
+      ansible.builtin.file:
+        path: /etc/apt/apt.conf.d/51cache
+        state: absent
+      when: use_apt_proxy
