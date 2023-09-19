@@ -1,7 +1,7 @@
 [Unit]
 Description=Setup timezone automatically based on IP address
 ConditionPathExists=/home/pi/.nhlledportal/setTZ
-After=multi-user.target
+After=network-online.target
 Wants=network-online.target
 
 [Service]

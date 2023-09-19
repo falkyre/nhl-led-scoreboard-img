@@ -4,6 +4,9 @@
   become: true
   become_user: pi
   vars:
+    keyboard_keymap: "us"
+    timezone: "America/Toronto"
+    locale: en_US.UTF-8
     gh_repo: "https://github.com/riffnshred/nhl-led-scoreboard.git"
     use_beta: false
     gh_branch: "beta"
@@ -35,10 +38,25 @@
               stdout_logfile=/var/log/scoreboard.stdout.log
               stdout_logfile_maxbytes=1MB
               stdout_logfile_backups=10
-             
 
   tasks:
     # use only become_user: root if task should be run as superuser
+    - name: Setup hostname using raspi-config
+      become_user: root
+      ansible.builtin.command: "/usr/bin/raspi-config nonint do_hostname {{ system_hostname }}"
+    
+    - name: Setup keyboard layout using raspi-config
+      become_user: root
+      ansible.builtin.command: "/usr/bin/raspi-config nonint do_configure_keyboard {{ keyboard_keymap }}"
+
+    - name: Setup timezone using raspi-config
+      become_user: root
+      ansible.builtin.command: "/usr/bin/raspi-config nonint do_change_timezone {{ timezone }}"
+
+    - name: Setup locale using raspi-config
+      become_user: root
+      ansible.builtin.command: "/usr/bin/raspi-config nonint do_change_locale {{ locale }}"
+          
     - name: Copy scoreboard supervisord.conf
       become_user: root
       ansible.builtin.copy:
@@ -81,27 +99,27 @@
           - build-essential
         state: present
 
-    - name: Change hostname
-      become_user: root
-      hostname:
-        name: "{{ system_hostname }}"
+    # - name: Change hostname
+    #   become_user: root
+    #   hostname:
+    #     name: "{{ system_hostname }}"
 
-    - name: updating hostname {{ system_hostname }} 
-      become_user: root
-      ansible.builtin.copy:
-        content: "{{ system_hostname }}{{'\n'}}"
-        dest: /etc/hostname
-        backup: true
-      register: hostname_change
+    # - name: updating hostname {{ system_hostname }} 
+    #   become_user: root
+    #   ansible.builtin.copy:
+    #     content: "{{ system_hostname }}{{'\n'}}"
+    #     dest: /etc/hostname
+    #     backup: true
+    #   register: hostname_change
 
-    - name: update /etc/hosts
-      become_user: root
-      ansible.builtin.lineinfile:
-        dest: /etc/hosts
-        regexp: '^127\.0\.0\.1'
-        line: "127.0.0.1{{'\t'}}{{ system_hostname }}"
-        backup: true
-        state: present
+    # - name: update /etc/hosts
+    #   become_user: root
+    #   ansible.builtin.lineinfile:
+    #     dest: /etc/hosts
+    #     regexp: '^127\.0\.0\.1'
+    #     line: "127.0.0.1{{'\t'}}{{ system_hostname }}"
+    #     backup: true
+    #     state: present
 
     - name: Enable SSH
       become_user: root
