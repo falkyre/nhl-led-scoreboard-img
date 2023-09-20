@@ -9,7 +9,7 @@
 # NHL LED Scoreboard Raspberry Pi Image
 [![Create Release - Image](https://github.com/falkyre/nhl-led-scoreboard-img/actions/workflows/main.yml/badge.svg)](https://github.com/falkyre/nhl-led-scoreboard-img/actions/workflows/main.yml)
 [![GitHub release (latest by date)](https://badgen.net/github/release/falkyre/nhl-led-scoreboard-img?label=Version)](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest)
-[![Github All Releases](https://img.shields.io/github/downloads/falkyre/nhl-led-scoreboard-img/total.svg)]
+[![Github All Releases](https://img.shields.io/github/downloads/falkyre/nhl-led-scoreboard-img/total.svg)
 
 
 </span>
