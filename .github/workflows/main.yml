@@ -2,10 +2,7 @@ name: Create Release - Image
 
 on:
    workflow_dispatch:  
-  push:
-    tags:
-    - 'v*'
-
+   
 jobs:
   build:
 
@@ -18,8 +15,8 @@ jobs:
       run: |
         echo ${GITHUB_REF/refs\/tags\//}
         echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-    - name: Install Dependencies
-      run: |
+    - name: Create scoreboard image
+      uses: addnab/docker-run-action@v3
        sudo dpkg --add-architecture i386
        sudo apt-get update
        sudo apt-get install -y coreutils quilt parted debootstrap zerofree zip dosfstools libarchive-tools libcap2-bin grep rsync xz-utils file git curl jq
