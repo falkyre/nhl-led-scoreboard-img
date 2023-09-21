@@ -200,3 +200,4 @@ config/custom_logos.json
 *.msm
 *.msp
 *.txz
+!scoreboard_ui.tar.gz
