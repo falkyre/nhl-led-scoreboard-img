@@ -24,14 +24,17 @@ jobs:
 
     - name: Build scoreboard image
       run: |
-        echo "Testing ${{ steps.get_version.outputs.version }}"
         docker run --rm --privileged -v /dev:/dev -v ${PWD}/nhl-image:/build ghcr.io/falkyre/packer-arm-ansible:latest build raspios.pkr.hcl
-        du -h rpios-scoreboard-${{ steps.get_version.outputs.version }}.img
-        du -h --apparent-size rpios-scoreboard-${{ steps.get_version.outputs.version }}.img
+        du -h rpios-scoreboard.img
+        du -h --apparent-size rpios-scoreboard.img
 
     - name: Compress imaage using pishrink
       run: |
-        docker run --privileged=true --rm --volume ${PWD}}/nhl-image/:/workdir mgomesborges/pishrink pishrink -aZv rpios-scoreboard-${{ steps.get_version.outputs.version }}.img
+        docker run --privileged=true --rm --volume ${PWD}}/nhl-image/:/workdir mgomesborges/pishrink pishrink -aZv rpios-scoreboard.img
+
+    - name: Rename compressed image to include version
+      run: |
+        cp nhl-image/rpios-scoreboard.img rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
   
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:

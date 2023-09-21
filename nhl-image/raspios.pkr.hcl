@@ -9,11 +9,6 @@ variable "sb_img" {
   default = "rpios-scoreboard"
 }
 
-variable "sb_version" {
-  type = string
-  default = "v1.6.12"
-}
-
 source "arm" "pi" {
   file_checksum_type    = "sha256"
   file_checksum_url     = "${var.raspios_url}.sha256"
@@ -39,7 +34,7 @@ source "arm" "pi" {
     start_sector = "532480"
     type         = "83"
   }
-  image_path                   = "${var.sb_img}-${var.sb_version}.img"
+  image_path                   = "${var.sb_img}.img"
   image_size                   = "3G"
   image_type                   = "dos"
   qemu_binary_destination_path = "/usr/bin/qemu-arm-static"
