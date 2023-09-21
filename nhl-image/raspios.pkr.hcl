@@ -11,7 +11,7 @@ variable "sb_img" {
 
 variable "sb_version" {
   type = string
-  default = "V1.6.12"
+  default = "v1.6.12"
 }
 
 source "arm" "pi" {

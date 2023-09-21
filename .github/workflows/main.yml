@@ -15,30 +15,26 @@ jobs:
       run: |
         echo ${GITHUB_REF/refs\/tags\//}
         echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-    - name: Create scoreboard image
-      uses: addnab/docker-run-action@v3
-       sudo dpkg --add-architecture i386
-       sudo apt-get update
-       sudo apt-get install -y coreutils quilt parted debootstrap zerofree zip dosfstools libarchive-tools libcap2-bin grep rsync xz-utils file git curl jq
-       sudo apt-get install -y qemu-user-static
-    - name: Build Image
-      run: sudo CLEAN=1 BUILD_VERSION=${{ steps.get_version.outputs.VERSION }} ./build.sh -c config
-    - name: Calculate Checksum
-      id: get_sha256_checksum
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build scoreboard image
       run: |
-        export IMAGE_SHA256_CHECKSUM=$(shasum -a 256 deploy/image_rpios-scoreboard.zip | awk '{print $1}')
-        echo "$IMAGE_SHA256_CHECKSUM deploy/image_rpios-scoreboard.zip"
-        echo ::set-output name=IMAGE_SHA256_CHECKSUM::${IMAGE_SHA256_CHECKSUM}
-    - name: Name asset
-      id: name_asset
-      run: |
-        cp deploy/image_rpios-scoreboard.zip rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.zip
+        docker run --rm --privileged -v /dev:/dev -v ${PWD}/nhl-image:/build docker pull ghcr.io/falkyre/packer-arm-ansible:latest build raspios.pkr.hcl
+        du -h rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img
+        du -h --apparent-size rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img
+  
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        prerelease: false
+        prerelease: true
         files: |
-          rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.zip
+          rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img.xz
 
     #- uses: sarisia/actions-status-discord@v1
     #  with:

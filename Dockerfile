@@ -14,6 +14,5 @@ RUN --mount=type=cache,target=/var/cache/apt,id=apt \
     && ansible-galaxy install geerlingguy.pip \
     && ansible-galaxy install geerlingguy.supervisor \
     && ansible-galaxy collection install community.general\
-
     && (rm -f /var/cache/apt/archives/*.deb \
     /var/cache/apt/archives/partial/*.d:wq!eb /var/cache/apt/*.bin /var/lib/apt/lists/* || true)

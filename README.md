@@ -52,7 +52,9 @@ The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD 
 
 ## First Boot 
 
-Now that you have flashed your SD card, you can insert it into your Raspberry Pi.  Your Raspberry Pi will expand the size of your SD card to utilize it fully.  This can take some time depending on the size and health of your card.  Once the Raspberry Pi has expanded the filesystem, it will launch a Captive Portal that you can log into to set your WiFi.  On an iPhone, this should open safari automatically.  On Android 10 and 11, it shows up as manage your router in the WiFi details in the settings.
+Now that you have flashed your SD card, you can insert it into your Raspberry Pi.  Your Raspberry Pi will expand the size of your SD card to utilize it fully.  This can take some time depending on the size and health of your card.  Once the Raspberry Pi has expanded the filesystem, it will launch a Captive Portal that you can log into to set your WiFi.  On an iPhone, this should open safari automatically.  On Android 10 and 11, it shows up as manage your router in the WiFi details in the settings.  Android now will open captive portal webpage automatically as well.  If you don't see it, use the manage router in WiFi details.
+
+
 
 
 ## Default Settings

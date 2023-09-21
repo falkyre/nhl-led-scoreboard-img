@@ -11,9 +11,9 @@
     use_beta: false
     gh_branch: "beta"
     system_hostname: scoreboard
-    apt_proxy: "http://192.168.100.99:3142"
-    use_apt_proxy: true
-    pypi_proxy: "--index-url=http://192.168.100.99:5000/index/ --trusted-host 192.168.100.99"
+    apt_proxy: ""
+    use_apt_proxy: false
+    pypi_proxy: ""
 
   # roles:
   #   - { role: chzerv.log2ram, become_user: root}
@@ -99,28 +99,6 @@
           - build-essential
         state: present
 
-    # - name: Change hostname
-    #   become_user: root
-    #   hostname:
-    #     name: "{{ system_hostname }}"
-
-    # - name: updating hostname {{ system_hostname }} 
-    #   become_user: root
-    #   ansible.builtin.copy:
-    #     content: "{{ system_hostname }}{{'\n'}}"
-    #     dest: /etc/hostname
-    #     backup: true
-    #   register: hostname_change
-
-    # - name: update /etc/hosts
-    #   become_user: root
-    #   ansible.builtin.lineinfile:
-    #     dest: /etc/hosts
-    #     regexp: '^127\.0\.0\.1'
-    #     line: "127.0.0.1{{'\t'}}{{ system_hostname }}"
-    #     backup: true
-    #     state: present
-
     - name: Enable SSH
       become_user: root
       file:
@@ -139,11 +117,20 @@
         name: root
         password: "{{ 'letiretlebut' | password_hash('sha512') }}"
 
-    - name: Add temporary password for pi user
+    # This is the new way to create a user on raspiOS headless, if you don't do it this way, the system unit for 
+    # multi-user.target never hits and can slow down boots.
+    - name: Create pi user encrypted password
       become_user: root
-      user:
-        name: pi
-        password: "{{ 'scoreboard' | password_hash('sha512') }}"
+      ansible.builtin.shell: echo "scoreboard" | openssl passwd -6 -stdin
+      register: pi_passwd
+
+    - name: Add pi user name to start of line
+      become_user: root
+      ansible.builtin.copy:
+        dest: /boot/userconf
+        content: 'pi:{{ pi_passwd.stdout }}'
+
+    #- meta: end_play
 
     - name: Force isocpus=3 in cmdline.txt so matrix code runs smoother
       become_user: root
@@ -306,6 +293,13 @@
         clean: yes
         state: absent
 
+    - name: Enable NetworkManager service
+      become_user: root
+      ansible.builtin.systemd:
+        name: NetworkManager
+        enabled: true
+        masked: false
+        
     - name: Disable and mask services so we can use comitup for wifi setup
       become_user: root
       ansible.builtin.systemd:
@@ -317,15 +311,9 @@
         - systemd-resolved
         - dhcpd
         - wpa-supplicant
-        
-    - name: Enable NetworkManager service
-      become_user: root
-      ansible.builtin.systemd:
-        name: NetworkManager
-        enabled: true
-        masked: false
+        - NetworkManager-wait-online
    
-    - name: Delete network inetrfaces file 
+    - name: Delete network interfaces file 
       become_user: root
       ansible.builtin.file:
         path: /etc/network/interface
@@ -446,7 +434,8 @@
       ansible.builtin.file:
         path: /home/pi/nhl-led-scoreboard/install_bindings.sh
         state: absent
-        
+    # For Debian 12, these will likely need to be installed in a venv
+    # Will need to add --break-system-packages to the extra_args
     - name: Install extra python packages for scoreboard
       become_user: root
       ansible.builtin.pip:
@@ -456,6 +445,7 @@
           - tzlocal
           - cairosvg
           - lastversion
+          - rich-cli
       
     - name: Install required python packages for scoreboard
       ansible.builtin.pip:
