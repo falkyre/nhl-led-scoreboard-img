@@ -24,20 +24,21 @@ jobs:
 
     - name: Build scoreboard image
       run: |
+        echo "Testing ${{ steps.get_version.outputs.version }}"
         docker run --rm --privileged -v /dev:/dev -v ${PWD}/nhl-image:/build ghcr.io/falkyre/packer-arm-ansible:latest build raspios.pkr.hcl
-        du -h rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img
-        du -h --apparent-size rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img
+        du -h rpios-scoreboard-${{ steps.get_version.outputs.version }}.img
+        du -h --apparent-size rpios-scoreboard-${{ steps.get_version.outputs.version }}.img
 
     - name: Compress imaage using pishrink
       run: |
-        docker run --privileged=true --rm --volume ${PWD}}/nhl-image/:/workdir mgomesborges/pishrink pishrink -aZv rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img
+        docker run --privileged=true --rm --volume ${PWD}}/nhl-image/:/workdir mgomesborges/pishrink pishrink -aZv rpios-scoreboard-${{ steps.get_version.outputs.version }}.img
   
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: true
         files: |
-          rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img.xz
+          rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
 
     #- uses: sarisia/actions-status-discord@v1
     #  with:
