@@ -30,7 +30,7 @@ jobs:
 
     - name: Compress imaage using pishrink
       run: |
-      docker run --privileged=true --rm --volume ${PWD}}/nhl-image/:/workdir mgomesborges/pishrink pishrink -aZv rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img
+        docker run --privileged=true --rm --volume ${PWD}}/nhl-image/:/workdir mgomesborges/pishrink pishrink -aZv rpios-scoreboard-${{ steps.get_version.outputs.VERSION }}.img
   
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
