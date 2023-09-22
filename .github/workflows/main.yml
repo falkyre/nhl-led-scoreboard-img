@@ -25,8 +25,8 @@ jobs:
     - name: Build scoreboard image
       run: |
         docker run --rm --privileged -v /dev:/dev -v ${PWD}/nhl-image:/build ghcr.io/falkyre/packer-arm-ansible:latest build raspios.pkr.hcl
-        du -h rpios-scoreboard.img
-        du -h --apparent-size rpios-scoreboard.img
+        du -h nhl-image/rpios-scoreboard.img
+        du -h --apparent-size nhl-image/rpios-scoreboard.img
 
     - name: Compress imaage using pishrink
       run: |
