@@ -1,4 +1,4 @@
-name: publish
+name: publish packer-arm-ansible
 
 on: 
    workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
              username: ${{ github.actor }}
              password: ${{ secrets.GITHUB_TOKEN }}
              
-         - name: Build the park-arm-ansible image
+         - name: Build the packer-arm-ansible image
            run: |
              docker build . --tag ghcr.io/falkyre/packer-arm-ansible:latest
              docker push ghcr.io/falkyre/packer-arm-ansible:latest

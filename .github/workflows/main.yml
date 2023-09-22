@@ -28,13 +28,13 @@ jobs:
         du -h nhl-image/rpios-scoreboard.img
         du -h --apparent-size nhl-image/rpios-scoreboard.img
 
-    - name: Compress imaage using pishrink
+    - name: Compress image using pishrink
       run: |
-        docker run --privileged=true --rm --volume ${PWD}}/nhl-image/:/workdir mgomesborges/pishrink pishrink -aZv rpios-scoreboard.img
+        docker run --privileged=true --rm --volume ${PWD}/nhl-image/:/workdir mgomesborges/pishrink pishrink -aZv rpios-scoreboard.img
 
     - name: Rename compressed image to include version
       run: |
-        cp nhl-image/rpios-scoreboard.img rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
+        cp nhl-image/rpios-scoreboard.img.xz rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
   
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
