@@ -4,8 +4,18 @@ name: Notify - Discord
 
 # Controls when the action will run. 
 on:
-   workflow_dispatch:
-     inputs:
+  workflow_dispatch:
+    inputs:
+       version:
+         description: 'Version Release'
+         required: true
+         default: 'v1.6.0'
+       detail:
+         description: 'Extra Notes'
+         required: false
+         default: 'Excelsior!'
+  workflow_call:
+    inputs:
        version:
          description: 'Version Release'
          required: true
