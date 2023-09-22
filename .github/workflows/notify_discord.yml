@@ -14,16 +14,6 @@ on:
          description: 'Extra Notes'
          required: false
          default: 'Excelsior!'
-  workflow_call:
-    inputs:
-       version:
-         description: 'Version Release'
-         required: true
-         default: 'v1.6.0'
-       detail:
-         description: 'Extra Notes'
-         required: false
-         default: 'Excelsior!'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
