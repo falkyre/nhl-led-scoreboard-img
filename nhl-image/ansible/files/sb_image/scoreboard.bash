@@ -17,6 +17,28 @@ NEWT_COLORS='
 '
 export NEWT_COLORS
 
+
+if [ -t 1 ]; then
+  RAINBOW=(
+    "$(printf '\033[38;5;196m')"
+    "$(printf '\033[38;5;202m')"
+    "$(printf '\033[38;5;226m')"
+    "$(printf '\033[38;5;082m')"
+    "$(printf '\033[38;5;021m')"
+    "$(printf '\033[38;5;093m')"
+    "$(printf '\033[38;5;163m')"
+  )
+
+  RED=$(printf '\033[31m')
+  GREEN=$(printf '\033[32m')
+  YELLOW=$(printf '\033[33m')
+  BLUE=$(printf '\033[34m')
+  BOLD=$(printf '\033[1m')
+  DIM=$(printf '\033[2m')
+  UNDER=$(printf '\033[4m')
+  RESET=$(printf '\033[m')
+fi
+
 # Aliases
 # - sudo alias that allows running other aliases with "sudo": https://github.com/MichaIng/DietPi/issues/424
 alias sudo='sudo '
@@ -58,4 +80,37 @@ if [ "$EUID" -ne 0 ]; then
         esac
      done
    fi
+   export PATH=/home/pi/nhl-led-scoreboard/venv/bin:$PATH
 fi
+
+_virtualenv_auto_activate() {
+    have_not_found=true
+    for folderName in $(find -maxdepth 1 -type d); do
+        if [ -e "$folderName/bin/activate" ]; then
+            have_not_found=false
+            if [ "$VIRTUAL_ENV" = "" ]; then
+                _VENV_NAME="venv $(basename `pwd`)"
+#                echo Activating virtualenv \"$_VENV_NAME\"...
+                VIRTUAL_ENV_DISABLE_PROMPT=1
+                source $folderName/bin/activate
+                _OLD_VIRTUAL_PS1="$PS1"
+                PS1="${BLUE}[$_VENV_NAME]${RESET}$PS1"
+                export PS1
+            fi
+        fi
+    done
+    if $have_not_found ; then
+        if [ "$VIRTUAL_ENV" != "" ]; then
+#            echo Deactivating Virtualenv...
+            deactivate
+        fi
+    fi
+}
+
+export PROMPT_COMMAND=_virtualenv_auto_activate
+
+function chpwd(){
+    _virtualenv_auto_activate
+}
+
+_virtualenv_auto_activate

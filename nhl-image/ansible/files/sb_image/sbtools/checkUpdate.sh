@@ -3,7 +3,7 @@
 cd /home/pi/nhl-led-scoreboard
 ROOT=$(/usr/bin/dirname "$(git rev-parse --git-dir)")
 CURRENTLY_BUILT_VER=$(/usr/bin/cat "${ROOT}"/VERSION) # stored somewhere, e.g. spec file in my case
-LASTVER=$(/usr/local/bin/lastversion riffnshred/nhl-led-scoreboard -gt "${CURRENTLY_BUILT_VER}")
+LASTVER=$(/home/pi/nhl-led-scoreboard/venv/bin/lastversion riffnshred/nhl-led-scoreboard -gt "${CURRENTLY_BUILT_VER}")
 if [[ $? -eq 0 ]]; then
   # LASTVER is newer, update and trigger build
   # ....

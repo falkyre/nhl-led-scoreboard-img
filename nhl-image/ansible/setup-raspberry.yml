@@ -15,8 +15,6 @@
     use_apt_proxy: false
     pypi_proxy: ""
 
-  # roles:
-  #   - { role: chzerv.log2ram, become_user: root}
   roles:
     - { role: geerlingguy.pip, become_user: root }
     - role: geerlingguy.supervisor
@@ -129,8 +127,6 @@
       ansible.builtin.copy:
         dest: /boot/userconf
         content: 'pi:{{ pi_passwd.stdout }}'
-
-    #- meta: end_play
 
     - name: Force isocpus=3 in cmdline.txt so matrix code runs smoother
       become_user: root
@@ -299,7 +295,7 @@
         name: NetworkManager
         enabled: true
         masked: false
-        
+
     - name: Disable and mask services so we can use comitup for wifi setup
       become_user: root
       ansible.builtin.systemd:
@@ -365,7 +361,6 @@
         path: ~/.config/neofetch
         state: directory
         mode: "0755"
-
 
     - name: Copy scoreboard neofetch config
       ansible.builtin.copy:
@@ -434,19 +429,7 @@
       ansible.builtin.file:
         path: /home/pi/nhl-led-scoreboard/install_bindings.sh
         state: absent
-    # For Debian 12, these will likely need to be installed in a venv
-    # Will need to add --break-system-packages to the extra_args
-    - name: Install extra python packages for scoreboard
-      become_user: root
-      ansible.builtin.pip:
-        extra_args: "{{ pypi_proxy }}"
-        name:
-          - archey4
-          - tzlocal
-          - cairosvg
-          - lastversion
-          - rich-cli
-      
+             
     - name: Install required python packages for scoreboard
       ansible.builtin.pip:
         virtualenv: /home/pi/nhl-led-scoreboard/venv
@@ -454,6 +437,19 @@
         virtualenv_site_packages: true 
         extra_args: "{{ pypi_proxy }}"
         requirements: /home/pi/nhl-led-scoreboard/requirements.txt
+
+    - name: Install extra python packages for scoreboard
+      ansible.builtin.pip:
+        virtualenv: /home/pi/nhl-led-scoreboard/venv
+        virtualenv_python: python3
+        virtualenv_site_packages: true 
+        extra_args: "{{ pypi_proxy }}"
+        name:
+          - archey4
+          - tzlocal
+          - cairosvg
+          - lastversion
+          - rich-cli
 
     - name: Update .nhlledportal/status file
       ansible.builtin.shell: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
