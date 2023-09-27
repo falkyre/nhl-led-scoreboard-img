@@ -1,3 +1,4 @@
+# How to build the NHL Led Scoreboard raspberry pi OS image locally
 ## To update the packer arm image to include ansible
 
 See the [Dockerfile](https://github.com/falkyre/nhl-led-scoreboard-img/blob/packer/Dockerfile)
@@ -23,7 +24,7 @@ docker run --rm -it --privileged -v ${PWD}/rpios-scoreboard-V1.6.12.img:/usr/rpi
 ```
 You can use this to endure that everything has been installed in the proper locations and even test some commands (but not the actual scoreboard code)
 
-To speed image builds up, there are two proxy programs used.  One, apt-cacher-ng, is used to cache the OS packages.  The other is called proxpi and this caches PyPi python packages.  In the ansible playbook, they are defined under the variables section at the top of the playbook.  Once these were added to t he build, the build time for the image dropped from about 1 hour down to about 15 minutes.
+To speed image builds up, there are two proxy programs used.  One, apt-cacher-ng, is used to cache the OS packages.  The other is called proxpi and this caches PyPi python packages.  In the ansible playbook, they are defined under the variables section at the top of the playbook.  Once these were added to the build, the build time for the image dropped from about 1 hour down to about 15 minutes.
 
 [apt-cacher-ng](https://github.com/sameersbn/docker-apt-cacher-ng)
 [proxpi](https://github.com/EpicWink/proxpi)
