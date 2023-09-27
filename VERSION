@@ -1,5 +1,3 @@
-v1.6.12
+VERSION: v1.6.12
 
-Extra Notes:
-
-NHL API currently broken so some functions may not work or the board will crash. 
+Extra Notes: NHL API currently broken so some functions may not work or the board will crash. 
