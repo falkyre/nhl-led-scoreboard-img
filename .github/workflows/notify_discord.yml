@@ -31,39 +31,44 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Get version and notes on release event
+      id: release_event
       if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
       run: |
         version=$(cat VERSION| grep version | awk -F':' '{print $2}')
         detail="$(cat VERSION| grep detail | awk -F':' '{print $2}')"
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "detail=$detail" >> $GITHUB_OUTPUT
-        echo "event=${{ github.event }}" >> $GITHUB_OUTPUT
-        echo $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Get version and notes on workflow_dispatch
-      if: ${{ github.event_name == 'workflow_dispatch' }}
-      run: |
-        version=${{ github.event.inputs.version }}
-        detail="${{ github.event.inputs.detail }}"
-        echo "version=$version" >> $GITHUB_OUTPUT
-        echo "detail=$detail" >> $GITHUB_OUTPUT
-        echo "event=${{ github.event }}" >> $GITHUB_OUTPUT
-        echo $GITHUB_OUTPUT
+        echo "event=${{ toJson(github.event) }}" >> $GITHUB_OUTPUT
       shell: bash
 
     
     - uses: sarisia/actions-status-discord@v1
+      if: ${{ github.event_name == 'workflow_dispatch' }}
       with:
         webhook: ${{ secrets.DISCORD_WEBHOOK }}
         nodetail: true
         title: New version of `NHL LED Scoreboard image` is ready!
         description: |
-          Version `${{ steps.outputs.version }}`
+          Version `${{ github.event.inputs.version }}`
           Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
           ----
           Extra Notes: 
-          ${{ steps.outputs.detail }}
+          ${{ github.event.inputs.detail }}
+
+    - uses: sarisia/actions-status-discord@v1
+      if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+      with:
+       webhook: ${{ secrets.DISCORD_WEBHOOK }}
+       nodetail: true
+       title: New version of `NHL LED Scoreboard image` is ready!
+       description: |
+         Version `${{ steps.release_event.outputs.version }}`
+         Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
+         ----
+         Extra Notes: 
+         ${{ steps.release_event.outputs.detail }}
+    
+
     # - uses: sarisia/actions-status-discord@v1
     #   with:
     #     webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
