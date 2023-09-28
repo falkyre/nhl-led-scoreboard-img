@@ -4,6 +4,9 @@ name: Notify - Discord
 
 # Controls when the action will run. 
 on:
+  release:
+    types: [released]
+
   workflow_dispatch:
     inputs:
        version:
@@ -14,7 +17,7 @@ on:
          description: 'Extra Notes'
          required: false
          default: 'Excelsior!'
-
+    
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -24,25 +27,51 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+    - name: Get repo
+      uses: actions/checkout@v4
+
+    - name: Get version and notes on release event
+      if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+      run: |
+        version=$(cat VERSION| grep version | awk -F':' '{print $2}')
+        detail=$(cat VERSION| grep detail | awk -F':' '{print $2}')
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "detail=$detail" >> $GITHUB_OUTPUT
+        echo "event=${{ github.event }}" >> $GITHUB_OUTPUT
+        echo $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Get version and notes on workflow_dispatch
+      if: ${{ github.event_name == 'workflow_dispatch' }}
+      run: |
+        version=${{ github.event.inputs.version }}
+        detail=${{ github.event.inputs.detail }}
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "detail=$detail" >> $GITHUB_OUTPUT
+        echo "event=${{ github.event }}" >> $GITHUB_OUTPUT
+        echo $GITHUB_OUTPUT
+      shell: bash
+
+    
     - uses: sarisia/actions-status-discord@v1
       with:
         webhook: ${{ secrets.DISCORD_WEBHOOK }}
         nodetail: true
         title: New version of `NHL LED Scoreboard image` is ready!
         description: |
-          Version `${{ github.event.inputs.version }}`
+          Version `${{ steps.outputs.version }}`
           Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
           ----
           Extra Notes: 
-          ${{ github.event.inputs.detail }}
-    - uses: sarisia/actions-status-discord@v1
-      with:
-        webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
-        nodetail: true
-        title: New version of `NHL LED Scoreboard image` is ready!
-        description: |
-          Version `${{ github.event.inputs.version }}`
-          Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
-          ----
-          Extra Notes: 
-          ${{ github.event.inputs.detail }}
+          ${{ steps.outputs.detail }}
+    # - uses: sarisia/actions-status-discord@v1
+    #   with:
+    #     webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
+    #     nodetail: true
+    #     title: New version of `NHL LED Scoreboard image` is ready!
+    #     description: |
+    #       Version `${{ github.event.inputs.version }}`
+    #       Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
+    #       ----
+    #       Extra Notes: 
+    #       ${{ github.event.inputs.detail }}
