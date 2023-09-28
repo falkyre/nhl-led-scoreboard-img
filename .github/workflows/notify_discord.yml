@@ -34,7 +34,7 @@ jobs:
       if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
       run: |
         version=$(cat VERSION| grep version | awk -F':' '{print $2}')
-        detail=$(cat VERSION| grep detail | awk -F':' '{print $2}')
+        detail="$(cat VERSION| grep detail | awk -F':' '{print $2}')"
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "detail=$detail" >> $GITHUB_OUTPUT
         echo "event=${{ github.event }}" >> $GITHUB_OUTPUT
@@ -45,7 +45,7 @@ jobs:
       if: ${{ github.event_name == 'workflow_dispatch' }}
       run: |
         version=${{ github.event.inputs.version }}
-        detail=${{ github.event.inputs.detail }}
+        detail="${{ github.event.inputs.detail }}"
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "detail=$detail" >> $GITHUB_OUTPUT
         echo "event=${{ github.event }}" >> $GITHUB_OUTPUT
