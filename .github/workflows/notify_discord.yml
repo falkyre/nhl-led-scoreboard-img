@@ -5,7 +5,7 @@ name: Notify - Discord
 # Controls when the action will run. 
 on:
   release:
-    types: [released]
+    types: [published]
 
   workflow_dispatch:
     inputs:
@@ -30,15 +30,18 @@ jobs:
     - name: Get repo
       uses: actions/checkout@v4
 
+    - name: Debug github.event
+      run: echo ${{ toJson(github.event) }}
+
     - name: Get version and notes on release event
       id: release_event
-      if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+      #if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+      if: '!github.event.prerelease'
       run: |
         version=$(cat VERSION| grep version | awk -F':' '{print $2}')
         detail="$(cat VERSION| grep detail | awk -F':' '{print $2}')"
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "detail=$detail" >> $GITHUB_OUTPUT
-        echo "event=${{ toJson(github.event) }}" >> $GITHUB_OUTPUT
       shell: bash
 
     
@@ -56,7 +59,8 @@ jobs:
           ${{ github.event.inputs.detail }}
 
     - uses: sarisia/actions-status-discord@v1
-      if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+      #if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
+      if: '!github.event.prerelease'
       with:
        webhook: ${{ secrets.DISCORD_WEBHOOK }}
        nodetail: true
