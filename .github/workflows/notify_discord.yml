@@ -69,14 +69,28 @@ jobs:
          ${{ steps.release_event.outputs.detail }}
     
 
-    # - uses: sarisia/actions-status-discord@v1
-    #   with:
-    #     webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
-    #     nodetail: true
-    #     title: New version of `NHL LED Scoreboard image` is ready!
-    #     description: |
-    #       Version `${{ github.event.inputs.version }}`
-    #       Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
-    #       ----
-    #       Extra Notes: 
-    #       ${{ github.event.inputs.detail }}
+    - uses: sarisia/actions-status-discord@v1
+      if: ${{ github.event.inputs.use_version == 'true' }}
+      with:
+       webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
+       nodetail: true
+       title: New version of `NHL LED Scoreboard image` is ready!
+       description: |
+         Version `${{ steps.release_event.outputs.version }}`
+         Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
+         ----
+         Extra Notes: 
+         ${{ steps.release_event.outputs.detail }}
+       
+    - uses: sarisia/actions-status-discord@v1
+      if: ${{ github.event.inputs.use_version == 'false' }}
+      with:
+        webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
+        nodetail: true
+        title: New version of `NHL LED Scoreboard image` is ready!
+        description: |
+          Version `${{ github.event.inputs.version }}`
+          Click [here](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest) to download!
+          ----
+          Extra Notes: 
+          ${{ github.event.inputs.detail }}
