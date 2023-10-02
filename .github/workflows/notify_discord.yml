@@ -6,6 +6,10 @@ name: Notify - Discord
 on:
   workflow_dispatch:
     inputs:
+       public:
+         type: boolean
+         required: true
+         description: 'Notify on Scoreboard discord?'
        use_version:
          type: boolean
          required: true
@@ -70,7 +74,7 @@ jobs:
     
 
     - uses: sarisia/actions-status-discord@v1
-      if: ${{ github.event.inputs.use_version == 'true' }}
+      if: ${{ github.event.inputs.use_version == 'true' }} && ${{ github.event.inputs.public == 'true' }}
       with:
        webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
        nodetail: true
@@ -83,7 +87,7 @@ jobs:
          ${{ steps.release_event.outputs.detail }}
        
     - uses: sarisia/actions-status-discord@v1
-      if: ${{ github.event.inputs.use_version == 'false' }}
+      if: ${{ github.event.inputs.use_version == 'false' }} && ${{ github.event.inputs.public == 'true' }}
       with:
         webhook: ${{ secrets.NHLDISCORD_WEBHOOK }}
         nodetail: true
