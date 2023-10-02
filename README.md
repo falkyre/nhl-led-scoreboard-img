@@ -33,7 +33,7 @@ Here's a comparison of how to run the scoreboard (assuming you are in the nhl-le
 > `sudo python3 ./src/main.py [command line options]`
 
 **Now with the venv**
-> `sudo /home/pi/nhl-led-scoreboard/venv/bin/python3 ./src/main.py [command line options]`
+> `sudo /home/pi/nhlsb-venv/bin/python3 ./src/main.py [command line options]`
 
 
 ## Download

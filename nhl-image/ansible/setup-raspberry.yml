@@ -24,7 +24,7 @@
         supervisor_enabled: false
         supervisor_programs:
           - name: 'scoreboard'
-            command: /home/pi/nhl-led-scoreboard/venv/bin/python3 ./src/main.py --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2 --led-rows=32 --led-cols=64 --updatecheck
+            command: /home/pi/nhlsb-venv/bin/python3 ./src/main.py --led-gpio-mapping=adafruit-hat-pwm --led-slowdown-gpio=2 --led-rows=32 --led-cols=64 --updatecheck
             state: present
             configuration: |
               directory=/home/pi/nhl-led-scoreboard
@@ -255,7 +255,8 @@
       ansible.builtin.apt:
         name:
           - network-manager
-          - python3-pip
+          #- python3-pip
+          - python3-cairosvg
           - python3-dev
           - python3-setuptools
           - python3-numpy
@@ -432,24 +433,34 @@
              
     - name: Install required python packages for scoreboard
       ansible.builtin.pip:
-        virtualenv: /home/pi/nhl-led-scoreboard/venv
+        virtualenv: /home/pi/nhlsb-venv
         virtualenv_python: python3   
         virtualenv_site_packages: true 
         extra_args: "{{ pypi_proxy }}"
         requirements: /home/pi/nhl-led-scoreboard/requirements.txt
 
+    - name: pip self-update
+      ansible.builtin.pip:
+        virtualenv: /home/pi/nhlsb-venv
+        virtualenv_python: python3   
+        virtualenv_site_packages: true 
+        extra_args: "{{ pypi_proxy }}"
+        state: latest
+        name: 
+          - pip
+        
     - name: Install extra python packages for scoreboard
       ansible.builtin.pip:
-        virtualenv: /home/pi/nhl-led-scoreboard/venv
+        virtualenv: /home/pi/nhlsb-venv
         virtualenv_python: python3
         virtualenv_site_packages: true 
         extra_args: "{{ pypi_proxy }}"
         name:
           - archey4
           - tzlocal
-          - cairosvg
           - lastversion
           - rich-cli
+          - cairosvg
 
     - name: Update .nhlledportal/status file
       ansible.builtin.shell: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status

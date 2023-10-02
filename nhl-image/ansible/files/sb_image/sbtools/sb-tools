@@ -221,7 +221,7 @@ do_test_matrix() {
 do_sup_conf() {
 
   #Set --led-slowdown-gpio based on type of pi.
-  command="command=/home/pi/nhl-led-scoreboard/venv/bin/python3 src/main.py "
+  command="command=/home/pi/nhlsb-venv/bin/python3 src/main.py "
   
   if is_pione || is_pizero; then
      gpio_slowdown="--led-slowdown-gpio=0"
@@ -268,7 +268,7 @@ do_sup_conf() {
   echo "echo 'Watch your display for $(tput setaf 3)$(cat /home/pi/.nhlledportal/status)$(tput sgr0) to be displayed'" >> /home/pi/sbtools/testMatrix.sh
   echo "echo 'This will run for about 15 seconds and then exit itself'" >> /home/pi/sbtools/testMatrix.sh
   echo "cd /home/pi/nhl-led-scoreboard/submodules/matrix/bindings/python/samples" >> /home/pi/sbtools/testMatrix.sh
-  echo "sudo /home/pi/nhl-led-scoreboard/venv/bin/python3 runtext.py $board_command -t '$(cat /home/pi/.nhlledportal/status)' >/dev/null 2>&1" >> /home/pi/sbtools/testMatrix.sh
+  echo "sudo /home/pi/nhlsb-venv/bin/python3 runtext.py $board_command -t '$(cat /home/pi/.nhlledportal/status)' >/dev/null 2>&1" >> /home/pi/sbtools/testMatrix.sh
   echo "clear" >> /home/pi/sbtools/testMatrix.sh
   echo "exit" >> /home/pi/sbtools/testMatrix.sh
   chmod +x /home/pi/sbtools/testMatrix.sh

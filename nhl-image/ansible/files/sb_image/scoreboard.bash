@@ -80,7 +80,7 @@ if [ "$EUID" -ne 0 ]; then
         esac
      done
    fi
-   export PATH=/home/pi/nhl-led-scoreboard/venv/bin:$PATH
+   export PATH=/home/pi/nhlsb-venv/bin:$PATH
 fi
 
 _virtualenv_auto_activate() {
