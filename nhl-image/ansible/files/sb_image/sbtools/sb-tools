@@ -292,7 +292,7 @@ do_enable_supervisor() {
    if [ "$TESTMATRIXRUN" = True ]; then
       whiptail --yesno "Enable supervisor systemd service.  This will reboot your pi after enabling service" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
       if [ $? -eq 0 ]; then # yes
-         sudo systemctl enable supervisord
+         sudo systemctl enable supervisor
          sudo sync
          sudo reboot
       fi 

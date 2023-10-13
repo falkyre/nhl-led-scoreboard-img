@@ -68,8 +68,10 @@ if git pull --rebase --stat origin master; then
   if [[ "$(git rev-parse HEAD)" = "$last_commit" ]]; then
     message="NHL LED Scoreboard is already at the latest version."
     ret=80 # non-zero exit code to indicate no changes pulled
+    printf "${BLUE}%s${RESET}\n" "$message"
+    exit $ret
   else
-    message="Hooray! NHL LED Scoreboard has been updated!"
+    message="NHL LED Scoreboard has been updated!"
 
     # Save the commit prior to updating
     git config nhl-led-scoreboard.lastVersion "$last_commit"
@@ -79,7 +81,7 @@ if git pull --rebase --stat origin master; then
       "/home/pi/sbtools/changelog.sh" HEAD "$last_commit"
       # Uncomment line below if running from repository scripts/sbtools directory
       # scripts/sbtools/changelog.sh HEAD "$last_commit"
-    #fi
+    fi
 
     #Comment out if running from repositories scripts/sbtools directory
     printf "${BLUE}%s \`${BOLD}%s${RESET}${BLUE}\`${RESET}\n" "You can see the changelog anytime with" "sb-changelog"
@@ -109,16 +111,15 @@ if git pull --rebase --stat origin master; then
           printf "${RED}%s${RESET}\n" "No apt-requirements found"
     fi
   fi
-  fi
   # Update the status of the download so image user is not asked to upgrade on login again
   # comment the line below if running from the repo
   /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
-  printf "${BLUE}%s${RESET}\n" "$message"
   
-  sudo zram-config stop
+  sudo zram-config sync
   # Force reboot to sync update to SD card
-  whiptail --title "Sync Update to SD Card" --msgbox "Pressing OK will reboot your pi and sync the update to the SD card" 20 60 2
-  sudo reboot
+  #whiptail --title "Sync Update to SD Card" --msgbox "Pressing OK will reboot your pi and sync the update to the SD card" 20 60 2
+  #sudo reboot
+  message="NHL LED Scoreboard has been updated and synced to SD card!"
 else
   ret=$?
   printf "${RED}%s${RESET}\n" 'There was an error updating. Try again later?'
@@ -130,5 +131,6 @@ case "$resetAutoStash" in
   *) git config rebase.autoStash "$resetAutoStash" ;;
 esac
 
+printf "${BLUE}%s${RESET}\n" "$message"
 # Exit with `1` if the update failed
 exit $ret

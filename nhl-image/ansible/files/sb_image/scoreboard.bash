@@ -83,34 +83,5 @@ if [ "$EUID" -ne 0 ]; then
    export PATH=/home/pi/nhlsb-venv/bin:$PATH
 fi
 
-_virtualenv_auto_activate() {
-    have_not_found=true
-    for folderName in $(find -maxdepth 1 -type d); do
-        if [ -e "$folderName/bin/activate" ]; then
-            have_not_found=false
-            if [ "$VIRTUAL_ENV" = "" ]; then
-                _VENV_NAME="venv $(basename `pwd`)"
-#                echo Activating virtualenv \"$_VENV_NAME\"...
-                VIRTUAL_ENV_DISABLE_PROMPT=1
-                source $folderName/bin/activate
-                _OLD_VIRTUAL_PS1="$PS1"
-                PS1="${BLUE}[$_VENV_NAME]${RESET}$PS1"
-                export PS1
-            fi
-        fi
-    done
-    if $have_not_found ; then
-        if [ "$VIRTUAL_ENV" != "" ]; then
-#            echo Deactivating Virtualenv...
-            deactivate
-        fi
-    fi
-}
-
-export PROMPT_COMMAND=_virtualenv_auto_activate
-
-function chpwd(){
-    _virtualenv_auto_activate
-}
-
-_virtualenv_auto_activate
+export DIRENV_LOG_FORMAT=
+eval "$(direnv hook bash)"

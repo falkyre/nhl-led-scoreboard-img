@@ -8,8 +8,8 @@ git config submodule.matrix.ignore all
 
 cd submodules/matrix 
 
-make build-python PYTHON=/usr/bin/python3
-make install-python PYTHON=/usr/bin/python3
+make build-python PYTHON=/home/pi/nhlsb-venv/bin/python3.9
+make install-python PYTHON=/home/pi/nhlsb-venv/bin/python3.9
 
 mv bindings/python/samples/runtext.py bindings/python/samples/runtext.py.ori
 mv /home/pi/sbtools/runtext.py bindings/python/samples/

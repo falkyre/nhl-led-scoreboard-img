@@ -18,7 +18,7 @@
 This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) pre-installed.  This is built with the Hasicorp packer with the packer-builder-arm plugin (https://github.com/mkaczanowski/packer-builder-arm) in a docker image extended with ansible.  Ansible is used to do the provisioning of the image.  For more information, see the [BUILD](https://github.com/falkyre/nhl-led-scoreboard-img/tree/packer/nhl-image/BUILD.md) documentation.
 
 * Works on all Raspberry Pi models
-* Built on Raspbian Lite (no desktop)
+* Built on Raspbian Lite (no desktop).  As of October 2023, current image build runs on RaspiOS Bullseye lite.  RaspiOS Bookworm (released October 10, 2023) is coming soon.
 * Simple WiFi Setup (Ethernet setup not tested and should only be done by advanced users) using the [comitup](http://davesteele.github.io/comitup/) utility.
 
 This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list.
@@ -34,6 +34,12 @@ Here's a comparison of how to run the scoreboard (assuming you are in the nhl-le
 
 **Now with the venv**
 > `sudo /home/pi/nhlsb-venv/bin/python3 ./src/main.py [command line options]`
+
+Also, when you change to the nhl-led-scoreboard directory, your virtual environment will automatically be activate (and deactivated when you leave it).  You can tell your virtual environment is active by your shell prompt.  This is what it looks like under raspiOS Bullseye.
+
+> `(nhlsb-venv)pi@scoreboard: ~/nhl-led-scoreboard (master)$`
+
+The front part of your prompt shows the name of the virtual environment.  The part after the nhl-led-scoreboard shows the git branch.
 
 
 ## Download
@@ -164,7 +170,9 @@ This table contains important information about the command line tools you can u
 
 ## Raspberty Pi OS Settings
 
-This raspberry pi image is built on top of the latest Raspberry Pi OS lite.  Added to this version is the following:
+This raspberry pi image is built on top of the latest Raspberry Pi OS lite Bullseye (May 3, 2023 release).  Bookworm supported will be coming in the future.
+
+Added to this version is the following:
 
 * Auto set timezone based on geolocation of your IP address. Initial time zone is America/Toronto because we all know that's the center of the universe.
 * There is a login banner that shows various system info for your raspberry pi (including timezone).  It can manually be run by using the `sb-sysinfo`
