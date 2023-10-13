@@ -237,6 +237,12 @@
         enabled: true
         masked: false
 
+    - name: Disable Supervisor service
+      ansible.builtin.systemd:
+        name: supervisor
+        enabled: false
+        masked: false
+
     - name: Disable and mask services so we can use comitup for wifi setup
       ansible.builtin.systemd:
         name: "{{ item }}"
@@ -293,7 +299,6 @@
       with_items:
         - sb_splash.service
         - sb_autosettz.service
-        - supervisord.service
 
     - name: Enable scoreboard services
       ansible.builtin.systemd:
@@ -472,8 +477,10 @@
       ansible.builtin.copy:
         dest: /home/pi/nhl-led-scoreboard/.envrc
         content: |
-          export VIRTUAL_ENV=~/nhlsb-venv
-          layout python
+          export VIRTUAL_ENV=/home/pi/nhlsb-venv
+          source /home/pi/nhlsb-venv/bin/activate
+          export PYVER=`python3 -V`
+          unset PS1
         mode: "0755"
 
     - name: Activate direnv
@@ -484,6 +491,8 @@
       changed_when: my_output.rc != 0
 
     - name: Update .nhlledportal/status file
+      become: true
+      become_user: pi
       ansible.builtin.shell: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
       args:
         chdir: /home/pi/sbtools
