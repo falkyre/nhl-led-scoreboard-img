@@ -32,10 +32,12 @@ Here's a comparison of how to run the scoreboard (assuming you are in the nhl-le
 
 > `sudo python3 ./src/main.py [command line options]`
 
-If you run this way, you will get error messages about python packages missing. **DO NOT INSTALL ANY AS ROOT BECAUSE EVERYTHIN IS INSTALLED IN THE VENV**
+If you run this way, you will get error messages about python packages missing. **DO NOT INSTALL ANY PYTHON PACKAGES AS ROOT BECAUSE EVERYTHING IS INSTALLED IN THE VENV**
 
 **Now with the venv**
 > `sudo /home/pi/nhlsb-venv/bin/python3 ./src/main.py [command line options]`
+
+You have to provide the sudo command the full command line to the virtual enviroment installed python **OR NOTHING WILL WORK**.  
 
 Also, when you change to the nhl-led-scoreboard directory, your virtual environment will automatically be activate (and deactivated when you leave it).  You can tell your virtual environment is active by your shell prompt.  This is what it looks like under raspiOS Bullseye.
 
