@@ -57,7 +57,7 @@ build {
   post-processor "compress" {
      keep_input_artifact = true
      compression_level = 9
-     output = "${var.sb_img}-${var.sb_version}.xz"
+     output = "${var.sb_img}.xz"
    }
 
 }
