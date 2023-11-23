@@ -1,2 +1,2 @@
-version:v1.6.12
-detail:NHL API currently broken so some functions may not work or the board will crash. This is built on raspios Bullseye, Bookworm will be coming in the future as some parts of the image do not work yet under Bookworm.
+version:v1.7.0
+detail:HOT FIX - Merged #430 from @ELepolt, refactoring the nhl data side to use the new api-web.nhle API.
