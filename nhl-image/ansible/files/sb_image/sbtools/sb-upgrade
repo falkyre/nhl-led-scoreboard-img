@@ -89,7 +89,11 @@ if git pull --rebase --stat origin master; then
        #Check to see if the requirements.txt has changed, if so, run the pip3 install -r requirements.txt again
        if ! git diff -s --exit-code HEAD "$last_commit" requirements.txt; then
           printf "${GREEN}%s${RESET}\n" "New python library requirements for this version, installing now"
-          sudo pip3 install -r requirements.txt
+          printf "${BLUE}%s${RESET}\n" "Activating scoreboard venv"
+          #Activate the venv
+          source /home/pi/nhlsb-venv/bin/activate
+          pip3 install -r requirements.txt
+          deactivate
        else
           printf "${YELLOW}%s${RESET}\n" "No new python libraries required to be installed."
        fi
@@ -115,7 +119,7 @@ if git pull --rebase --stat origin master; then
   # comment the line below if running from the repo
   /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
   
-  sudo zram-config sync
+  #sudo zram-config sync
   # Force reboot to sync update to SD card
   #whiptail --title "Sync Update to SD Card" --msgbox "Pressing OK will reboot your pi and sync the update to the SD card" 20 60 2
   #sudo reboot
