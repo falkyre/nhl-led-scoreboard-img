@@ -24,7 +24,7 @@ This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/ra
 This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list.
 
 ### Note about python
-Everything python related is now installed in a virtual environment that is located in the /home/pi/nhl-led-scoreboard/venv directory.  The bashrc script contains code that will auto activate the venv and deactivate upon entering and leaving the /home/pi/nhl-led-scoreboard directory.  The purpose behind this is to keep the OS install as clean as possible (and will be the way the upcoming RaspiOS Bookworm will require python installs to be).  In order to run the code from the command line using sudo, the python command **`must`** now reference the virtual environment installation and not the globally installed one.  Everything is handled with the image but if you are asked to run the code via command line for troubleshooting issues, see below.
+Everything python related is now installed in a virtual environment that is located in the /home/pi/nhl-led-scoreboard/venv directory.  The bashrc script contains code that will auto activate the venv and deactivate upson entering and leaving the /home/pi/nhl-led-scoreboard directory.  The purpose behind this is to keep the OS install as clean as possible (and will be the way the upcoming RaspiOS Bookworm will require python installs to be).  In order to run the code from the command line using sudo, the python command **`must`** now reference the virtual environment installation and not the globally installed one.  Everything is handled with the image but if you are asked to run the code via command line for troubleshooting issues, see below.
 
 Here's a comparison of how to run the scoreboard (assuming you are in the nhl-led-scoreboard directory)
 
@@ -32,12 +32,8 @@ Here's a comparison of how to run the scoreboard (assuming you are in the nhl-le
 
 > `sudo python3 ./src/main.py [command line options]`
 
-If you run this way, you will get error messages about python packages missing. **DO NOT INSTALL ANY PYTHON PACKAGES AS ROOT BECAUSE EVERYTHING IS INSTALLED IN THE VENV**
-
 **Now with the venv**
 > `sudo /home/pi/nhlsb-venv/bin/python3 ./src/main.py [command line options]`
-
-You have to provide the sudo command the full command line to the virtual enviroment installed python **OR NOTHING WILL WORK**.  
 
 Also, when you change to the nhl-led-scoreboard directory, your virtual environment will automatically be activate (and deactivated when you leave it).  You can tell your virtual environment is active by your shell prompt.  This is what it looks like under raspiOS Bullseye.
 
@@ -70,7 +66,7 @@ The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD 
 </p>
 
 1. Download and install the latest version of [Etcher](https://www.balena.io/etcher/).
-2. Open Etcher and select the `rpios-scoreboard-v0.0.0.zip` file you have [downloaded](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest). There is no need to extract the `.zip` file first.
+2. Open Etcher and select the `rpios-scoreboard-v0.0.0.xz` file you have [downloaded](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest). There is no need to extract the `.xz` file first.
 3. Choose the drive your SD card has been inserted into.
 4. Click Flash.
 
