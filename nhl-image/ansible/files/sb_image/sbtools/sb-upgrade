@@ -92,7 +92,7 @@ if git pull --rebase --stat origin master; then
           printf "${BLUE}%s${RESET}\n" "Activating scoreboard venv"
           #Activate the venv
           source /home/pi/nhlsb-venv/bin/activate
-          pip3 install -r requirements.txt
+          pip3 install -U -r requirements.txt
           deactivate
        else
           printf "${YELLOW}%s${RESET}\n" "No new python libraries required to be installed."
