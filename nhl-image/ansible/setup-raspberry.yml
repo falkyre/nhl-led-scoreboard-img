@@ -402,13 +402,13 @@
         version: "{{ gh_branch }}"
       when: use_beta
 
-    - name: Remove RPi.GPIO==0.7.0 from /home/pi/nhl-led-scoreboard requirements.txt
-      become: true
-      become_user: pi
-      ansible.builtin.lineinfile:
-        path: /home/pi/nhl-led-scoreboard/requirements.txt
-        line: RPi.GPIO==0.7.0
-        state: absent
+    #- name: Remove RPi.GPIO==0.7.0 from /home/pi/nhl-led-scoreboard requirements.txt
+    #  become: true
+    #  become_user: pi
+    #  ansible.builtin.lineinfile:
+    #    path: /home/pi/nhl-led-scoreboard/requirements.txt
+    #    line: RPi.GPIO==0.7.0
+    #    state: absent
 
     - name: Install required python packages for scoreboard
       become: true
