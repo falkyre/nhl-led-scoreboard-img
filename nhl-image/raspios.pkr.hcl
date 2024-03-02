@@ -36,7 +36,7 @@ source "arm" "pi" {
     type         = "83"
   }
   image_path                   = "${var.sb_img}.img"
-  image_size                   = "3G"
+  image_size                   = "4G"
   image_type                   = "dos"
   qemu_binary_destination_path = "/usr/bin/qemu-arm-static"
   qemu_binary_source_path      = "/usr/bin/qemu-arm-static"
