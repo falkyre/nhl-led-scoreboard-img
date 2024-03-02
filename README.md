@@ -18,13 +18,13 @@
 This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) pre-installed.  This is built with the Hasicorp packer with the packer-builder-arm plugin (https://github.com/mkaczanowski/packer-builder-arm) in a docker image extended with ansible.  Ansible is used to do the provisioning of the image.  For more information, see the [BUILD](https://github.com/falkyre/nhl-led-scoreboard-img/tree/packer/nhl-image/BUILD.md) documentation.
 
 * Works on all Raspberry Pi models
-* Built on Raspbian Lite (no desktop).  As of October 2023, current image build runs on RaspiOS Bullseye lite.  RaspiOS Bookworm (released October 10, 2023) is coming soon.
+* Built on Raspbian Lite (no desktop).  As of March 2024, current image build runs on RaspiOS Bookworm lite.
 * Simple WiFi Setup (Ethernet setup not tested and should only be done by advanced users) using the [comitup](http://davesteele.github.io/comitup/) utility.
 
 This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list.
 
 ### Note about python
-Everything python related is now installed in a virtual environment that is located in the /home/pi/nhl-led-scoreboard/venv directory.  The bashrc script contains code that will auto activate the venv and deactivate upson entering and leaving the /home/pi/nhl-led-scoreboard directory.  The purpose behind this is to keep the OS install as clean as possible (and will be the way the upcoming RaspiOS Bookworm will require python installs to be).  In order to run the code from the command line using sudo, the python command **`must`** now reference the virtual environment installation and not the globally installed one.  Everything is handled with the image but if you are asked to run the code via command line for troubleshooting issues, see below.
+Everything python related is now installed in a virtual environment that is located in the /home/pi/nhl-led-scoreboard/venv directory.  The bashrc script contains code that will auto activate the venv and deactivate upson entering and leaving the /home/pi/nhl-led-scoreboard directory.  The purpose behind this is to keep the OS install as clean as possible and the Python 3.11 in Bookworm will not let you install over system installed packages.  In order to run the code from the command line using sudo, the python command **`must`** now reference the virtual environment installation and not the globally installed one.  Everything is handled with the image but if you are asked to run the code via command line for troubleshooting issues, see below.
 
 Here's a comparison of how to run the scoreboard (assuming you are in the nhl-led-scoreboard directory)
 

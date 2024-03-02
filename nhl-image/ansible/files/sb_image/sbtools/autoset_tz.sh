@@ -4,7 +4,8 @@ zone=$(/usr/bin/wget -O - -q http://geoip.ubuntu.com/lookup | sed -n -e 's/.*<Ti
 current_tz=$(/usr/bin/timedatectl show -p Timezone --value)
 
 if [ "$zone" != "" ] && [ "$zone" != "$current_tz" ] ;then
-    /usr/bin/timedatectl set-timezone $zone 
+    #/usr/bin/timedatectl set-timezone $zone 
+    /usr/bin/raspi-config nonint do_change_timezone $zone
     #Check to see if the setTZ file exists and delete it 
     #This is for when run from the autostart service on boot
     if [ -f "/home/pi/.nhlledportal/setTZ" ]; then

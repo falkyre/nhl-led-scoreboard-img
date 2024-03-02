@@ -158,31 +158,27 @@
         hour: 3
         job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
 
-    # - name: Download zram-config # noqa: latest
-    #   ansible.builtin.git:
-    #     repo: https://github.com/ecdye/zram-config
-    #     dest: /root/zram-config
-    #     recursive: true
+    - name: Download zram-swap # noqa: latest
+      ansible.builtin.git:
+        repo: https://github.com/foundObjects/zram-swap.git
+        dest: /root/zram-swap
+        recursive: true
 
-    # - name: Replace zram-config install.bash
-    #   ansible.builtin.copy:
-    #     src: ./files/zram-config/install.bash
-    #     dest: /root/zram-config/
-    #     backup: true
-    #     mode: "0755"
+    - name: Install zram-swap
+      ansible.builtin.command: /root/zram-swap/install.sh
+      args:
+        chdir: /root/zram-swap
+      register: my_output # <- Registers the command output.
+      changed_when: my_output.rc != 0
 
-    # - name: Install zram-config
-    #   ansible.builtin.command: /root/zram-config/install.bash
-    #   args:
-    #     chdir: /root/zram-config
-    #   register: my_output # <- Registers the command output.
-    #   changed_when: my_output.rc != 0
-
-    # - name: Install ztab
-    #   ansible.builtin.copy:
-    #     src: ./files/zram-config/ztab
-    #     dest: /etc/
-    #     mode: "0644"
+    - name: Update sysctl.conf to optimize zram swap
+      ansible.builtin.blockinfile:
+        path: /etc/sysctl.conf
+        block: |
+          vm.vfs_cache_pressure=500
+          vm.swappiness=100
+          vm.dirty_background_ratio=1
+          vm.dirty_ratio=50
 
     - name: Install aptfile (used for updates)
       ansible.builtin.copy:
@@ -401,14 +397,6 @@
         track_submodules: true
         version: "{{ gh_branch }}"
       when: use_beta
-
-    #- name: Remove RPi.GPIO==0.7.0 from /home/pi/nhl-led-scoreboard requirements.txt
-    #  become: true
-    #  become_user: pi
-    #  ansible.builtin.lineinfile:
-    #    path: /home/pi/nhl-led-scoreboard/requirements.txt
-    #    line: RPi.GPIO==0.7.0
-    #    state: absent
 
     - name: Install required python packages for scoreboard
       become: true
