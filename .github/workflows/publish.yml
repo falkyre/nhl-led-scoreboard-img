@@ -20,5 +20,5 @@ jobs:
              
          - name: Build the packer-arm-ansible image
            run: |
-             docker build . --tag ghcr.io/falkyre/packer-arm-ansible:latest
+             docker build . --tag ghcr.io/falkyre/packer-arm-ansible:latest --tag ghcr.io/falkyre/packer-arm-ansible:1.0.8
              docker push ghcr.io/falkyre/packer-arm-ansible:latest
