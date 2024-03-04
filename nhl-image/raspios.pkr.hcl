@@ -45,7 +45,7 @@ source "arm" "pi" {
 build {
   sources = ["source.arm.pi"]
 
-  provisioner "ansible" {
+  provisioner "ansible-local" {
     extra_arguments = [
      # "-vvv",
       "--connection=chroot",
