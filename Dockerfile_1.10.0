@@ -1,8 +1,13 @@
 # syntax = docker/dockerfile:1.3
 
-FROM mkaczanowski/packer-builder-arm:1.0.8
+FROM mkaczanowski/packer-builder-arm
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+ENTRYPOINT ["/bin/packer"]
+
+# Install the latest version of the official plugins
+RUN /bin/packer plugins install "github.com/hashicorp/ansible"
 
 RUN --mount=type=cache,target=/var/cache/apt,id=apt \
     apt update \
