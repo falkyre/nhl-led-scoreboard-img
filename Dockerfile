@@ -16,3 +16,8 @@ RUN --mount=type=cache,target=/var/cache/apt,id=apt \
     && ansible-galaxy collection install community.general\
     && (rm -f /var/cache/apt/archives/*.deb \
     /var/cache/apt/archives/partial/*.d:wq!eb /var/cache/apt/*.bin /var/lib/apt/lists/* || true)
+
+ENTRYPOINT ["/bin/packer"]
+
+# Install the latest version of the official plugins
+RUN /bin/packer plugins install "github.com/hashicorp/ansible"
