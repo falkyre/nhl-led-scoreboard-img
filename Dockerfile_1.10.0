@@ -22,3 +22,5 @@ ENTRYPOINT ["/bin/packer"]
 
 # Install the latest version of the official plugins
 RUN /bin/packer plugins install "github.com/hashicorp/ansible"
+
+RUN /bin/packer init
