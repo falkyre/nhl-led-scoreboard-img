@@ -18,7 +18,15 @@ jobs:
              username: ${{ github.actor }}
              password: ${{ secrets.GITHUB_TOKEN }}
              
-         - name: Build the packer-arm-ansible image
-           run: |
-             docker build . --tag ghcr.io/falkyre/packer-arm-ansible:latest --tag ghcr.io/falkyre/packer-arm-ansible:1.0.8
-             docker push ghcr.io/falkyre/packer-arm-ansible:latest
+        #  - name: Build the packer-arm-ansible image
+        #    run: |
+        #      docker build . --tag ghcr.io/falkyre/packer-arm-ansible:latest --tag ghcr.io/falkyre/packer-arm-ansible:1.0.8
+        #      docker push ghcr.io/falkyre/packer-arm-ansible:latest
+
+         - name: Build and push
+           uses: docker/build-push-action@v5
+           with:
+           context: .
+            platforms: linux/amd64,linux/arm64
+            push: true
+            tags: falkyre/packer-arm-ansible:latest
