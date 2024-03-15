@@ -509,3 +509,10 @@
         path: /etc/apt/apt.conf.d/51cache
         state: absent
       when: use_apt_proxy
+
+    - name: Clean up apt cache
+      become: true
+      ansible.builtin.apt:
+        autoclean: true
+        autoremove: true
+        clean: true

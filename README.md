@@ -18,7 +18,7 @@
 This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) pre-installed.  This is built with the Hasicorp packer with the packer-builder-arm plugin (https://github.com/mkaczanowski/packer-builder-arm) in a docker image extended with ansible.  Ansible is used to do the provisioning of the image.  For more information, see the [BUILD](https://github.com/falkyre/nhl-led-scoreboard-img/tree/packer/nhl-image/BUILD.md) documentation.
 
 * Works on all Raspberry Pi models
-* Built on Raspbian Lite (no desktop).  As of March 2024, current image build runs on RaspiOS Bookworm lite.
+* Built on Raspbian Lite (no desktop).  As of March 2024, current image build runs on latest RaspiOS Bookworm lite.
 * Simple WiFi Setup (Ethernet setup not tested and should only be done by advanced users) using the [comitup](http://davesteele.github.io/comitup/) utility.
 
 This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list.
@@ -59,7 +59,11 @@ If you'd like to support me:
 
 ## Flash to SD Card
 
-The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD card is to use [Etcher](https://www.balena.io/etcher/).
+### NOTE: Minimum SD Card size required is: 8GB
+
+The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD card is to use [Etcher](https://www.balena.io/etcher/).  If you decide to use the official Raspberry Pi IMager, make sure you DO NOT apply any customizations to the OS when it gets transferred to the SD card.  If you do, your SD card will not work as intended for this project (if at all).
+
+
   
 <p align="center">
     <img src="https://user-images.githubusercontent.com/3979615/74733445-789cac00-52a0-11ea-9167-05b42d6383ad.gif" width="600">
