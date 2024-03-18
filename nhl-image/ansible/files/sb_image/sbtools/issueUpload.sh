@@ -7,7 +7,13 @@ else
 fi
 
 #Create temp file with the data
-ROOT=$(/usr/bin/dirname "$(/usr/bin/git rev-parse --git-dir)")
+#Check to see if we are running from the image
+if [ -d /home/pi/.nhlledportal ]; then
+   ROOT="/home/pi/nhl-led-scoreboard/"
+else 
+   ROOT=$(/usr/bin/dirname "$(/usr/bin/git rev-parse --git-dir)")
+fi
+
 version=$(/bin/cat "${ROOT}"/VERSION)
 currdate=$(date)
 echo "nhl-led-scoreboard issue data ${currdate}" > /tmp/issue.txt

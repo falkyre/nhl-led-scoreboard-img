@@ -47,7 +47,7 @@ build {
 
   provisioner "ansible" {
     extra_arguments = [
-     # "-vvv",
+     "-vvvvv",
       "--connection=chroot",
       "-e ansible_host=/tmp/rpi_chroot"
       ]

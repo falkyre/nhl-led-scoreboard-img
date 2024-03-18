@@ -39,8 +39,8 @@ jobs:
       id: release_event
       if: ${{ github.event.inputs.use_version == 'true' }}
       run: |
-        version=$(cat VERSION| grep version | awk -F':' '{print $2}')
-        detail="$(cat VERSION| grep detail | awk -F':' '{print $2}')"
+        version=$(cat nhl-image/ansible/VERSION| grep version | awk -F':' '{print $2}')
+        detail="$(cat nhl-image/ansible/VERSION| grep detail | awk -F':' '{print $2}')"
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "detail=$detail" >> $GITHUB_OUTPUT
       shell: bash

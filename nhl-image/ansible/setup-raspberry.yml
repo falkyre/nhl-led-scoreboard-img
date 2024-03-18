@@ -14,6 +14,7 @@
     apt_proxy: ""
     use_apt_proxy: false
     pypi_proxy: ""
+    imgver: "{{ lookup('file', 'VERSION').splitlines()[0].split(':')[-1] }}"
 
   tasks:
     # use only become_user: root if task should be run as superuser
@@ -362,19 +363,12 @@
         - setTZ
         - SETUP
 
-    - name: Get image version
-      ansible.builtin.uri:
-        url: 'https://lastversion-api.getpagespeed.com/falkyre/nhl-led-scoreboard-img?version'
-        method: GET
-        return_content: true
-      register: imgver
-
     - name: Put image version in .nhlledportal
       become: true
       become_user: pi
       ansible.builtin.copy:
         dest: ~/.nhlledportal/imgver
-        content: 'You are running the image version V{{ imgver.content | trim() }}'
+        content: 'You are running the image version {{ imgver }}'
         mode: preserve
 
 
