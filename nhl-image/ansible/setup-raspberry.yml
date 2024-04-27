@@ -54,13 +54,13 @@
         replace: "{{ apt_proxy }}"
       when: use_apt_proxy
 
-    - name: Upgrade all apt packages
-      ansible.builtin.apt:
-        name: "*"
-        state: latest
-        update_cache: true
-        force_apt_get: true
-        only_upgrade: true
+    # - name: Upgrade all apt packages
+    #   ansible.builtin.apt:
+    #     name: "*"
+    #     state: latest
+    #     update_cache: true
+    #     force_apt_get: true
+    #     only_upgrade: true
 
     - name: Install git and build essential
       ansible.builtin.apt:

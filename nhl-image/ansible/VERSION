@@ -1,2 +1,2 @@
-version:v1.8.2.1
-detail:This is a minor update to the image to fix the splash animation on boot.  The image is still running V1.8.2 scoreboard
+version:v1.8.4
+detail:This update contains the latest NHL LED Scoreboard code (V1.8.4) and updates the raspiOS to the March 15, 2024 release.
