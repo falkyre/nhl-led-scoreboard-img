@@ -260,7 +260,7 @@
 
     - name: Install comitup deb package from the internet
       ansible.builtin.apt:
-        deb: https://davesteele.github.io/comitup/latest/davesteele-comitup-apt-source_latest.deb
+        deb: https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb
         dpkg_options: "force-all"
 
     - name: Install comitup and comitup-web packages
