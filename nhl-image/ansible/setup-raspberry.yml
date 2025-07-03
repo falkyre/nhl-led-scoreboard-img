@@ -7,7 +7,7 @@
     keyboard_keymap: "us"
     timezone: "America/Toronto"
     locale: en_US.UTF-8
-    gh_repo: "https://github.com/riffnshred/nhl-led-scoreboard.git"
+    gh_repo: "https://github.com/falkyre/nhl-led-scoreboard.git"
     use_beta: false
     gh_branch: "beta"
     system_hostname: scoreboard
