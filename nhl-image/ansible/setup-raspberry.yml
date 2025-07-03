@@ -189,6 +189,7 @@
 
     - name: Install OS packages needed for scoreboard
       ansible.builtin.apt:
+        update_cache: yes
         name:
           - network-manager
           - python3-pip
