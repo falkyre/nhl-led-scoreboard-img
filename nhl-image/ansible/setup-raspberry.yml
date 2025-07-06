@@ -226,6 +226,7 @@
           - bluez-firmware
           - pi-bluetooth
           - triggerhappy
+          - python3-networkmanager
         clean: true
         state: absent
 
