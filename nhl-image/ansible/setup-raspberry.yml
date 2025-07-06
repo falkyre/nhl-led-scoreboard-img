@@ -266,7 +266,7 @@
       ansible.builtin.apt:
         update_cache: true
         name: "{{ item }}"
-      with_items:--
+      with_items:
         - comitup
         - comitup-watch
 
