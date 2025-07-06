@@ -191,7 +191,6 @@
       ansible.builtin.apt:
         update_cache: yes
         name:
-          - network-manager
           - python3-pip
           - python3-cairosvg
           - python3-dev
@@ -226,7 +225,6 @@
           - bluez-firmware
           - pi-bluetooth
           - triggerhappy
-          - python3-networkmanager
         clean: true
         state: absent
 
@@ -268,8 +266,7 @@
       ansible.builtin.apt:
         update_cache: true
         name: "{{ item }}"
-      with_items:
-        - python3-networkmanager
+      with_items:--
         - comitup
         - comitup-watch
 
