@@ -7,6 +7,7 @@
     keyboard_keymap: "us"
     timezone: "America/Toronto"
     locale: en_US.UTF-8
+    wifi_country: CA
     gh_repo: "https://github.com/falkyre/nhl-led-scoreboard.git"
     use_beta: false
     gh_branch: "beta"
@@ -35,6 +36,11 @@
 
     - name: Setup locale using raspi-config
       ansible.builtin.command: "/usr/bin/raspi-config nonint do_change_locale {{ locale }}"
+      register: my_output # <- Registers the command output.
+      changed_when: my_output.rc != 0
+
+    - name: Setup Wifi Regulatory Country using raspi-config
+      ansible.builtin.command: "/usr/bin/raspi-config nonint do_wifi_country {{ wifi_country }}"
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
 
@@ -296,6 +302,7 @@
       with_items:
         - sb_splash.service
         - sb_autosettz.service
+        - wifi-on.service
 
     - name: Enable scoreboard services
       ansible.builtin.systemd:
@@ -305,6 +312,7 @@
       with_items:
         - sb_splash.service
         - sb_autosettz.service
+        - wifi-on.service
 
     - name: Copy scoreboard supervisord.conf
       ansible.builtin.copy:
