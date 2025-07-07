@@ -17,12 +17,12 @@ Once you have created the above image, you can now run your build.
 docker run -e TZ=America/Winnipeg --rm -it --privileged -v /dev:/dev -v ${PWD}:/build packer-builder-arm-ansible:vlatest build raspios.pkr.hcl
 ```
 
-If you want to "test" your image without burning to an SD card and raspberry pi, you can use this docker image to mount the raspberry pi image and launch bash on it.  This uses Qemu to emulate the raspberry pi arm chip.
+If you want to "test" your image without burning to an SD card and raspberry pi, you can use this docker image to mount the raspberry pi image and launch bash on it.  This uses Qemu to emulate the raspberry pi arm chip.  If you are running on a Mac M series chip (Apple Silicon), make sure that you are using the Rosetta Emulation in the Docker Desktop for this to run properly.  At this time, it does not appear that Podman is able to run the emulator.
 
 ```
 docker run --rm -it --privileged -v ${PWD}/rpios-scoreboard-V1.6.12.img:/usr/rpi/rpi.img -w /usr/rpi ryankurte/docker-rpi-emu:latest ./run.sh rpi.img /bin/bash
 ```
-You can use this to endure that everything has been installed in the proper locations and even test some commands (but not the actual scoreboard code)
+You can use this to ensure that everything has been installed in the proper locations and even test some commands (but not the actual scoreboard code)
 
 To speed image builds up, there are two proxy programs used.  One, apt-cacher-ng, is used to cache the OS packages.  The other is called proxpi and this caches PyPi python packages.  In the ansible playbook, they are defined under the variables section at the top of the playbook.  Once these were added to the build, the build time for the image dropped from about 1 hour down to about 15 minutes.
 
