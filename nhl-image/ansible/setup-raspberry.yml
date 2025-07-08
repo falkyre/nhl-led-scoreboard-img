@@ -328,6 +328,13 @@
         backup: true
         mode: preserve
 
+    - name: Copy scoreboard scoreboard-emulated.conf
+      ansible.builtin.copy:
+        src: ./files/sb_image/scoreboard-emulated.conf
+        dest: /etc/supervisor/conf.d/
+        backup: true
+        mode: preserve
+
     - name: Copy sbtools directory
       become: true
       become_user: pi
