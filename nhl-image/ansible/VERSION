@@ -1,2 +1,2 @@
 version:2025.7.0
-detail:This update contains the latest NHL LED Scoreboard code (2025.7.0) from my repository and updates the raspiOS to the May 13, 2025 release.  All future builds of the image will be based on my repository now.
+detail:This update contains the latest NHL LED Scoreboard code (2025.7.0) from my repository and updates the raspiOS to the May 13, 2025 release.  All future builds of the image will be based on my repository now.  The image now has two supervisor entries.  One will be the main scoreboard and the second will be the emulated one.  The emulated one is off by default.
