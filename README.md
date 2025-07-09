@@ -6,8 +6,6 @@
 
 <span align="center">
 
-> [!WARNING]
-> Although the image will boot, the scoreboard code it's based on (V1.8.x) no longer works.  The latest working code for the scoreboard, V2025.5.x has not been moved to the image yet.  The process to build the image is currently broken.  DO NOT expect the image to work if you use it.
 
 # NHL LED Scoreboard Raspberry Pi Image
 [![Create Release - Image](https://github.com/falkyre/nhl-led-scoreboard-img/actions/workflows/main.yml/badge.svg)](https://github.com/falkyre/nhl-led-scoreboard-img/actions/workflows/main.yml)
