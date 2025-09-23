@@ -18,7 +18,7 @@
 
 This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) pre-installed.  This is built with the Hasicorp packer with the packer-builder-arm plugin (https://github.com/mkaczanowski/packer-builder-arm) in a docker image extended with ansible.  Ansible is used to do the provisioning of the image.  For more information, see the [BUILD](https://github.com/falkyre/nhl-led-scoreboard-img/tree/packer/nhl-image/BUILD.md) documentation.
 
-* Works on all Raspberry Pi models
+* Works on Raspberry Pi models zero 2w up to the pi 4.  The pi zero w will crash and the pi 5 requires a rewrite of the software due to how it handles GPIO now.
 * Built on Raspbian Lite (no desktop).  As of March 2024, current image build runs on latest RaspiOS Bookworm lite.
 * Simple WiFi Setup (Ethernet setup not tested and should only be done by advanced users) using the [comitup](http://davesteele.github.io/comitup/) utility.
 
