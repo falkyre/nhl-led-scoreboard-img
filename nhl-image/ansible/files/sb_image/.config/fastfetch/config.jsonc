@@ -1,0 +1,88 @@
+// This is a fastfetch configuration file in JSONC format.
+// JSONC is JSON with comments.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "modules": [
+    // Corresponds to 'info title'
+    "title",
+
+    // Corresponds to 'info underline'
+    "separator",
+
+    // Basic system information modules
+    { "type": "os", "key": "OS" },
+    { "type": "host", "key": "Host" },
+
+    // 'kernel_shorthand="on"' is achieved by formatting the output to show only the release version.
+    { "type": "kernel", "key": "Kernel", "format": "{release}" },
+
+    // 'uptime_shorthand="on"' is the default behavior in fastfetch.
+    { "type": "uptime", "key": "Uptime" },
+
+    "packages",
+    "shell",
+    { "type": "display", "key": "Resolution" },
+    "icons",
+    "terminal",
+    { "type": "terminalfont", "key": "Terminal Font" },
+
+    // 'cpu_temp="C"' is handled by setting "showTemp" to true and adding the temp to the format string.
+    { "type": "cpu", "key": "CPU", "format": "{name} ({cores}) @ {freq} [{temp}]", "showTemp": true },
+
+    "gpu",
+
+    // 'memory_percent="off"' is achieved by customizing the format string to exclude the percentage.
+    { "type": "memory", "key": "Memory", "format": "{used} / {total}" },
+
+    { "type": "cpuusage", "key": "CPU Usage" },
+
+    // 'disk_show=('/')' is handled by specifying which folders to check.
+    { "type": "disk", "key": "Disk", "folders": ["/"] },
+
+    { "type": "localip", "key": "Local IP" },
+    "locale",
+
+    // This is a custom module to replicate 'prin "Time Zone" "$(timedatectl show -p Timezone --value)"'
+    {
+      "type": "command",
+      "key": "Time Zone",
+      "text": "(timedatectl show -p Timezone --value)"
+    },
+
+    // A 'break' module creates a blank line, just like 'prin' in neofetch.
+    "break",
+
+    // Custom modules for your NHL LED Scoreboard status.
+    // ANSI escape codes are used to replicate the colors and text formatting.
+    {
+      "type": "custom",
+      "key": "\u001b[33mNHL LED Scoreboard Image\u001b[0m",
+      "shell": "echo \"\u001b[1m\u001b[38;5;10m$(cat /home/pi/.nhlledportal/imgver)\u001b[0m\""
+    },
+    {
+      "type": "custom",
+      "key": "\u001b[33mNHL LED Scoreboard\u001b[0m",
+      "shell": "status=$(cat /home/pi/.nhlledportal/status); if [[ $status == *'UPDATE'* ]]; then echo \"\\u001b[1m\\u001b[38;5;10m\\u001b[7m $status \\u001b[27m\"; else echo \"\\u001b[38;5;6m $status\"; fi"
+    },
+
+    "break",
+
+    // Custom modules to display the static help text for your scoreboard commands.
+    // "showKey": false hides the key and colon, so only the value is printed.
+    {
+      "type": "custom",
+      "showKey": false,
+      "text": "\u001b[33m\u001b[4mscoreboard commands:\u001b[24m"
+    },
+    {
+      "type": "custom",
+      "showKey": false,
+      "text": "\u001b[1msb-help sb-tools sb-issue sb-updatecheck sb-changelog sb-upgrade sb-resetwifi\u001b[0m"
+    },
+    {
+      "type": "custom",
+      "showKey": false,
+      "text": "\u001b[1msb-stderr sb-stdout sb-livelog sb-stop sb-start sb-restart sb-status sb-sysinfo\u001b[0m"
+    }
+  ]
+}

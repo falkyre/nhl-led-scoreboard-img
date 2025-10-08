@@ -37,11 +37,11 @@ fi
 # Update upstream remote to nhl-led-scoreboard 
 git remote -v | while read remote url extra; do
   case "$url" in
-  https://github.com/riffnshred/nhl-led-scoreboard(|.git))
-    git remote set-url "$remote" "https://github.com/riffnshred/nhl-led-scoreboard.git"
+  https://github.com/falkyre/nhl-led-scoreboard(|.git))
+    git remote set-url "$remote" "https://github.com/falkyre/nhl-led-scoreboard.git"
     break ;;
-  git@github.com:riffnshred/nhl-led-scoreboard(|.git))
-    git remote set-url "$remote" "git@github.com:riffnshred/nhl-led-scoreboard.git"
+  git@github.com:falkyre/nhl-led-scoreboard(|.git))
+    git remote set-url "$remote" "git@github.com:falkyre/nhl-led-scoreboard.git"
     break ;;
   esac
 done

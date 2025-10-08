@@ -1,11 +1,10 @@
 <p align="center">
-<a href="https://github.com/riffnshred/nhl-led-scoreboard">
-<img src="https://github.com/riffnshred/nhl-led-scoreboard/blob/master/assets/images/scoreboard.jpg" height="150">
+<a href="https://github.com/falkyre/nhl-led-scoreboard">
+<img src="https://github.com/falkyre/nhl-led-scoreboard/blob/master/assets/images/scoreboard.jpg" height="150">
 </a>
 </p>
 
 <span align="center">
-
 
 # NHL LED Scoreboard Raspberry Pi Image
 [![Create Release - Image](https://github.com/falkyre/nhl-led-scoreboard-img/actions/workflows/main.yml/badge.svg)](https://github.com/falkyre/nhl-led-scoreboard-img/actions/workflows/main.yml)
@@ -16,10 +15,10 @@
 
 </span>
 
-This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/riffnshred/nhl-led-scoreboard) pre-installed.  This is built with the Hasicorp packer with the packer-builder-arm plugin (https://github.com/mkaczanowski/packer-builder-arm) in a docker image extended with ansible.  Ansible is used to do the provisioning of the image.  For more information, see the [BUILD](https://github.com/falkyre/nhl-led-scoreboard-img/tree/packer/nhl-image/BUILD.md) documentation.
+This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/falkyre/nhl-led-scoreboard) pre-installed.  This is built with the Hasicorp packer with the packer-builder-arm plugin (https://github.com/mkaczanowski/packer-builder-arm) in a docker image extended with ansible.  Ansible is used to do the provisioning of the image.  For more information, see the [BUILD](https://github.com/falkyre/nhl-led-scoreboard-img/tree/packer/nhl-image/BUILD.md) documentation.
 
-* Works on Raspberry Pi models **_zero 2w up to the pi 4_**.  The pi zero w will crash and the pi 5 requires a rewrite of the software due to how it handles GPIO now.
-* Built on Raspbian Lite (no desktop).  As of March 2024, current image build runs on latest RaspiOS Bookworm lite.
+* Works on Raspberry Pi models - Zero 2w up to Raspberry pi 4
+* Built on Raspbian Lite (no desktop).  As of October 2025, current image build runs on latest RaspiOS Trixie lite (32 and 64bit).
 * Simple WiFi Setup (Ethernet setup not tested and should only be done by advanced users) using the [comitup](http://davesteele.github.io/comitup/) utility.
 
 This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list.
@@ -137,7 +136,7 @@ The official NHL LED Scoreboard Discord server where users can discuss NHL LED S
 
 </span>
 
-[NHL LED Scoreboard Forum](https://github.com/riffnshred/nhl-led-scoreboard/discussions)
+[NHL LED Scoreboard Forum](https://github.com/falkyre/nhl-led-scoreboard/discussions)
 ## NHL Led Scoreboard command line utilities
 
 This table contains important information about the command line tools you can use. 

@@ -107,7 +107,7 @@
         mode: preserve
 
     - name: Force isocpus=3 in cmdline.txt so matrix code runs smoother
-      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/cmdline.txt # noqa: command-instead-of-module
+      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/firmware/cmdline.txt # noqa: command-instead-of-module
       args:
         chdir: /boot/
       register: my_output # <- Registers the command output.
@@ -197,6 +197,7 @@
       ansible.builtin.apt:
         update_cache: yes
         name:
+          - cmake
           - cython3
           - python3-pip
           - python3-cairosvg
@@ -212,8 +213,7 @@
           - python3-virtualenv
           - python3-venv
           - supervisor
-          - libatlas-base-dev
-          - neofetch
+          - fastfetch
           - pastebinit
           - jq
           - neovim
@@ -344,20 +344,20 @@
         dest: ~/
         mode: preserve
 
-    - name: Create .config/neofetch directory in pi home
+    - name: Create .config/fastfetch directory in pi home
       become: true
       become_user: pi
       ansible.builtin.file:
-        path: ~/.config/neofetch
+        path: ~/.config/fastfetch
         state: directory
         mode: "0755"
 
-    - name: Copy scoreboard neofetch config
+    - name: Copy scoreboard fastfetch config
       become: true
       become_user: pi
       ansible.builtin.copy:
-        src: ./files/sb_image/.config/neofetch/neofetch_config.conf
-        dest: ~/.config/neofetch/config.conf
+        src: ./files/sb_image/.config/fastfetch/config.jsonc
+        dest: ~/.config/fastfetch/config.jsonc
         mode: "0755"
 
     - name: Create .nhlledportal directory

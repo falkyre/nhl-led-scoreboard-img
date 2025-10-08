@@ -40,6 +40,6 @@ echo "${scoreboard_proc} stdout log, last 50kb" >> /tmp/issue.txt
 echo "=================================" >> /tmp/issue.txt
 /usr/bin/supervisorctl tail -50000 $scoreboard_proc >> /tmp/issue.txt
 url=$(/usr/bin/pastebinit -b paste.ubuntu.com -t "nhl-led-scoreboard issue logs and config" < /tmp/issue.txt)
-echo "Take this url and paste it into your issue.  You can create an issue @ https://github.com/riffnshred/nhl-led-scoreboard/issues"
+echo "Take this url and paste it into your issue.  You can create an issue @ https://github.com/falkyre/nhl-led-scoreboard/issues"
 echo "${url}"
 rm /tmp/issue.txt
