@@ -115,16 +115,16 @@
         mode: preserve
 
   # The next two will need to be removed for Trixie as there is a systemd unit that handles this now
-    - name: Download resize2fs_once binary
-      ansible.builtin.get_url:
-        url: https://github.com/RPi-Distro/pi-gen/tree/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
-        dest: /etc/init.d/resize2fs_once
-        mode: "0755"
+    # - name: Download resize2fs_once binary
+    #   ansible.builtin.get_url:
+    #     url: https://github.com/RPi-Distro/pi-gen/tree/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
+    #     dest: /etc/init.d/resize2fs_once
+    #     mode: "0755"
 
-    - name: Force automatic rootfs expansion on first boot
-      ansible.builtin.systemd:
-        service: resize2fs_once
-        enabled: true
+    # - name: Force automatic rootfs expansion on first boot
+    #   ansible.builtin.systemd:
+    #     service: resize2fs_once
+    #     enabled: true
 
     - name: Copy global bash.bashrc
       ansible.builtin.copy:
