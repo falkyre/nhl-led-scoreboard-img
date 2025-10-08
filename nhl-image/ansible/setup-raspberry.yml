@@ -60,14 +60,6 @@
         replace: "{{ apt_proxy }}"
       when: use_apt_proxy
 
-    # - name: Upgrade all apt packages
-    #   ansible.builtin.apt:
-    #     name: "*"
-    #     state: latest
-    #     update_cache: true
-    #     force_apt_get: true
-    #     only_upgrade: true
-
     - name: Install git and build essential
       ansible.builtin.apt:
         name:
@@ -106,8 +98,9 @@
         content: 'pi:{{ pi_passwd.stdout }}'
         mode: preserve
 
+    # This will need to change with Trixie.  The cmdline.txt is in /boot/fireware now
     - name: Force isocpus=3 in cmdline.txt so matrix code runs smoother
-      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/firmware/cmdline.txt # noqa: command-instead-of-module
+      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/cmdline.txt # noqa: command-instead-of-module
       args:
         chdir: /boot/
       register: my_output # <- Registers the command output.
@@ -121,9 +114,10 @@
           blacklist snd_bcm2835
         mode: preserve
 
+  # The next two will need to be removed for Trixie as there is a systemd unit that handles this now
     - name: Download resize2fs_once binary
       ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/RPi-Distro/pi-gen/master/stage2/01-sys-tweaks/files/resize2fs_once
+        url: https://github.com/RPi-Distro/pi-gen/tree/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
         dest: /etc/init.d/resize2fs_once
         mode: "0755"
 
