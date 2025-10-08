@@ -207,7 +207,7 @@
           - python3-virtualenv
           - python3-venv
           - supervisor
-          - fastfetch
+          - neofetch
           - pastebinit
           - jq
           - neovim
@@ -338,20 +338,20 @@
         dest: ~/
         mode: preserve
 
-    - name: Create .config/fastfetch directory in pi home
+    - name: Create .config/neofetch directory in pi home
       become: true
       become_user: pi
       ansible.builtin.file:
-        path: ~/.config/fastfetch
+        path: ~/.config/neofetch
         state: directory
         mode: "0755"
 
-    - name: Copy scoreboard fastfetch config
+    - name: Copy scoreboard neofetch config
       become: true
       become_user: pi
       ansible.builtin.copy:
-        src: ./files/sb_image/.config/fastfetch/config.jsonc
-        dest: ~/.config/fastfetch/config.jsonc
+        src: ./files/sb_image/.config/neofetch/neofetch_config.conf
+        dest: ~/.config/neofetch/config.conf
         mode: "0755"
 
     - name: Create .nhlledportal directory
