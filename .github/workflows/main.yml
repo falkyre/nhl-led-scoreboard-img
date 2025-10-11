@@ -4,8 +4,17 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:  
-   
+  workflow_dispatch:
+    inputs:
+      run_type:
+        description: 'Run type: "Test" or "Release"'
+        required: true
+        default: 'Test'
+        type: choice
+        options:
+        - Test
+        - Release
+
 jobs:
   build:
 
@@ -13,11 +22,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Get the version (git tag)
       uses: maltoze/get-version-action@v1
       id: get_version
-      
+
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -42,7 +51,15 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         exclude_types: other,doc,chore
 
+    - name: Upload image artifact for testing
+      if: github.event.inputs.run_type == 'Test'
+      uses: actions/upload-artifact@v4
+      with:
+        name: rpios-scoreboard-${{ steps.get_version.outputs.version }}.img
+        path: rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
+
     - name: GH Release
+      if: github.event.inputs.run_type == 'Release' || github.event_name == 'push'
       uses: softprops/action-gh-release@v0.1.15
       with:
         prerelease: true
