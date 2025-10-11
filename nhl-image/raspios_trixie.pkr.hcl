@@ -30,7 +30,7 @@ source "arm" "pi" {
     filesystem   = "ext4"
     mountpoint   = "/"
     name         = "root"
-    size         = "0"
+    size         = "4G"
     start_sector = "1064960"
     type         = "83"
   }
