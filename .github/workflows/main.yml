@@ -27,7 +27,7 @@ jobs:
 
     - name: Build scoreboard image
       run: |
-        docker run --rm --privileged -v /dev:/dev -v ${PWD}/nhl-image:/build ghcr.io/falkyre/packer-arm-ansible:latest build raspios.pkr.hcl
+        docker run --rm --privileged -v /dev:/dev -v ${PWD}/nhl-image:/build ghcr.io/falkyre/packer-arm-ansible:latest build raspios_trixie.pkr.hcl
         du -h nhl-image/rpios-scoreboard.img
         du -h --apparent-size nhl-image/rpios-scoreboard.img
 
