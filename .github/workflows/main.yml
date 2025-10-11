@@ -14,6 +14,16 @@ on:
         options:
         - Test
         - Release
+      hcl_file:
+        description: 'HCL file to use'
+        required: true
+        default: 'raspios_trixie.pkr.hcl'
+        type: choice
+        options:
+        - raspios.pkr.hcl
+        - raspios_trixie.pkr.hcl
+        - raspios_trixie_3264.hcl
+        - alpine.pkr.hcl
 
 jobs:
   build:
@@ -27,6 +37,14 @@ jobs:
       uses: maltoze/get-version-action@v1
       id: get_version
 
+    - name: Set HCL file
+      run: |
+        if [ "${{ github.event_name }}" == "push" ]; then
+          echo "HCL_FILE=raspios.pkr.hcl" >> $GITHUB_ENV
+        else
+          echo "HCL_FILE=${{ github.event.inputs.hcl_file }}" >> $GITHUB_ENV
+        fi
+
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -36,7 +54,7 @@ jobs:
 
     - name: Build scoreboard image
       run: |
-        docker run --rm --privileged -v /dev:/dev -v ${PWD}/nhl-image:/build ghcr.io/falkyre/packer-arm-ansible:latest build raspios_trixie.pkr.hcl
+        docker run --rm --privileged -v /dev:/dev -v ${PWD}/nhl-image:/build ghcr.io/falkyre/packer-arm-ansible:latest build $HCL_FILE
         du -h nhl-image/rpios-scoreboard.img
         du -h --apparent-size nhl-image/rpios-scoreboard.img
 
@@ -66,4 +84,3 @@ jobs:
         generate_release_notes: true
         body: ${{ steps.changelog.outputs.changes }}
         files: rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
-
