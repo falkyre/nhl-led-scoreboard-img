@@ -98,9 +98,8 @@
         content: 'pi:{{ pi_passwd.stdout }}'
         mode: preserve
 
-    # This will need to change with Trixie.  The cmdline.txt is in /boot/fireware now
     - name: Force isocpus=3 in cmdline.txt so matrix code runs smoother
-      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/cmdline.txt # noqa: command-instead-of-module
+      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/firmware/cmdline.txt # noqa: command-instead-of-module
       args:
         chdir: /boot/
       register: my_output # <- Registers the command output.
@@ -114,17 +113,12 @@
           blacklist snd_bcm2835
         mode: preserve
 
-  # The next two will need to be removed for Trixie as there is a systemd unit that handles this now
-    - name: Download resize2fs_once binary
-      ansible.builtin.get_url:
-        url: https://github.com/RPi-Distro/pi-gen/tree/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
-        dest: /etc/init.d/resize2fs_once
-        mode: "0755"
-
-    - name: Force automatic rootfs expansion on first boot
-      ansible.builtin.systemd:
-        service: resize2fs_once
-        enabled: true
+    - name: Force filesystem resize on next boot
+      ansible.builtin.shell: sed -i 's/$/ resize/' /boot/firmware/cmdline.txt # noqa: command-instead-of-module
+      args:
+        chdir: /boot/firmware
+      register: my_output # <- Registers the command output.
+      changed_when: my_output.rc != 0
 
     - name: Copy global bash.bashrc
       ansible.builtin.copy:
@@ -159,34 +153,6 @@
         hour: 3
         job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
 
-    - name: Download zram-swap # noqa: latest
-      ansible.builtin.git:
-        repo: https://github.com/foundObjects/zram-swap.git
-        dest: /root/zram-swap
-        recursive: true
-
-    - name: Install zram-swap
-      ansible.builtin.command: /root/zram-swap/install.sh
-      args:
-        chdir: /root/zram-swap
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
-
-    - name: Update sysctl.conf to optimize zram swap
-      ansible.builtin.blockinfile:
-        path: /etc/sysctl.conf
-        block: |
-          vm.vfs_cache_pressure=500
-          vm.swappiness=100
-          vm.dirty_background_ratio=1
-          vm.dirty_ratio=50
-
-    - name: Install aptfile (used for updates)
-      ansible.builtin.copy:
-        src: ./files/sb_image/aptfile
-        dest: /usr/local/bin
-        mode: "0755"
-
     - name: Install OS packages needed for scoreboard
       ansible.builtin.apt:
         update_cache: true
@@ -207,7 +173,7 @@
           - python3-virtualenv
           - python3-venv
           - supervisor
-          - neofetch
+          - fastfetch
           - pastebinit
           - jq
           - neovim
@@ -338,20 +304,20 @@
         dest: ~/
         mode: preserve
 
-    - name: Create .config/neofetch directory in pi home
+    - name: Create .config/fastfetch directory in pi home
       become: true
       become_user: pi
       ansible.builtin.file:
-        path: ~/.config/neofetch
+        path: ~/.config/fastfetch
         state: directory
         mode: "0755"
 
-    - name: Copy scoreboard neofetch config
+    - name: Copy scoreboard fastfetch config
       become: true
       become_user: pi
       ansible.builtin.copy:
-        src: ./files/sb_image/.config/neofetch/neofetch_config.conf
-        dest: ~/.config/neofetch/config.conf
+        src: ./files/sb_image/.config/fastfetch/config.jsonc
+        dest: ~/.config/fastfetch/config.jsonc
         mode: "0755"
 
     - name: Create .nhlledportal directory

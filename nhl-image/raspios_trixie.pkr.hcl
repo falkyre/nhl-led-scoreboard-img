@@ -50,7 +50,7 @@ build {
       "--connection=chroot",
       "-e ansible_host=/tmp/rpi_chroot"
       ]
-    playbook_file   = "ansible/setup-raspberry.yml"
+    playbook_file   = "ansible/setup-raspberry-trixie.yml"
   }
 
   post-processor "compress" {

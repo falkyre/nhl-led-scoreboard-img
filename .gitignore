@@ -201,3 +201,4 @@ config/custom_logos.json
 *.msp
 *.txz
 !scoreboard_ui.tar.gz
+.ansible/*
