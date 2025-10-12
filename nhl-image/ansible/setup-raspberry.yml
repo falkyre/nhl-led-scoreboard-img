@@ -115,16 +115,16 @@
         mode: preserve
 
   # The next two will need to be removed for Trixie as there is a systemd unit that handles this now
-    - name: Download resize2fs_once binary
-      ansible.builtin.get_url:
-        url: https://github.com/RPi-Distro/pi-gen/tree/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
-        dest: /etc/init.d/resize2fs_once
-        mode: "0755"
+    # - name: Download resize2fs_once binary
+    #   ansible.builtin.get_url:
+    #     url: https://github.com/RPi-Distro/pi-gen/blob/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
+    #     dest: /etc/init.d/resize2fs_once
+    #     mode: "0755"
 
-    - name: Force automatic rootfs expansion on first boot
-      ansible.builtin.systemd:
-        service: resize2fs_once
-        enabled: true
+    # - name: Force automatic rootfs expansion on first boot
+    #   ansible.builtin.systemd:
+    #     service: resize2fs_once
+    #     enabled: true
 
     - name: Copy global bash.bashrc
       ansible.builtin.copy:
@@ -159,27 +159,27 @@
         hour: 3
         job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
 
-    - name: Download zram-swap # noqa: latest
-      ansible.builtin.git:
-        repo: https://github.com/foundObjects/zram-swap.git
-        dest: /root/zram-swap
-        recursive: true
+    # - name: Download zram-swap # noqa: latest
+    #   ansible.builtin.git:
+    #     repo: https://github.com/foundObjects/zram-swap.git
+    #     dest: /root/zram-swap
+    #     recursive: true
 
-    - name: Install zram-swap
-      ansible.builtin.command: /root/zram-swap/install.sh
-      args:
-        chdir: /root/zram-swap
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
+    # - name: Install zram-swap
+    #   ansible.builtin.command: /root/zram-swap/install.sh
+    #   args:
+    #     chdir: /root/zram-swap
+    #   register: my_output # <- Registers the command output.
+    #   changed_when: my_output.rc != 0
 
-    - name: Update sysctl.conf to optimize zram swap
-      ansible.builtin.blockinfile:
-        path: /etc/sysctl.conf
-        block: |
-          vm.vfs_cache_pressure=500
-          vm.swappiness=100
-          vm.dirty_background_ratio=1
-          vm.dirty_ratio=50
+    # - name: Update sysctl.conf to optimize zram swap
+    #   ansible.builtin.blockinfile:
+    #     path: /etc/sysctl.conf
+    #     block: |
+    #       vm.vfs_cache_pressure=500
+    #       vm.swappiness=100
+    #       vm.dirty_background_ratio=1
+    #       vm.dirty_ratio=50
 
     - name: Install aptfile (used for updates)
       ansible.builtin.copy:
@@ -497,6 +497,14 @@
       ansible.builtin.command: direnv allow ~/nhl-led-scoreboard
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
+
+    - name: Download nhl_setup executable
+      become: true
+      become_user: pi
+      ansible.builtin.get_url:
+        url: "https://github.com/falkyre/nhl-setup/releases/download/V2025.10.0/nhl_setup.32"
+        dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
+        mode: '0755'
 
     - name: Update .nhlledportal/status file
       become: true
