@@ -464,6 +464,24 @@
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
 
+    - name: Download nhl_setup executable for 32bit systems
+      become: true
+      become_user: pi
+      ansible.builtin.get_url:
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.32"
+        dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
+        mode: '0755'
+      when: ansible_architecture != 'aarch64' and ansible_architecture != 'arm64'
+
+    - name: Download nhl_setup executable for 64bit systems
+      become: true
+      become_user: pi
+      ansible.builtin.get_url:
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.64"
+        dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
+        mode: '0755'
+      when: ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'
+
     - name: Update .nhlledportal/status file
       become: true
       become_user: pi
