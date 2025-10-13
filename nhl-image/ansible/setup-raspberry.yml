@@ -502,7 +502,7 @@
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/download/V2025.10.0/nhl_setup.32"
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.32"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
 
