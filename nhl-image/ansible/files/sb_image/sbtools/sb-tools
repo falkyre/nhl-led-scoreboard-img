@@ -155,7 +155,8 @@ do_set_team() {
       whiptail --msgbox "You will now be asked to select a preferred team to create the initial config.json." $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
   fi
   echo "Loading $(tput setaf 1)nhl_setup$(tput sgr0) to select your inital team$(tput blink).........$(tput sgr0)"
-  /home/pi/nhl-led-scoreboard/nhl_setup -s /home/pi/nhl-led-scoreboard/config &&
+  cd /home/pi/nhl-led-scoreboard || exit
+  /home/pi/nhl-led-scoreboard/nhl_setup -s &&
   clear
   if [ $? -ne 0 ]; then
      TEAMSET=False 
