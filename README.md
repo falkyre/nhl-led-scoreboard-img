@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://github.com/falkyre/nhl-led-scoreboard">
-<img src="https://github.com/falkyre/nhl-led-scoreboard/blob/master/assets/images/scoreboard.jpg" height="150">
+<img src="https://github.com/falkyre/nhl-led-scoreboard/blob/main/assets/images/scoreboard.jpg" height="150">
 </a>
 </p>
 
@@ -18,7 +18,7 @@
 This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/falkyre/nhl-led-scoreboard) pre-installed.  This is built with the Hasicorp packer with the packer-builder-arm plugin (https://github.com/mkaczanowski/packer-builder-arm) in a docker image extended with ansible.  Ansible is used to do the provisioning of the image.  For more information, see the [BUILD](https://github.com/falkyre/nhl-led-scoreboard-img/tree/packer/nhl-image/BUILD.md) documentation.
 
 * Works on Raspberry Pi models - Zero 2w up to Raspberry pi 4
-* Built on Raspbian Lite (no desktop).  As of October 2025, current image build runs on latest RaspiOS Trixie lite (32 and 64bit).
+* Built on Raspbian Lite (no desktop).  As of October 2025, current image build still runs on RaspiOS Bookworm lite (32bit).  Trixie is being worked on.
 * Simple WiFi Setup (Ethernet setup not tested and should only be done by advanced users) using the [comitup](http://davesteele.github.io/comitup/) utility.
 
 This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list.
