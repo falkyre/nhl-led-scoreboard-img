@@ -1,8 +1,13 @@
 #!/bin/bash
 # Upload the scoreboard stderr, stdout and config.json to pastebin using pastebinit
-
+cd $HOME//nhl-led-scoreboard || exit 1
+ROOT=$HOME/nhl-led-scoreboard
+version=$(cat "$ROOT"/VERSION)
+currdate=$(date)
+SUPERVISOR_INSTALLED=false  
 if command -v supervisorctl &> /dev/null
 then
+    SUPERVISORCTL=$(command -v supervisorctl)
     SUPERVISOR_INSTALLED=true
 else
     SUPERVISOR_INSTALLED=false
@@ -14,22 +19,39 @@ else
    scoreboard_proc="scoreboard"
 fi
 
-#Create temp file with the data
-ROOT=$(/usr/bin/dirname "$(/usr/bin/git rev-parse --git-dir)")
-version=$(/bin/cat "${ROOT}"/VERSION)
-currdate=$(date)
+FETCH_INSTALLED=false
+if command -v fastfetch &> /dev/null
+then
+    FASTFETCH_CMD=$(command -v fastfetch)
+    HOSTOS="${FASTFETCH_CMD} -l none"
+    FETCH_INSTALLED=true
+elif command -v neofetch &> /dev/null
+then
+    NEOFETCH_CMD=$(command -v neofetch)
+    HOSTOS="${NEOFETCH_CMD} --off -stdout"
+    FETCH_INSTALLED=true
+fi
+
 echo "nhl-led-scoreboard issue data ${currdate}" > /tmp/issue.txt
 echo "=============================" >>/tmp/issue.txt
 echo "" >> /tmp/issue.txt
-echo "Running V${version} on a " >> /tmp/issue.txt
-/usr/bin/fastfetch -l none  | grep Host >> /tmp/issue.txt
-echo "Running OS: " >> /tmp/issue.txt
-/usr/bin/fastfetch -l none  | grep "OS:" >> /tmp/issue.txt
+if [ "$FETCH_INSTALLED" = true ]; then
+    echo "Running V${version} on a " >> /tmp/issue.txt
+    $HOSTOS | grep Host >> /tmp/issue.txt
+fi
 
 echo "------------------------------------------------------" >> /tmp/issue.txt
 echo "Git Remotes" >> /tmp/issue.txt
 echo "=================================" >> /tmp/issue.txt
 /usr/bin/git remote -v >> /tmp/issue.txt
+
+echo "------------------------------------------------------" >> /tmp/issue.txt
+echo "OS Info" >> /tmp/issue.txt
+echo "=================================" >> /tmp/issue.txt
+if [ -r /etc/os-release ]; then
+    . /etc/os-release
+    echo $PRETTY_NAME >> /tmp/issue.txt
+fi
 
 echo "------------------------------------------------------" >> /tmp/issue.txt
 
@@ -83,16 +105,16 @@ if [ "$SUPERVISOR_INSTALLED" = true ]; then
     echo "------------------------------------------------------" >> /tmp/issue.txt
     echo "supervisorctl status" >> /tmp/issue.txt
     echo "------------------------------------------------------" >> /tmp/issue.txt
-    /usr/local/bin/supervisorctl status >>/tmp/issue.txt
+    ${SUPERVISORCTL} status >>/tmp/issue.txt
     echo "------------------------------------------------------" >> /tmp/issue.txt
     echo "${scoreboard_proc} stderr log, last 50kb" >> /tmp/issue.txt
     echo "=================================" >> /tmp/issue.txt
-    /usr/local/bin/supervisorctl tail -50000 $scoreboard_proc stderr >> /tmp/issue.txt
+    ${SUPERVISORCTL} tail -50000 $scoreboard_proc stderr >> /tmp/issue.txt
     echo "" >> /tmp/issue.txt
     echo "------------------------------------------------------" >> /tmp/issue.txt
     echo "${scoreboard_proc} stdout log, last 50kb" >> /tmp/issue.txt
     echo "=================================" >> /tmp/issue.txt
-    /usr/local/bin/supervisorctl tail -50000 $scoreboard_proc >> /tmp/issue.txt
+    ${SUPERVISORCTL} tail -50000 $scoreboard_proc >> /tmp/issue.txt
 fi
 
 if [ "$SUPERVISOR_INSTALLED" = false ]; then
