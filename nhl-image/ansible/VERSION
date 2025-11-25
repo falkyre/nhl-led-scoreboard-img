@@ -1,2 +1,2 @@
-version:2025.10.1
-detail:This update contains the latest NHL LED Scoreboard code (2025.10.1) from my repository.  Still current running on 32 bit bookworm. 
+version:2025.12.0
+detail:This update contains the latest NHL LED Scoreboard code (2025.12.0) from my repository.  Still current running on 32 bit bookworm. This also includes an experimental web server for updating the configuration, creating a pastbin for issues, plugin management and embedding supervisor.  It runs on http://<your_pi_ip>:8000
