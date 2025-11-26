@@ -1,0 +1,11 @@
+# Configuration for the NHL LED Scoreboard Control Hub
+# All values are optional. If a value is not present, the default from the script will be used.
+# The scoreboard_dir can be overridden by the --scoreboard_dir command-line argument, which takes the highest precedence.
+
+# SUPERVISOR_URL = "127.0.0.1"
+# SUPERVISOR_PORT = 9001
+# PORT = 8000
+# Set the PYTHON_EXEC to the full path of your Scoreboard venv's python executable: 
+# eg /home/pi/nhlsb-venv/bin/python3
+PYTHON_EXEC = "/home/pi/nhlsb-venv/bin/python3"
+scoreboard_dir = "/home/pi/nhl-led-scoreboard/"

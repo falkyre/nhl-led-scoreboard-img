@@ -10,7 +10,7 @@
     wifi_country: CA
     gh_repo: "https://github.com/falkyre/nhl-led-scoreboard.git"
     use_beta: false
-    gh_branch: "beta"
+    gh_branch: "2025.x.x-beta"
     system_hostname: scoreboard
     apt_proxy: ""
     use_apt_proxy: false
@@ -114,18 +114,6 @@
           blacklist snd_bcm2835
         mode: preserve
 
-  # The next two will need to be removed for Trixie as there is a systemd unit that handles this now
-    # - name: Download resize2fs_once binary
-    #   ansible.builtin.get_url:
-    #     url: https://github.com/RPi-Distro/pi-gen/blob/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
-    #     dest: /etc/init.d/resize2fs_once
-    #     mode: "0755"
-
-    # - name: Force automatic rootfs expansion on first boot
-    #   ansible.builtin.systemd:
-    #     service: resize2fs_once
-    #     enabled: true
-
     - name: Copy global bash.bashrc
       ansible.builtin.copy:
         src: ./files/sb_image/bash.bashrc
@@ -159,27 +147,6 @@
         hour: 3
         job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
 
-    # - name: Download zram-swap # noqa: latest
-    #   ansible.builtin.git:
-    #     repo: https://github.com/foundObjects/zram-swap.git
-    #     dest: /root/zram-swap
-    #     recursive: true
-
-    # - name: Install zram-swap
-    #   ansible.builtin.command: /root/zram-swap/install.sh
-    #   args:
-    #     chdir: /root/zram-swap
-    #   register: my_output # <- Registers the command output.
-    #   changed_when: my_output.rc != 0
-
-    # - name: Update sysctl.conf to optimize zram swap
-    #   ansible.builtin.blockinfile:
-    #     path: /etc/sysctl.conf
-    #     block: |
-    #       vm.vfs_cache_pressure=500
-    #       vm.swappiness=100
-    #       vm.dirty_background_ratio=1
-    #       vm.dirty_ratio=50
 
     - name: Install aptfile (used for updates)
       ansible.builtin.copy:
@@ -289,6 +256,17 @@
         regexp: '^TEMPLATE_PATH ='
         line: TEMPLATE_PATH = "/usr/share/comitup/web/templates/scoreboard"
 
+    - name: Install NLS ControlHub from debian from github
+      ansible.builtin.apt:
+        path: https://github.com/falkyre/nhl-setup/releases/download/latest/nls-controlhub-deb-bookworm-armv7.deb
+      become: true
+
+    - name: Copy nls_controlhub_cfg.toml to /etc/nls_controlhub
+      ansible.builtin.copy:
+        src: "./files/sb_image/nls_controlhub_cfg.toml"
+        dest: "/etc/nls_controlhub/config.toml"
+        mode: "0644"
+
     - name: Install scoreboard services
       ansible.builtin.copy:
         src: "./files/sb_image/{{ item }}"
@@ -298,6 +276,7 @@
         - sb_splash.service
         - sb_autosettz.service
         - wifi-on.service
+        - nls_controlhub.service
 
     - name: Enable scoreboard services
       ansible.builtin.systemd:
@@ -308,6 +287,7 @@
         - sb_splash.service
         - sb_autosettz.service
         - wifi-on.service
+        - nls_controlhub.service
 
     - name: Copy scoreboard supervisord.conf
       ansible.builtin.copy:

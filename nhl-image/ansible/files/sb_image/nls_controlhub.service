@@ -1,0 +1,19 @@
+[Unit]
+Description=NLS Control Hub
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/nls_controlhub --config /etc/nls_controlhub/config.toml
+User=pi
+WorkingDirectory=/home/pi/nhl-led-scoreboard
+Restart=on-failure
+
+RestartSec=5
+
+# Output logging to syslog (viewable via journalctl)
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=nls_controlhub
+
+[Install]
+WantedBy=multi-user.target

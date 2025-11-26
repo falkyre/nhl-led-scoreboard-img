@@ -1,12 +1,12 @@
 # reuse this long string
 variable "raspios_url_32" {
   type    = string
-  default = "https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2025-10-02/2025-10-01-raspios-trixie-armhf-lite.img.xz"
+  default = "https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2025-11-24/2025-11-24-raspios-trixie-armhf-lite.img.xz"
 }
 
 variable "raspios_url_64" {
   type    = string
-  default = "https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2025-10-02/2025-10-01-raspios-trixie-arm64-lite.img.xz"
+  default = "https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2025-11-24/2025-11-24-raspios-trixie-arm64-lite.img.xz"
 }
 
 variable "sb_img" {
