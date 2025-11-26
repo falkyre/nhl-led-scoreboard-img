@@ -256,10 +256,16 @@
         regexp: '^TEMPLATE_PATH ='
         line: TEMPLATE_PATH = "/usr/share/comitup/web/templates/scoreboard"
 
-    - name: Install NLS ControlHub from debian from github
-      ansible.builtin.apt:
-        deb: https://github.com/falkyre/nhl-setup/releases/download/latest/nls-controlhub-deb-bookworm-armv7.deb
-      become: true
+    - name: Get nls-controlhub package
+      ansible.builtin.get_url:
+        url: "https://github.com/falkyre/nhl-setup/releases/download/latest/nls-controlhub-deb-bookworm-armv7.deb"
+        dest: "/tmp/nls-controlhub-deb-bookworm-armv7.deb"
+        mode: "0644"
+
+    - name: Install NLS ControlHub using dpkg
+      ansible.builtin.command:  dpkg -i /tmp/nls-controlhub-deb-bookworm-armv7.deb
+      register: dpkg_result
+      changed_when: "'Setting up' in dpkg_result.stdout"
 
     - name: Copy nls_controlhub_cfg.toml to /etc/nls_controlhub
       ansible.builtin.copy:
