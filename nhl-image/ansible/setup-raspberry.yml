@@ -258,7 +258,7 @@
 
     - name: Install NLS ControlHub from debian from github
       ansible.builtin.apt:
-        path: https://github.com/falkyre/nhl-setup/releases/download/latest/nls-controlhub-deb-bookworm-armv7.deb
+        deb: https://github.com/falkyre/nhl-setup/releases/download/latest/nls-controlhub-deb-bookworm-armv7.deb
       become: true
 
     - name: Copy nls_controlhub_cfg.toml to /etc/nls_controlhub
