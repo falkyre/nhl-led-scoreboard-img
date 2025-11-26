@@ -258,7 +258,7 @@
 
     - name: Get nls-controlhub package
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/download/latest/nls-controlhub-deb-bookworm-armv7.deb"
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nls-controlhub-deb-bookworm-armv7.deb"
         dest: "/tmp/nls-controlhub-deb-bookworm-armv7.deb"
         mode: "0644"
 
