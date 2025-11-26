@@ -21,6 +21,7 @@ on:
         type: choice
         options:
         - raspios.pkr.hcl
+        - raspios-beta.pkr.hcl
         - raspios_trixie.pkr.hcl
         - raspios_trixie_3264.hcl
         - alpine.pkr.hcl
