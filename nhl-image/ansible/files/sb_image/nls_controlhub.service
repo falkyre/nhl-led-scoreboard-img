@@ -10,9 +10,9 @@ Restart=on-failure
 
 RestartSec=5
 
-# Output logging to syslog (viewable via journalctl)
-StandardOutput=syslog
-StandardError=syslog
+# Output logging to journal (viewable via journalctl)
+StandardOutput=journal
+StandardError=sjournal
 SyslogIdentifier=nls_controlhub
 
 [Install]
