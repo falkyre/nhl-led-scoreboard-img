@@ -182,7 +182,7 @@
           - libwebp-dev
           - dbus
           - libsixel-bin
-          - libgraphicsmagick++-q16-12
+          - libgraphicsmagick++-dev
         state: present
 
     - name: Remove OS packages that will cause issues with scoreboard
