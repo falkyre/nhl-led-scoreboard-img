@@ -386,9 +386,7 @@
         repo: "{{ gh_repo }}"
         dest: ~/nhl-led-scoreboard
         recursive: true
-        single_branch: true
         depth: 1
-        track_submodules: true
       when: not use_beta
 
     - name: Download scoreboard beta repo "{{ gh_repo }}" # noqa: latest
@@ -398,9 +396,7 @@
         repo: "{{ gh_repo }}"
         dest: ~/nhl-led-scoreboard
         recursive: true
-        single_branch: true
         depth: 1
-        track_submodules: true
         version: "{{ gh_branch }}"
       when: use_beta
 
