@@ -13,3 +13,9 @@ make install-python PYTHON=/home/pi/nhlsb-venv/bin/python3
 
 mv bindings/python/samples/runtext.py bindings/python/samples/runtext.py.ori
 mv /home/pi/sbtools/runtext.py bindings/python/samples/
+
+cd utils
+make led-image-viewer
+
+cp led-image-viewer /home/pi/sbtools/led-image-viewer
+chmod +x /home/pi/sbtools/led-image-viewer
