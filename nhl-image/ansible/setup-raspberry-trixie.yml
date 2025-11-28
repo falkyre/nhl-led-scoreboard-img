@@ -154,6 +154,21 @@
         hour: 3
         job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
 
+    - name: Show free disk space before major package install
+      ansible.builtin.command: "df -h /"
+      register: df_output
+      changed_when: false
+
+    - name: Display free disk space
+      ansible.builtin.debug:
+        var: df_output.stdout_lines
+
+    - name: Clean apt cache and remove unused packages before install
+      ansible.builtin.apt:
+        autoclean: true
+        autoremove: true
+        clean: true
+
     - name: Install OS packages needed for scoreboard
       ansible.builtin.apt:
         update_cache: true
