@@ -255,6 +255,24 @@
         regexp: '^TEMPLATE_PATH ='
         line: TEMPLATE_PATH = "/usr/share/comitup/web/templates/scoreboard"
 
+    - name: Get nls-controlhub package
+      ansible.builtin.get_url:
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nls-controlhub-deb-trixie-arm64.deb"
+        dest: "/tmp/nls-controlhub-deb-bookworm-armv7.deb"
+        mode: "0644"
+
+    - name: Install NLS ControlHub using dpkg
+      ansible.builtin.command:  dpkg -i /tmp/nls-controlhub-deb-bookworm-armv7.deb
+      register: dpkg_result
+      changed_when: "'Setting up' in dpkg_result.stdout"
+
+    - name: Copy nls_controlhub_cfg.toml to /etc/nls_controlhub
+      ansible.builtin.copy:
+        src: "./files/sb_image/nls_controlhub_cfg.toml"
+        dest: "/etc/nls_controlhub/config.toml"
+        mode: "0644"
+
+
     - name: Install scoreboard services
       ansible.builtin.copy:
         src: "./files/sb_image/{{ item }}"
@@ -264,6 +282,7 @@
         - sb_splash.service
         - sb_autosettz.service
         - wifi-on.service
+        - nls_controlhub.service
 
     - name: Enable scoreboard services
       ansible.builtin.systemd:
@@ -274,6 +293,7 @@
         - sb_splash.service
         - sb_autosettz.service
         - wifi-on.service
+        - nls_controlhub.service
 
     - name: Copy scoreboard supervisord.conf
       ansible.builtin.copy:

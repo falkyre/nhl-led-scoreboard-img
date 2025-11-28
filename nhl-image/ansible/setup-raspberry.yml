@@ -480,7 +480,7 @@
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
 
-    - name: Download nhl_setup executable for 32bit Trixie systems
+    - name: Download nhl_setup executable for 64bit Trixie systems
       become: true
       become_user: pi
       ansible.builtin.get_url:
