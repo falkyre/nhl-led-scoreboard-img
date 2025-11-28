@@ -1,5 +1,5 @@
 -
-  name: Setup RPi - Scoreboard setup
+  name: Setup RPi - Scoreboard setup 64 bit Trixie
   hosts: all
   become: true
   become_user: root
