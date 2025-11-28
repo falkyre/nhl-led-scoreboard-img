@@ -98,50 +98,21 @@
         content: 'pi:{{ pi_passwd.stdout }}'
         mode: preserve
 
-    - name: Check if /boot/firmware/cmdline.txt exists
-      stat:
-        path: /boot/firmware/cmdline.txt
-      register: cmdline_txt_stat
-
-    - name: List contents of /boot if cmdline.txt not found
-      block:
-        - name: List /boot
-          ansible.builtin.command: ls -la /boot
-          register: boot_listing
-          changed_when: false
-
-        - name: Show /boot listing
-          ansible.builtin.debug:
-            var: boot_listing.stdout_lines
-
-        - name: List /boot/firmware
-          ansible.builtin.command: ls -la /boot/firmware
-          register: boot_firmware_listing
-          changed_when: false
-          failed_when: false
-
-        - name: Show /boot/firmware listing
-          ansible.builtin.debug:
-            var: boot_firmware_listing.stdout_lines
-          when: boot_firmware_listing.stdout is defined
-      when: not cmdline_txt_stat.stat.exists
-
+    
     - name: Force isocpus=3 in cmdline.txt so matrix code runs smoother
-      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/firmware/cmdline.txt # noqa: command-instead-of-module
+      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/cmdline.txt # noqa: command-instead-of-module
       args:
         chdir: /boot/firmware
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
-      when: cmdline_txt_stat.stat.exists
 
 
     - name: Force filesystem resize on next boot
-      ansible.builtin.shell: sed -i 's/$/ resize/' /boot/firmware/cmdline.txt # noqa: command-instead-of-module
+      ansible.builtin.shell: sed -i 's/$/ resize/' /boot/cmdline.txt # noqa: command-instead-of-module
       args:
         chdir: /boot/firmware
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
-      when: cmdline_txt_stat.stat.exists
 
     - name: Blacklist snd_bcm module (as per hzeller's instructions)
       ansible.builtin.copy:
