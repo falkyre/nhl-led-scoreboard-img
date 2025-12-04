@@ -114,6 +114,14 @@
         group: root
         mode: '0755'
 
+    - name: Copy import_readme.txt to /boot/scoreboard
+      ansible.builtin.copy:
+        src: ./files/sb_image/import_readme.txt
+        dest: /boot/scoreboard/
+        owner: root
+        group: root
+        mode: 0644
+
 
     - name: Blacklist snd_bcm module (as per hzeller's instructions)
       ansible.builtin.copy:
