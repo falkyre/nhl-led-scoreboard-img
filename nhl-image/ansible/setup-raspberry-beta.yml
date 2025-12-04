@@ -106,6 +106,14 @@
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
 
+    - name: Create /boot/scoreboard directory
+      ansible.builtin.file:
+        path: /boot/scoreboard
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
 
     - name: Blacklist snd_bcm module (as per hzeller's instructions)
       ansible.builtin.copy:
@@ -113,6 +121,13 @@
         content: |
           blacklist snd_bcm2835
         mode: preserve
+
+    - name: Disable onboard audio
+      ansible.builtin.lineinfile:
+        path: /boot/config.txt
+        regexp: '^dtparam=audio=on$'
+        line: 'dtparam=audio=off'
+        state: present
 
     - name: Copy global bash.bashrc
       ansible.builtin.copy:
@@ -524,6 +539,14 @@
         chdir: /home/pi/sbtools
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
+
+    - name: Create softlink for sb-upgrade
+      become: true
+      become_user: pi
+      ansible.builtin.file:
+        src: /home/pi/nhl-led-scoreboard/scripts/sbtools/sb-upgrade
+        dest: /home/pi/sbtools/sb-upgrade
+        state: link
 
     - name: Remove 51cache file (delete file)
 

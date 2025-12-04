@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+cd #!/usr/bin/env zsh
 # Borrowed from oh-my-zsh
 # https://github.com/ohmyzsh/ohmyzsh/blob/master/tools/upgrade.sh
 

@@ -389,10 +389,45 @@ do_finish() {
 }
 
 
+do_import() {
+  if [ -f /boot/scoreboard/configs.zip ]; then
+    if (whiptail --yesno "/boot/scoreboard/configs.zip found. Import settings?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then
+      TMPDIR=$(mktemp -d)
+      if unzip -o /boot/scoreboard/configs.zip -d $TMPDIR; then
+        if [ -f $TMPDIR/config.json ]; then
+          sudo cp $TMPDIR/config.json /home/pi/nhl-led-scoreboard/config/config.json
+          sudo chown pi:pi /home/pi/nhl-led-scoreboard/config/config.json
+          TEAMSET=True
+          whiptail --msgbox "Imported config.json" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+        fi
+        if [ -f $TMPDIR/testMatrix.sh ]; then
+          sudo cp $TMPDIR/testMatrix.sh /home/pi/sbtools/testMatrix.sh
+          sudo chmod +x /home/pi/sbtools/testMatrix.sh
+          whiptail --msgbox "Imported testMatrix.sh. Now running test." $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+          do_test_matrix
+        fi
+        if [ -f $TMPDIR/scoreboard.conf ]; then
+          sudo cp $TMPDIR/scoreboard.conf /etc/supervisor/conf.d/scoreboard.conf
+          sudo mkdir -p /home/pi/config_backup
+          sudo mv /boot/scoreboard/configs.zip /home/pi/config_backup/
+          sudo chown -R pi:pi /home/pi/config_backup
+          whiptail --msgbox "configs.zip moved to /home/pi/config_backup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+          do_enable_supervisor
+        fi
+        
+      else
+        whiptail --msgbox "Failed to unzip configs.zip" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+      fi
+      rm -rf $TMPDIR
+    fi
+  fi
+}
+
 #Force the user to setup scoreboard.conf for supervisor, test the matrix and then reboot once complete
 do_firstrun() {
    calc_wt_size
    while true; do 
+      do_import
       #do_scoreboard_menu
       if [ "$TEAMSET" = False ]; then
         do_set_team
