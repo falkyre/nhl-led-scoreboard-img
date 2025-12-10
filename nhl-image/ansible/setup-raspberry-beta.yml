@@ -281,7 +281,7 @@
 
     - name: Get nls-controlhub package
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nls-controlhub-deb-bookworm-armv7.deb"
+        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-web/nls-controlhub-deb-bookworm-armv7.deb"
         dest: "/tmp/nls-controlhub-deb-bookworm-armv7.deb"
         mode: "0644"
 
@@ -503,11 +503,11 @@
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
 
-    - name: Download nhl_setup executable for 32bit Trixie systems
+    - name: Download nhl_setup executable for 64bit Trixie systems
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.32"
+        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-cli/nhl_setup.32"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
       when: ansible_architecture != 'aarch64' and ansible_architecture != 'arm64' and ansible_distribution_release == 'trixie'
@@ -516,7 +516,7 @@
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.64"
+        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-cli/nhl_setup.64"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
       when: (ansible_architecture == 'aarch64' or ansible_architecture == 'arm64') and ansible_distribution_release == 'trixie'
@@ -525,7 +525,7 @@
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.bookworm.32"
+        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-cli/nhl_setup.bookworm.32"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
       when: ansible_architecture != 'aarch64' and ansible_architecture != 'arm64' and ansible_distribution_release == 'bookworm'
@@ -534,7 +534,7 @@
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.bookworm.64"
+        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-cli/nhl_setup.bookworm.64"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
       when: (ansible_architecture == 'aarch64' or ansible_architecture == 'arm64') and ansible_distribution_release == 'bookworm'
@@ -555,6 +555,7 @@
         src: /home/pi/nhl-led-scoreboard/scripts/sbtools/sb-upgrade
         dest: /home/pi/sbtools/sb-upgrade
         state: link
+        force: true
 
     - name: Remove 51cache file (delete file)
 
