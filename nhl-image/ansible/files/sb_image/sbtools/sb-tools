@@ -391,9 +391,9 @@ do_finish() {
 
 do_import() {
   if [ -f /boot/scoreboard/configs.zip ]; then
-    if (whiptail --yesno "/boot/scoreboard/configs.zip found. Import settings?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then
+    if (whiptail --yesno "/boot/firmware/scoreboard/configs.zip found. Import settings?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then
       TMPDIR=$(mktemp -d)
-      if unzip -o /boot/scoreboard/configs.zip -d $TMPDIR; then
+      if unzip -o /boot/firmware/scoreboard/configs.zip -d $TMPDIR; then
         if [ -f $TMPDIR/config.json ]; then
           sudo cp $TMPDIR/config.json /home/pi/nhl-led-scoreboard/config/config.json
           sudo chown pi:pi /home/pi/nhl-led-scoreboard/config/config.json
