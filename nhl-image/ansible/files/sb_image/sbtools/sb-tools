@@ -203,13 +203,15 @@ do_test_matrix() {
                 rm /home/pi/.nhlledportal/SETUP
         fi
 
-        # Create a splash.sh that loads on boot
-	# The t60 will run the animation for 30 seconds but it will be killed by the newest scoreboard code
-	# So no conflicts happen with the scoreboard
-        echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
-        echo "cd /home/pi/sbtools/" >> /home/pi/sbtools/splash.sh
-        echo "./led-image-viewer $board_command -t60 -C splash.gif" >> /home/pi/sbtools/splash.sh
-        chmod +x /home/pi/sbtools/splash.sh
+        if [ ! -f /home/pi/sbtools/splash.sh ]; then
+            # Create a splash.sh that loads on boot
+            # The t60 will run the animation for 30 seconds but it will be killed by the newest scoreboard code
+            # So no conflicts happen with the scoreboard
+            echo "#!/bin/bash" > /home/pi/sbtools/splash.sh
+            echo "cd /home/pi/sbtools/" >> /home/pi/sbtools/splash.sh
+            echo "./led-image-viewer $board_command -t60 -C splash.gif" >> /home/pi/sbtools/splash.sh
+            chmod +x /home/pi/sbtools/splash.sh
+        fi
 
      else
         TESTMATRIXRUN=False
