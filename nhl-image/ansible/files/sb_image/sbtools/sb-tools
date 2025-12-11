@@ -405,9 +405,14 @@ do_import() {
           sudo cp $TMPDIR/testMatrix.sh /home/pi/sbtools/testMatrix.sh
           sudo chmod +x /home/pi/sbtools/testMatrix.sh
           # Update to the latest version
-          sed -i -E "/latest version/s/V[0-9]{4}\.[0-9]{2}\.[0-9]+/$VERSION/" testMatrix.sh
+          sed -i -E "/latest version/s/V[0-9]{4}\.[0-9]{2}\.[0-9]+/$VERSION/" /home/pi/sbtools/testMatrix.sh
           whiptail --msgbox "Imported testMatrix.sh. Now running test." $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
           do_test_matrix
+        fi
+        if [ -f $TMPDIR/splash.sh ]; then
+          sudo cp $TMPDIR/splash.sh /home/pi/sbtools/splash.sh
+          sudo chmod +x /home/pi/sbtools/splash.sh
+          whiptail --msgbox "Imported splash.sh" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
         fi
         if [ -f $TMPDIR/scoreboard.conf ]; then
           sudo cp $TMPDIR/scoreboard.conf /etc/supervisor/conf.d/scoreboard.conf
