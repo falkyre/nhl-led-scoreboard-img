@@ -403,6 +403,18 @@ do_import() {
           TEAMSET=True
           whiptail --msgbox "Imported config.json" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
         fi
+
+        if ls $TMPDIR/logos_*x*.json 1> /dev/null 2>&1; then
+          sudo cp $TMPDIR/logos_*x*.json /home/pi/nhl-led-scoreboard/config/layout/
+          sudo chown pi:pi /home/pi/nhl-led-scoreboard/config/layout/logos_*x*.json
+          whiptail --msgbox "Imported custom logos layout(s)" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+        fi
+
+        if [ -d $TMPDIR/logos ]; then
+          sudo cp -r $TMPDIR/logos /home/pi/nhl-led-scoreboard/assets/
+          sudo chown -R pi:pi /home/pi/nhl-led-scoreboard/assets/logos
+          whiptail --msgbox "Imported custom logos folder" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT
+        fi
         if [ -f $TMPDIR/testMatrix.sh ]; then
           sudo cp $TMPDIR/testMatrix.sh /home/pi/sbtools/testMatrix.sh
           sudo chmod +x /home/pi/sbtools/testMatrix.sh
