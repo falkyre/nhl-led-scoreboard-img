@@ -10,7 +10,7 @@
     wifi_country: CA
     gh_repo: "https://github.com/falkyre/nhl-led-scoreboard.git"
     use_beta: false
-    gh_branch: "beta"
+    gh_branch: "2026.x.x-beta"
     system_hostname: scoreboard
     apt_proxy: ""
     use_apt_proxy: false

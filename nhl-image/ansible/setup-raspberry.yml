@@ -10,7 +10,7 @@
     wifi_country: CA
     gh_repo: "https://github.com/falkyre/nhl-led-scoreboard.git"
     use_beta: false
-    gh_branch: "2025.x.x-beta"
+    gh_branch: "2026.x.x-beta"
     system_hostname: scoreboard
     apt_proxy: ""
     use_apt_proxy: false
@@ -106,22 +106,6 @@
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
 
-    - name: Create /boot/scoreboard directory
-      ansible.builtin.file:
-        path: /boot/scoreboard
-        state: directory
-        owner: root
-        group: root
-        mode: '0755'
-
-    - name: Copy import_readme.txt to /boot/scoreboard
-      ansible.builtin.copy:
-        src: ./files/sb_image/import_readme.txt
-        dest: /boot/scoreboard/
-        owner: root
-        group: root
-        mode: 0644
-
 
     - name: Blacklist snd_bcm module (as per hzeller's instructions)
       ansible.builtin.copy:
@@ -130,12 +114,17 @@
           blacklist snd_bcm2835
         mode: preserve
 
-    - name: Disable onboard audio
-      ansible.builtin.lineinfile:
-        path: /boot/config.txt
-        regexp: '^dtparam=audio=on$'
-        line: 'dtparam=audio=off'
-        state: present
+  # The next two will need to be removed for Trixie as there is a systemd unit that handles this now
+    # - name: Download resize2fs_once binary
+    #   ansible.builtin.get_url:
+    #     url: https://github.com/RPi-Distro/pi-gen/blob/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
+    #     dest: /etc/init.d/resize2fs_once
+    #     mode: "0755"
+
+    # - name: Force automatic rootfs expansion on first boot
+    #   ansible.builtin.systemd:
+    #     service: resize2fs_once
+    #     enabled: true
 
     - name: Copy global bash.bashrc
       ansible.builtin.copy:
@@ -170,6 +159,27 @@
         hour: 3
         job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
 
+    # - name: Download zram-swap # noqa: latest
+    #   ansible.builtin.git:
+    #     repo: https://github.com/foundObjects/zram-swap.git
+    #     dest: /root/zram-swap
+    #     recursive: true
+
+    # - name: Install zram-swap
+    #   ansible.builtin.command: /root/zram-swap/install.sh
+    #   args:
+    #     chdir: /root/zram-swap
+    #   register: my_output # <- Registers the command output.
+    #   changed_when: my_output.rc != 0
+
+    # - name: Update sysctl.conf to optimize zram swap
+    #   ansible.builtin.blockinfile:
+    #     path: /etc/sysctl.conf
+    #     block: |
+    #       vm.vfs_cache_pressure=500
+    #       vm.swappiness=100
+    #       vm.dirty_background_ratio=1
+    #       vm.dirty_ratio=50
 
     - name: Install aptfile (used for updates)
       ansible.builtin.copy:
@@ -206,7 +216,7 @@
           - libwebp-dev
           - dbus
           - libsixel-bin
-          - libgraphicsmagick++-dev
+          - libgraphicsmagick++-q16-12
         state: present
 
     - name: Remove OS packages that will cause issues with scoreboard
@@ -317,7 +327,6 @@
         - sb_splash.service
         - sb_autosettz.service
         - wifi-on.service
-        - nls_controlhub.service
 
     - name: Enable scoreboard services
       ansible.builtin.systemd:
@@ -328,7 +337,6 @@
         - sb_splash.service
         - sb_autosettz.service
         - wifi-on.service
-        - nls_controlhub.service
 
     - name: Copy scoreboard supervisord.conf
       ansible.builtin.copy:
@@ -421,7 +429,9 @@
         repo: "{{ gh_repo }}"
         dest: ~/nhl-led-scoreboard
         recursive: true
+        single_branch: true
         depth: 1
+        track_submodules: true
       when: not use_beta
 
     - name: Download scoreboard beta repo "{{ gh_repo }}" # noqa: latest
@@ -431,7 +441,9 @@
         repo: "{{ gh_repo }}"
         dest: ~/nhl-led-scoreboard
         recursive: true
+        single_branch: true
         depth: 1
+        track_submodules: true
         version: "{{ gh_branch }}"
       when: use_beta
 
@@ -515,41 +527,23 @@
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
 
-    - name: Download nhl_setup executable for 64bit Trixie systems
+    - name: Download nhl_setup executable for 32bit systems
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-cli/nhl_setup.32"
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.32"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
-      when: ansible_architecture != 'aarch64' and ansible_architecture != 'arm64' and ansible_distribution_release == 'trixie'
+      when: ansible_architecture != 'aarch64' and ansible_architecture != 'arm64'
 
-    - name: Download nhl_setup executable for 64bit Trixie systems
+    - name: Download nhl_setup executable for 64bit systems
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-cli/nhl_setup.64"
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.64"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
-      when: (ansible_architecture == 'aarch64' or ansible_architecture == 'arm64') and ansible_distribution_release == 'trixie'
-
-    - name: Download nhl_setup executable for 32bit Bookworm systems
-      become: true
-      become_user: pi
-      ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-cli/nhl_setup.bookworm.32"
-        dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
-        mode: '0755'
-      when: ansible_architecture != 'aarch64' and ansible_architecture != 'arm64' and ansible_distribution_release == 'bookworm'
-
-    - name: Download nhl_setup executable for 64bit Bookworm systems
-      become: true
-      become_user: pi
-      ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-cli/nhl_setup.bookworm.64"
-        dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
-        mode: '0755'
-      when: (ansible_architecture == 'aarch64' or ansible_architecture == 'arm64') and ansible_distribution_release == 'bookworm'
+      when: ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'
 
     - name: Update .nhlledportal/status file
       become: true
@@ -559,15 +553,6 @@
         chdir: /home/pi/sbtools
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
-
-    - name: Create softlink for sb-upgrade
-      become: true
-      become_user: pi
-      ansible.builtin.file:
-        src: /home/pi/nhl-led-scoreboard/scripts/sbtools/sb-upgrade
-        dest: /home/pi/sbtools/sb-upgrade
-        state: link
-        force: true
 
     - name: Remove 51cache file (delete file)
 
