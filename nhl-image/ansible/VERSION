@@ -1,2 +1,2 @@
-version:2025.12.2
-detail:This update contains the latest NHL LED Scoreboard code (2025.12.2) from my repository.  Still currently running on 32 bit bookworm. This also includes V2025.12.2 of the Experimental Web UI which now allows uploading of the config.json from your PC and also downloading configuration settings that can be used to load on future versions of the image.  In the Utilities section of the Web UI, there's a Download Coniguration section now.
+version:2026.02.0
+detail:This update contains the latest NHL LED Scoreboard code (2026.02.0) from my repository.  Still currently running on 32 bit bookworm. This also includes V2026.02.0 of the Experimental Web UI.

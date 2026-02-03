@@ -279,16 +279,28 @@
         regexp: '^TEMPLATE_PATH ='
         line: TEMPLATE_PATH = "/usr/share/comitup/web/templates/scoreboard"
 
-    - name: Get nls-controlhub package
-      ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/download/latest-web/nls-controlhub-deb-bookworm-armv7.deb"
-        dest: "/tmp/nls-controlhub-deb-bookworm-armv7.deb"
-        mode: "0644"
+    - name: Install nls-controlhub source deb package from the internet
+      ansible.builtin.apt:
+        deb: https://falkyre.github.io/nhl-setup/repo/nls-controlhub-apt-source_2026.02.0_all.deb
+        dpkg_options: "force-all"
 
-    - name: Install NLS ControlHub using dpkg
-      ansible.builtin.command:  dpkg -i /tmp/nls-controlhub-deb-bookworm-armv7.deb
-      register: dpkg_result
-      changed_when: "'Setting up' in dpkg_result.stdout"
+    - name: Install nls-controlhub packages
+      ansible.builtin.apt:
+        update_cache: true
+        name: "{{ item }}"
+      with_items:
+        - nls-controlhub
+
+    # - name: Get nls-controlhub package
+    #   ansible.builtin.get_url:
+    #     url: "https://github.com/falkyre/nhl-setup/releases/download/latest-web/nls-controlhub-deb-bookworm-armv7.deb"
+    #     dest: "/tmp/nls-controlhub-deb-bookworm-armv7.deb"
+    #     mode: "0644"
+
+    # - name: Install NLS ControlHub using dpkg
+    #   ansible.builtin.command:  dpkg -i /tmp/nls-controlhub-deb-bookworm-armv7.deb
+    #   register: dpkg_result
+    #   changed_when: "'Setting up' in dpkg_result.stdout"
 
     - name: Copy nls_controlhub_cfg.toml to /etc/nls_controlhub
       ansible.builtin.copy:
