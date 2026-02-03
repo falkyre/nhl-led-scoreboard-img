@@ -65,6 +65,7 @@
         name:
           - git
           - build-essential
+        update_cache: yes
         state: present
 
     - name: Enable SSH
