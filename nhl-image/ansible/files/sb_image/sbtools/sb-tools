@@ -175,7 +175,7 @@ do_check_update() {
 do_upgrade() {
         if echo $STATUS | grep -q "UPDATE"; then 
            if (whiptail --yesno "$STATUS Run upgrade?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT); then
-	        /home/pi/sbtools/sb-upgrade
+	        /home/pi/nhl-led-scoreboard/scripts/sbtools/sb-upgrade
 	   fi 
 	else
            whiptail --msgbox "$STATUS No upgrade available" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT	
