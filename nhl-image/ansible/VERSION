@@ -1,2 +1,2 @@
-version:2026.02.0
-detail:This update contains the latest NHL LED Scoreboard code (2026.02.0) from my repository.  Still currently running on 32 bit bookworm. This also includes V2026.02.0 of the Experimental Web UI.
+version:2026.02.1
+detail:This fixes some of the broken parts of the image (wrong nhl_setup download, wrong sb-upgrade path)
