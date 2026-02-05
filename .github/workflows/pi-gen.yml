@@ -1,0 +1,100 @@
+name: Build Pi-Gen Image
+
+on:
+  push:
+    branches:
+      - migrate/pi-gen
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      run_type:
+        description: 'Run type: "Test" or "Release"'
+        required: true
+        default: 'Test'
+        type: choice
+        options:
+        - Test
+        - Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get the version (git tag)
+        uses: maltoze/get-version-action@v1
+        id: get_version
+
+      - name: Enable Docker
+        run: docker --version
+
+      - name: Cache Apt Packages
+        uses: actions/cache@v4
+        with:
+          path: .apt-cache
+          key: apt-cache-${{ hashFiles('pi-gen-config/config') }}
+          restore-keys: |
+            apt-cache-
+
+      - name: Start apt-cacher-ng proxy
+        run: |
+          mkdir -p .apt-cache
+          docker run -d -p 3142:3142 \
+            -v $(pwd)/.apt-cache:/var/cache/apt-cacher-ng \
+            --name apt-cacher-ng \
+            sameersbn/apt-cacher-ng:latest
+
+      - name: Configure APT Proxy
+        # Determine Docker bridge IP (gateway) so pi-gen container can reach apt-cacher-ng
+        run: |
+          DOCKER_GATEWAY=$(docker network inspect bridge --format='{{(index .IPAM.Config 0).Gateway}}')
+          echo "Setting APT_PROXY to http://$DOCKER_GATEWAY:3142"
+          echo "APT_PROXY='http://$DOCKER_GATEWAY:3142'" >> pi-gen-config/config
+
+      - name: Build Image
+        env:
+          USE_DOCKER: true
+        run: |
+          chmod +x build-image.sh
+          ./build-image.sh
+
+      - name: Rename compressed image to include version
+        run: |
+          # Find the generated image in pi-gen/deploy/
+          # It should be named based on IMG_NAME in config + date + other info.
+          # We want to rename it to rpios-scoreboard-<version>.img.xz
+          
+          # List files for debugging
+          ls -lh pi-gen/deploy/
+          
+          # We take the first xz file found (should be only one success)
+          SOURCE_FILE=$(ls pi-gen/deploy/*.xz | head -n 1)
+          mv "$SOURCE_FILE" "rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz"
+
+      - name: Create changelog text
+        id: changelog
+        uses: loopwerk/tag-changelog@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          exclude_types: other,doc,chore
+
+      - name: Upload image artifact for testing
+        if: github.event.inputs.run_type == 'Test'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpios-scoreboard-${{ steps.get_version.outputs.version }}.img
+          path: rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
+
+      - name: GH Release
+        if: github.event.inputs.run_type == 'Release' || startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v0.1.15
+        with:
+          prerelease: true
+          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.changes }}
+          files: rpios-scoreboard-${{ steps.get_version.outputs.version }}.img.xz

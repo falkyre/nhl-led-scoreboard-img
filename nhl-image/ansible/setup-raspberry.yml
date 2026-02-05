@@ -23,26 +23,31 @@
       ansible.builtin.command: "/usr/bin/raspi-config nonint do_hostname {{ system_hostname }}"
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
+      when: not is_pigen_build | default(false)
 
     - name: Setup keyboard layout using raspi-config
       ansible.builtin.command: "/usr/bin/raspi-config nonint do_configure_keyboard {{ keyboard_keymap }}"
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
+      when: not is_pigen_build | default(false)
 
     - name: Setup timezone using raspi-config
       ansible.builtin.command: "/usr/bin/raspi-config nonint do_change_timezone {{ timezone }}"
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
+      when: not is_pigen_build | default(false)
 
     - name: Setup locale using raspi-config
       ansible.builtin.command: "/usr/bin/raspi-config nonint do_change_locale {{ locale }}"
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
+      when: not is_pigen_build | default(false)
 
     - name: Setup Wifi Regulatory Country using raspi-config
       ansible.builtin.command: "/usr/bin/raspi-config nonint do_wifi_country {{ wifi_country }}"
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
+      when: not is_pigen_build | default(false)
 
     # - meta: end_play
 
@@ -159,28 +164,6 @@
         minute: 0
         hour: 3
         job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
-
-    # - name: Download zram-swap # noqa: latest
-    #   ansible.builtin.git:
-    #     repo: https://github.com/foundObjects/zram-swap.git
-    #     dest: /root/zram-swap
-    #     recursive: true
-
-    # - name: Install zram-swap
-    #   ansible.builtin.command: /root/zram-swap/install.sh
-    #   args:
-    #     chdir: /root/zram-swap
-    #   register: my_output # <- Registers the command output.
-    #   changed_when: my_output.rc != 0
-
-    # - name: Update sysctl.conf to optimize zram swap
-    #   ansible.builtin.blockinfile:
-    #     path: /etc/sysctl.conf
-    #     block: |
-    #       vm.vfs_cache_pressure=500
-    #       vm.swappiness=100
-    #       vm.dirty_background_ratio=1
-    #       vm.dirty_ratio=50
 
     - name: Install aptfile (used for updates)
       ansible.builtin.copy:
@@ -302,17 +285,6 @@
         name: "{{ item }}"
       with_items:
         - nls-controlhub
-
-    # - name: Get nls-controlhub package
-    #   ansible.builtin.get_url:
-    #     url: "https://github.com/falkyre/nhl-setup/releases/download/latest-web/nls-controlhub-deb-bookworm-armv7.deb"
-    #     dest: "/tmp/nls-controlhub-deb-bookworm-armv7.deb"
-    #     mode: "0644"
-
-    # - name: Install NLS ControlHub using dpkg
-    #   ansible.builtin.command:  dpkg -i /tmp/nls-controlhub-deb-bookworm-armv7.deb
-    #   register: dpkg_result
-    #   changed_when: "'Setting up' in dpkg_result.stdout"
 
     - name: Copy nls_controlhub_cfg.toml to /etc/nls_controlhub
       ansible.builtin.copy:
@@ -533,7 +505,7 @@
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.bookworm.32"
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.32"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
       when: ansible_architecture != 'aarch64' and ansible_architecture != 'arm64'
@@ -542,7 +514,7 @@
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.bookworm.64"
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.64"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
       when: ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'

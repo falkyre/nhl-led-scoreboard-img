@@ -202,3 +202,4 @@ config/custom_logos.json
 *.txz
 !scoreboard_ui.tar.gz
 .ansible/*
+nhl-image/.vscode

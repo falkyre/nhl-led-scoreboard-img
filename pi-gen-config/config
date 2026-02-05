@@ -1,0 +1,11 @@
+IMG_NAME='rpios-scoreboard'
+RELEASE='trixie'
+DEPLOY_COMPRESSION='xz'
+COMPRESSION_LEVEL='9'
+LOCALE_DEFAULT='en_US.UTF-8'
+TARGET_HOSTNAME='scoreboard'
+KEYBOARD_KEYMAP='us'
+TIMEZONE_DEFAULT='America/Toronto'
+ARCH='arm64'
+ENABLE_SSH=1
+STAGE_LIST='stage0 stage1 stage2 stage-nhl'
