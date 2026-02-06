@@ -203,3 +203,5 @@ config/custom_logos.json
 !scoreboard_ui.tar.gz
 .ansible/*
 nhl-image/.vscode
+user-config
+pi-gen/

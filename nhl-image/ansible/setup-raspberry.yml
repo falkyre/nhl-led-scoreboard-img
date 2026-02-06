@@ -112,25 +112,28 @@
       register: my_output # <- Registers the command output.
       changed_when: my_output.rc != 0
 
+     - name: Create /boot/scoreboard directory
+      ansible.builtin.file:
+        path: /boot/scoreboard
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
 
+    - name: Copy import_readme.txt to /boot/scoreboard
+      ansible.builtin.copy:
+        src: ./files/sb_image/import_readme.txt
+        dest: /boot/scoreboard/
+        owner: root
+        group: root
+        mode: 0644
+        
     - name: Blacklist snd_bcm module (as per hzeller's instructions)
       ansible.builtin.copy:
         dest: /etc/modprobe.d/blacklist-rgb-matrix.conf
         content: |
           blacklist snd_bcm2835
         mode: preserve
-
-  # The next two will need to be removed for Trixie as there is a systemd unit that handles this now
-    # - name: Download resize2fs_once binary
-    #   ansible.builtin.get_url:
-    #     url: https://github.com/RPi-Distro/pi-gen/blob/bookworm/stage2/01-sys-tweaks/files/resize2fs_once
-    #     dest: /etc/init.d/resize2fs_once
-    #     mode: "0755"
-
-    # - name: Force automatic rootfs expansion on first boot
-    #   ansible.builtin.systemd:
-    #     service: resize2fs_once
-    #     enabled: true
 
     - name: Copy global bash.bashrc
       ansible.builtin.copy:
@@ -173,7 +176,6 @@
 
     - name: Install OS packages needed for scoreboard
       ansible.builtin.apt:
-        update_cache: true
         name:
           - cmake
           - cython3
@@ -191,7 +193,6 @@
           - python3-virtualenv
           - python3-venv
           - supervisor
-          - neofetch
           - pastebinit
           - jq
           - neovim
@@ -250,7 +251,7 @@
 
     - name: Install comitup and comitup-web packages
       ansible.builtin.apt:
-        update_cache: true
+        update_cache: yes
         name: "{{ item }}"
       with_items:
         - comitup
@@ -281,7 +282,7 @@
 
     - name: Install nls-controlhub packages
       ansible.builtin.apt:
-        update_cache: true
+        update_cache: yes
         name: "{{ item }}"
       with_items:
         - nls-controlhub
@@ -341,22 +342,21 @@
         dest: ~/
         mode: preserve
 
-    - name: Create .config/neofetch directory in pi home
+    - name: Create .config/fastfetch directory in pi home
       become: true
       become_user: pi
       ansible.builtin.file:
-        path: ~/.config/neofetch
+        path: ~/.config/fastfetch
         state: directory
         mode: "0755"
 
-    - name: Copy scoreboard neofetch config
+    - name: Copy scoreboard fastfetch config
       become: true
       become_user: pi
       ansible.builtin.copy:
-        src: ./files/sb_image/.config/neofetch/neofetch_config.conf
-        dest: ~/.config/neofetch/config.conf
+        src: ./files/sb_image/.config/fastfetch/config.jsonc
+        dest: ~/.config/fastfetch/config.jsonc
         mode: "0755"
-
     - name: Create .nhlledportal directory
       become: true
       become_user: pi

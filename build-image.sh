@@ -3,7 +3,7 @@ set -e
 
 # Configuration
 PI_GEN_REPO="https://github.com/RPi-Distro/pi-gen.git"
-PI_GEN_BRANCH="master"
+PI_GEN_BRANCH="arm64"
 BUILD_DIR="pi-gen"
 CONFIG_FILE="$(pwd)/pi-gen-config/config"
 STAGE_NHL="$(pwd)/pi-gen-config/stage-nhl"
@@ -18,12 +18,21 @@ if [ ! -d "$BUILD_DIR" ]; then
 else
     echo "pi-gen directory exists, updating..."
     cd "$BUILD_DIR"
-    git pull
+    # Fetch deployment branch to ensure we can switch if needed (handling depth=1 from potential master clone)
+    git fetch --depth 1 origin "$PI_GEN_BRANCH"
+    git checkout "$PI_GEN_BRANCH"
+    git reset --hard "origin/$PI_GEN_BRANCH"
     cd ..
 fi
 
 # Copy config
 cp "$CONFIG_FILE" "$BUILD_DIR/config"
+
+# Check for user-config override
+if [ -f "user-config" ]; then
+    echo "Found user-config. Applying local overrides..."
+    cat "user-config" >> "$BUILD_DIR/config"
+fi
 
 # Setup custom stage
 # We want to run our stage after stage2 (Lite system)
@@ -32,6 +41,14 @@ if [ -d "$BUILD_DIR/stage-nhl" ]; then
     rm -rf "$BUILD_DIR/stage-nhl"
 fi
 cp -r "$STAGE_NHL" "$BUILD_DIR/stage-nhl"
+
+# Copy custom export-image configuration (overrides default to fix space issues)
+EXPORT_CONFIG="$(pwd)/pi-gen-config/export-image"
+if [ -d "$EXPORT_CONFIG" ]; then
+    echo "Applying custom export-image scripts from $EXPORT_CONFIG..."
+    rm -rf "$BUILD_DIR/export-image"
+    cp -r "$EXPORT_CONFIG" "$BUILD_DIR/"
+fi
 
 # We need to make sure stage-nhl is executed. 
 # pi-gen runs stages looking for 'stage*' directories and executing them in order (if configured in STAGE_LIST usually, or just by existence if following numbering)
@@ -60,10 +77,17 @@ cp -r "$REPO_ROOT/nhl-image/ansible/"* "$BUILD_DIR/stage-nhl/01-run-ansible/file
 
 cd "$BUILD_DIR"
 
-# Ensure stage-nhl is executable
-chmod +x stage-nhl/*/*.sh 2>/dev/null || true
+# Ensure stage-nhl scripts are executable
+find stage-nhl -name "*.sh" -exec chmod +x {} +
 
 # Run build
+# Check for CONTINUE argument
+for arg in "$@"; do
+  if [[ "$arg" == "CONTINUE=1" ]]; then
+    export CONTINUE=1
+  fi
+done
+
 # Run build
 if [[ "$OSTYPE" == "darwin"* ]] || [[ "$USE_DOCKER" == "true" ]]; then
     echo "Building using Container Runtime..."
