@@ -55,7 +55,7 @@ alias sb-restart='supervisorctl restart scoreboard'
 alias sb-status='supervisorctl status scoreboard'
 alias sb-tools='/home/pi/sbtools/sb-tools'
 alias sb-changelog='cd /home/pi/nhl-led-scoreboard;latest=$(git tag --sort=-v:refname | head -1);previous=$(git tag --sort=-v:refname | head -2 | tail -1);echo "$(tput bold)$(tput smul)Changes since $previous$(tput sgr0)";git log --oneline --decorate $previous..$latest;cd ~'
-alias sb-sysinfo='neofetch --off'
+alias sb-sysinfo='fastfetch -l none'
 alias sb-upgrade='/home/pi/nhl-led-scoreboard/scripts/sbtools/sb-upgrade'
 alias sb-resetwifi='sudo /usr/sbin/comitup-cli d'
 
@@ -67,7 +67,7 @@ if [ "$EUID" -ne 0 ]; then
         whiptail --msgbox "Welcome to the nhl-led-scoreboard initial setup. You will be asked to select a team and your board size for initial configuration.\n\nThis configuration will reboot after you do your setup.\n\nYou can do a more complex setup after by using the /home/pi/nhl-led-scoreboard/nhl_setup app after the reboot" 20 60 1
         /home/pi/sbtools/sb-tools do_firstrun
    fi
-   neofetch --off
+   fastfetch -l none
    #Check to see if there is an UPDATE and if there is, ask the user if they want to run it
    status=$(cat /home/pi/.nhlledportal/status)
    if [[ $status == *"New"* ]]; then

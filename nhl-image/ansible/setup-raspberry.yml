@@ -19,35 +19,7 @@
 
   tasks:
     # use only become_user: root if task should be run as superuser
-    - name: Setup hostname using raspi-config
-      ansible.builtin.command: "/usr/bin/raspi-config nonint do_hostname {{ system_hostname }}"
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
-      when: not is_pigen_build | default(false)
-
-    - name: Setup keyboard layout using raspi-config
-      ansible.builtin.command: "/usr/bin/raspi-config nonint do_configure_keyboard {{ keyboard_keymap }}"
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
-      when: not is_pigen_build | default(false)
-
-    - name: Setup timezone using raspi-config
-      ansible.builtin.command: "/usr/bin/raspi-config nonint do_change_timezone {{ timezone }}"
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
-      when: not is_pigen_build | default(false)
-
-    - name: Setup locale using raspi-config
-      ansible.builtin.command: "/usr/bin/raspi-config nonint do_change_locale {{ locale }}"
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
-      when: not is_pigen_build | default(false)
-
-    - name: Setup Wifi Regulatory Country using raspi-config
-      ansible.builtin.command: "/usr/bin/raspi-config nonint do_wifi_country {{ wifi_country }}"
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
-      when: not is_pigen_build | default(false)
+    # Redundant raspi-config tasks removed as they are handled by pi-gen config
 
     # - meta: end_play
 
@@ -73,12 +45,6 @@
         update_cache: yes
         state: present
 
-    - name: Enable SSH
-      ansible.builtin.file:
-        path: /boot/ssh
-        state: touch
-        mode: "0600"
-
     - name: Disable "Please note that SSH may not work until a valid user has been set up." message
       ansible.builtin.file:
         path: /etc/ssh/sshd_config.d/rename_user.conf
@@ -89,44 +55,10 @@
         name: root
         password: "{{ 'letiretlebut' | password_hash('sha512') }}"
 
-    # This is the new way to create a user on raspiOS headless, if you don't do it this way, the system unit for
-    # multi-user.target never hits and can slow down boots.
-    - name: Create pi user encrypted password
-      ansible.builtin.shell:
-        cmd: set -o pipefail && echo "scoreboard" | openssl passwd -6 -stdin
-        executable: /bin/bash
-      register: pi_passwd
-      changed_when: pi_passwd.rc != 0
+  
+    # cmdline.txt isolcpus=3 is now handled by stage-nhl/02-config-boot/00-run.sh
 
-    - name: Add pi user name to start of line
-      ansible.builtin.copy:
-        dest: /boot/userconf
-        content: 'pi:{{ pi_passwd.stdout }}'
-        mode: preserve
-
-    # This will need to change with Trixie.  The cmdline.txt is in /boot/fireware now
-    - name: Force isocpus=3 in cmdline.txt so matrix code runs smoother
-      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' /boot/cmdline.txt # noqa: command-instead-of-module
-      args:
-        chdir: /boot/
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
-
-     - name: Create /boot/scoreboard directory
-      ansible.builtin.file:
-        path: /boot/scoreboard
-        state: directory
-        owner: root
-        group: root
-        mode: '0755'
-
-    - name: Copy import_readme.txt to /boot/scoreboard
-      ansible.builtin.copy:
-        src: ./files/sb_image/import_readme.txt
-        dest: /boot/scoreboard/
-        owner: root
-        group: root
-        mode: 0644
+    # /boot/scoreboard directory and import_readme.txt are now handled by stage-nhl/03-boot-files/00-run.sh
         
     - name: Blacklist snd_bcm module (as per hzeller's instructions)
       ansible.builtin.copy:
@@ -194,6 +126,7 @@
           - python3-venv
           - supervisor
           - pastebinit
+          - fastfetch
           - jq
           - neovim
           - zsh
