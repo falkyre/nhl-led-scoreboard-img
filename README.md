@@ -72,7 +72,7 @@ The easiest way to flash the *NHL LED Scoreboard Raspberry Pi Image* to your SD 
 </p>
 
 1. Download and install the latest version of [Etcher](https://www.balena.io/etcher/).
-2. Open Etcher and select the `rpios-scoreboard-v0.0.0.xz` file you have [downloaded](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest). There is no need to extract the `.xz` file first.
+2. Open Etcher and select the `rpios-scoreboard-v0.0.0.xz` file you have [downloaded](https://github.com/falkyre/nhl-led-scoreboard-img/releases/latest). There is no need to extract the `.gz` file first.
 3. Choose the drive your SD card has been inserted into.
 4. Click Flash.
 
