@@ -1,2 +1,2 @@
-version:2026.02.1
-detail:This fixes some of the broken parts of the image (wrong nhl_setup download, wrong sb-upgrade path)
+version:2026.02.2
+detail:Image now built on Trixie 64bit.  Various fixes to the build process.  Includes the latest version of the NHL LED Scoreboard code.

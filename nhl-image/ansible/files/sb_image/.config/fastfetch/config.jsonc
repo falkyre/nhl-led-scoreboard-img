@@ -75,7 +75,9 @@
         {
             "type": "disk",
             "key": "Disk",
-            "folders": ["/"]
+            "folders": [
+                "/"
+            ]
         },
         {
             "type": "localip",
@@ -135,7 +137,7 @@
             "type": "command",
             "key": "NLS ControlHub",
             // Neofetch: color 2 (green) for URL. Extracts IP from wlan0.
-            "text": "ip=$(ip -4 addr show wlan0 | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}'); echo \"\u001b[32mhttp://$ip:8000\u001b[0m\"",
+            "text": "ip=$(ip -4 addr show wlan0 | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}'); svc_status=$(systemctl show -p ActiveState --value nls_controlhub.service); if [ \"$svc_status\" == \"active\" ]; then echo \"\u001b[32mhttp://$ip:8000 (running)\u001b[0m\"; else echo \"\u001b[31mhttp://$ip:8000 (not running)\u001b[0m\"; fi",
             "shell": "/bin/bash"
         }
     ]
