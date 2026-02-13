@@ -6,17 +6,10 @@ SB_DIR="/home/pi/nhl-led-scoreboard"
 VENV_PATH="/home/pi/nhlsb-venv"
 SB_TOOLS="/home/pi/sbtools"
 
-# --- THE FIX: HARDCODED ARCHITECTURE FLAGS ---
-# We define these flags once and verify them.
-# -march=armv8-a: The baseline instruction set for Pi 3 / Zero 2W
-# -mtune=cortex-a53: Optimize for the specific CPU core in those models
-SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53"
+# Portability flags for aarch64 (Zero 2W / Pi 3 / Pi 4)
+SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
 
-# 1. Export globally for Python setup.py and implicit make rules
-export CFLAGS="$SAFE_FLAGS"
-export CXXFLAGS="$SAFE_FLAGS"
-
-echo "Building for aarch64 (Cortex-A53) with flags: $SAFE_FLAGS"
+echo "Applying architecture lock: $SAFE_FLAGS"
 
 cd "$SB_DIR"
 git submodule update --init --recursive
@@ -24,19 +17,37 @@ git config submodule.matrix.ignore all
 
 cd submodules/matrix 
 
-# 2. Clean EVERYTHING to prevent mixing bad objects with good ones
+# 1. Clean previous artifacts
 make clean
 make -C lib clean
 make -C utils clean
 
-# 3. EXPLICITLY build the core library FIRST
-# This guarantees librgbmatrix.a is safe before Python or Utils touch it.
-# We pass HARDWARE_DESC=regular to prevent auto-detection script errors.
-make -C lib EXTRA_CXXFLAGS="$SAFE_FLAGS" HARDWARE_DESC=regular
+# --- CRITICAL FIX: PATCH THE MAKEFILE ---
+# The library's Makefile ignores environment variables for CXXFLAGS.
+# We must physically write our flags into the file to stop it from using
+# 'native' optimizations that cause the SIGILL on Pi 3.
 
-# 4. Build Python bindings
-# The CFLAGS/CXXFLAGS exports above handle the setup.py compilation.
-# We verify the library exists first so it doesn't try to rebuild it wrongly.
+# Remove the line that tries to auto-detect hardware
+sed -i '/DEFINES+=-march=native/d' lib/Makefile
+
+# Force our flags at the top of the CXXFLAGS definition in lib/Makefile
+# This ensures they take precedence over any other internal flags.
+sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
+
+# Do the same for the utils/Makefile
+sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
+
+# ------------------------------------------
+
+# 2. Build Core Library (Forced to ARMv8-A)
+# We explicitly set HARDWARE_DESC to avoid the library's shell script from 
+# guessing the wrong Pi model during the build.
+make -C lib HARDWARE_DESC=regular
+
+# 3. Build Python bindings
+# Export flags just in case setup.py decides to use them
+export CFLAGS="$SAFE_FLAGS"
+export CXXFLAGS="$SAFE_FLAGS"
 make build-python PYTHON="$VENV_PATH/bin/python3" HARDWARE_DESC=regular
 make install-python PYTHON="$VENV_PATH/bin/python3" HARDWARE_DESC=regular
 
@@ -46,16 +57,15 @@ if [ -f "$SB_TOOLS/runtext.py" ]; then
     cp "$SB_TOOLS/runtext.py" bindings/python/samples/
 fi
 
-# 5. Build the led-image-viewer utility
+# 4. Build the led-image-viewer utility
 cd utils
-# We pass the flags AGAIN just to be absolutely sure the linker uses them.
-make led-image-viewer EXTRA_CXXFLAGS="$SAFE_FLAGS" HARDWARE_DESC=regular
+make led-image-viewer HARDWARE_DESC=regular
 
 # Deploy
 if [ -f "led-image-viewer" ]; then
     cp led-image-viewer "$SB_TOOLS/led-image-viewer"
     chmod +x "$SB_TOOLS/led-image-viewer"
-    echo "SUCCESS: led-image-viewer built and deployed."
+    echo "SUCCESS: led-image-viewer built with forced architecture flags."
 else
     echo "ERROR: led-image-viewer failed to compile."
     exit 1
