@@ -1,2 +1,2 @@
 version:2026.02.3
-detail:Fixes to the build process.
+detail:Fixes to the build process.  Force the build to target the Raspberry Pi 3/Zero 2W baseline so build works properly in the Github action

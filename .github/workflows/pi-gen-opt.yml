@@ -53,9 +53,21 @@ jobs:
           restore-keys: |
             apt-cache-
 
-      - name: Start apt-cacher-ng proxy
+      - name: Cache Pip Packages
+        uses: actions/cache@v4
+        with:
+          path: .pip-cache
+          key: pip-cache-${{ hashFiles('nhl-image/ansible/requirements.txt') }}
+          restore-keys: |
+            pip-cache-
+
+      - name: Create Cache Directories
         run: |
           mkdir -p .apt-cache
+          mkdir -p .pip-cache
+
+      - name: Start apt-cacher-ng proxy
+        run: |
           docker run -d -p 3142:3142 \
             -v $(pwd)/.apt-cache:/var/cache/apt-cacher-ng \
             --name apt-cacher-ng \
