@@ -34,8 +34,20 @@ if [ -n "$PYPI_PROXY" ]; then
     EXTRA_VARS="$EXTRA_VARS pypi_proxy='$PYPI_PROXY'"
 fi
 
+# Configure pip to use the cache if it exists
+if [ -d "/tmp/pip_cache" ]; then
+    echo "Configuring pip to use /tmp/pip_cache"
+    mkdir -p /root/.config/pip
+    echo "[global]" > /root/.config/pip/pip.conf
+    echo "cache-dir = /tmp/pip_cache" >> /root/.config/pip/pip.conf
+fi
+
 ansible-playbook setup-raspberry.yml -i "localhost," -c local -e "$EXTRA_VARS"
-EOF
 
 # Cleanup
+if [ -d "/tmp/pip_cache" ]; then
+    rm -rf /root/.config/pip
+fi
+EOF
+
 rm -rf "${ROOTFS_DIR}/tmp/ansible"

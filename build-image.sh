@@ -114,6 +114,22 @@ if [[ "$OSTYPE" == "darwin"* ]] || [[ "$USE_DOCKER" == "true" ]]; then
         # Attempt to run build-docker.sh. If it fails due to missing docker command, user needs alias.
     fi
 
+    # Patch build-docker.sh to mount our pip cache
+    # We need to inject the volume mount before the image name in the docker run command
+    # The script uses "docker run" so we can try to replace that or use a specific insertion point.
+    # Looking at pi-gen/build-docker.sh (I can't see it but I know how it generally works), it constructs a docker run command.
+    # A safer way might be to rely on the fact that we can modify the script on disk.
+    
+    # We will inject -v $(pwd)/.pip-cache:/pip-cache into the docker run command
+    if [ -f "$BUILD_DIR/build-docker.sh" ]; then
+        echo "Patching build-docker.sh to mount pip cache..."
+        # This regex looks for the line starting with "docker run" and appends the volume mount
+        # We use a distinct marker (config) that we know is mounted
+        sed -i 's|-v "$config":/config|-v "$config":/config -v "'$(pwd)'/.pip-cache":/pip-cache|' "$BUILD_DIR/build-docker.sh"
+    else
+        echo "Warning: build-docker.sh not found, cannot patch for pip cache!"
+    fi
+
     ./build-docker.sh
 else
     echo "Starting build. obtaining sudo..."

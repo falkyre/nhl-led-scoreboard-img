@@ -1,2 +1,2 @@
-version:2026.02.2
-detail:Image now built on Trixie 64bit.  Various fixes to the build process.  Includes the latest version of the NHL LED Scoreboard code.
+version:2026.02.3
+detail:Fixes to the build process.  Force the build to target the Raspberry Pi 3/Zero 2W baseline so build works properly in the Github action

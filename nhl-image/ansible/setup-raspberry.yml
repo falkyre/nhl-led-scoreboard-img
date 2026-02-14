@@ -1,5 +1,5 @@
--
-  name: Setup RPi - Scoreboard setup
+---
+- name: Setup RPi - Scoreboard setup
   hosts: all
   become: true
   become_user: root
@@ -18,11 +18,6 @@
     imgver: "{{ lookup('file', 'VERSION').splitlines()[0].split(':')[-1] }}"
 
   tasks:
-    # use only become_user: root if task should be run as superuser
-    # Redundant raspi-config tasks removed as they are handled by pi-gen config
-
-    # - meta: end_play
-
     - name: Setup apt proxy
       ansible.builtin.copy:
         src: ./files/sb_image/51cache
@@ -45,7 +40,7 @@
         update_cache: yes
         state: present
 
-    - name: Disable "Please note that SSH may not work until a valid user has been set up." message
+    - name: Disable SSH rename user message
       ansible.builtin.file:
         path: /etc/ssh/sshd_config.d/rename_user.conf
         state: absent
@@ -55,17 +50,12 @@
         name: root
         password: "{{ 'letiretlebut' | password_hash('sha512') }}"
 
-  
-    # cmdline.txt isolcpus=3 is now handled by stage-nhl/02-config-boot/00-run.sh
-
-    # /boot/scoreboard directory and import_readme.txt are now handled by stage-nhl/03-boot-files/00-run.sh
-        
-    - name: Blacklist snd_bcm module (as per hzeller's instructions)
+    - name: Blacklist snd_bcm module
       ansible.builtin.copy:
         dest: /etc/modprobe.d/blacklist-rgb-matrix.conf
         content: |
           blacklist snd_bcm2835
-        mode: preserve
+        mode: "0644"
 
     - name: Copy global bash.bashrc
       ansible.builtin.copy:
@@ -85,14 +75,14 @@
         dest: /etc/cron.scoreboard
         mode: "0755"
 
-    - name: Setup crontab to call cron.scoreboard on reboots
+    - name: Setup crontab
       ansible.builtin.copy:
         src: ./files/sb_image/crontab
         dest: /etc/
         backup: true
         mode: preserve
 
-    - name: Setup pi user crontab for daily check of version
+    - name: Setup pi user crontab for updates
       ansible.builtin.cron:
         user: pi
         name: "Check scoreboard version"
@@ -100,7 +90,7 @@
         hour: 3
         job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
 
-    - name: Install aptfile (used for updates)
+    - name: Install aptfile
       ansible.builtin.copy:
         src: ./files/sb_image/aptfile
         dest: /usr/local/bin
@@ -118,7 +108,6 @@
           - python3-numpy
           - python3-pandas
           - python3-pil
-          - python3-numpy
           - python3-pygame
           - python3-tk
           - python3-gpiozero
@@ -138,7 +127,7 @@
           - libgraphicsmagick++-dev
         state: present
 
-    - name: Remove OS packages that will cause issues with scoreboard
+    - name: Remove OS packages that will cause issues
       ansible.builtin.apt:
         name:
           - bluez
@@ -152,15 +141,13 @@
       ansible.builtin.systemd:
         name: NetworkManager
         enabled: true
-        masked: false
 
     - name: Disable Supervisor service
       ansible.builtin.systemd:
         name: supervisor
         enabled: false
-        masked: false
 
-    - name: Disable and mask services so we can use comitup for wifi setup
+    - name: Disable and mask services for comitup
       ansible.builtin.systemd:
         name: "{{ item }}"
         masked: true
@@ -177,56 +164,52 @@
         path: /etc/network/interface
         state: absent
 
-    - name: Install comitup deb package from the internet
+    - name: Install comitup source repo
       ansible.builtin.apt:
         deb: https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb
         dpkg_options: "force-all"
 
-    - name: Install comitup and comitup-web packages
+    - name: Install comitup and comitup-watch
       ansible.builtin.apt:
         update_cache: yes
-        name: "{{ item }}"
-      with_items:
-        - comitup
-        - comitup-watch
+        name:
+          - comitup
+          - comitup-watch
 
-    - name: Copy scoreboard comitup.conf file
+    - name: Copy scoreboard comitup.conf
       ansible.builtin.copy:
         src: ./files/comitup-conf/comitup.conf
         dest: /etc/
-        backup: true
         mode: "0755"
 
-    - name: Extract scoreboard template into the comitup flask template directory
+    - name: Extract scoreboard template
       ansible.builtin.unarchive:
         src: ./files/comitup-conf/scoreboard_ui.tar.gz
         dest: /usr/share/comitup/web/templates
 
-    - name: Update template path variable in comitupweb.py to use scoreboard template
+    - name: Update template path in comitupweb.py
       ansible.builtin.lineinfile:
         path: /usr/share/comitup/web/comitupweb.py
         regexp: '^TEMPLATE_PATH ='
-        line: TEMPLATE_PATH = "/usr/share/comitup/web/templates/scoreboard"
+        line: 'TEMPLATE_PATH = "/usr/share/comitup/web/templates/scoreboard"'
 
-    - name: Install nls-controlhub source deb package from the internet
+    - name: Install nls-controlhub source repo
       ansible.builtin.apt:
         deb: https://falkyre.github.io/nhl-setup/repo/nls-controlhub-apt-source_2026.02.0_all.deb
         dpkg_options: "force-all"
 
-    - name: Install nls-controlhub packages
+    - name: Install nls-controlhub
       ansible.builtin.apt:
         update_cache: yes
-        name: "{{ item }}"
-      with_items:
-        - nls-controlhub
+        name: nls-controlhub
 
-    - name: Copy nls_controlhub_cfg.toml to /etc/nls_controlhub
+    - name: Copy nls_controlhub config
       ansible.builtin.copy:
         src: "./files/sb_image/nls_controlhub_cfg.toml"
         dest: "/etc/nls_controlhub/config.toml"
         mode: "0644"
 
-    - name: Install scoreboard services
+    - name: Install and enable scoreboard services
       ansible.builtin.copy:
         src: "./files/sb_image/{{ item }}"
         dest: /etc/systemd/system
@@ -236,36 +219,24 @@
         - sb_autosettz.service
         - wifi-on.service
 
-    - name: Enable scoreboard services
+    - name: Enable services
       ansible.builtin.systemd:
         name: "{{ item }}"
         enabled: true
-        masked: false
       with_items:
         - sb_splash.service
         - sb_autosettz.service
         - wifi-on.service
 
-    - name: Copy scoreboard supervisord.conf
+    - name: Copy supervisor configs
       ansible.builtin.copy:
-        src: ./files/sb_image/supervisord.conf
-        dest: /etc/supervisor/
-        backup: true
+        src: "./files/sb_image/{{ item }}"
+        dest: "/etc/supervisor/{{ 'conf.d/' if 'scoreboard' in item else '' }}"
         mode: preserve
-
-    - name: Copy scoreboard scoreboard.conf
-      ansible.builtin.copy:
-        src: ./files/sb_image/scoreboard.conf
-        dest: /etc/supervisor/conf.d/
-        backup: true
-        mode: preserve
-
-    - name: Copy scoreboard scoreboard-emulated.conf
-      ansible.builtin.copy:
-        src: ./files/sb_image/scoreboard-emulated.conf
-        dest: /etc/supervisor/conf.d/
-        backup: true
-        mode: preserve
+      with_items:
+        - supervisord.conf
+        - scoreboard.conf
+        - scoreboard-emulated.conf
 
     - name: Copy sbtools directory
       become: true
@@ -275,30 +246,26 @@
         dest: ~/
         mode: preserve
 
-    - name: Create .config/fastfetch directory in pi home
+    - name: Setup fastfetch and portal directories
       become: true
       become_user: pi
       ansible.builtin.file:
-        path: ~/.config/fastfetch
+        path: "{{ item }}"
         state: directory
         mode: "0755"
+      with_items:
+        - ~/.config/fastfetch
+        - ~/.nhlledportal
 
-    - name: Copy scoreboard fastfetch config
+    - name: Copy fastfetch config
       become: true
       become_user: pi
       ansible.builtin.copy:
         src: ./files/sb_image/.config/fastfetch/config.jsonc
         dest: ~/.config/fastfetch/config.jsonc
         mode: "0755"
-    - name: Create .nhlledportal directory
-      become: true
-      become_user: pi
-      ansible.builtin.file:
-        path: ~/.nhlledportal
-        state: directory
-        mode: "0755"
 
-    - name: Create startup files in .nhlledportal
+    - name: Create portal startup files
       become: true
       become_user: pi
       ansible.builtin.file:
@@ -315,8 +282,6 @@
       ansible.builtin.copy:
         dest: ~/.nhlledportal/imgver
         content: 'You are running the image version {{ imgver }}'
-        mode: preserve
-
 
     - name: Setup pi user bash and gitconfig
       become: true
@@ -329,7 +294,7 @@
         - .gitconfig
         - .bashrc
 
-    - name: Download scoreboard release repo "{{ gh_repo }}" # noqa: latest
+    - name: Download scoreboard repo
       become: true
       become_user: pi
       ansible.builtin.git:
@@ -338,23 +303,9 @@
         recursive: true
         single_branch: true
         depth: 1
-        track_submodules: true
-      when: not use_beta
+        version: "{{ gh_branch if use_beta else 'HEAD' }}"
 
-    - name: Download scoreboard beta repo "{{ gh_repo }}" # noqa: latest
-      become: true
-      become_user: pi
-      ansible.builtin.git:
-        repo: "{{ gh_repo }}"
-        dest: ~/nhl-led-scoreboard
-        recursive: true
-        single_branch: true
-        depth: 1
-        track_submodules: true
-        version: "{{ gh_branch }}"
-      when: use_beta
-
-    - name: Install required python packages for scoreboard
+    - name: Install required python packages
       become: true
       become_user: pi
       ansible.builtin.pip:
@@ -364,27 +315,13 @@
         extra_args: "{{ pypi_proxy }}"
         requirements: /home/pi/nhl-led-scoreboard/requirements.txt
 
-    - name: Do pip self-update
+    - name: Install extra python packages
       become: true
       become_user: pi
       ansible.builtin.pip:
         virtualenv: /home/pi/nhlsb-venv
-        virtualenv_python: python3
-        virtualenv_site_packages: true
-        extra_args: "{{ pypi_proxy }}"
-        state: forcereinstall
         name:
           - pip
-
-    - name: Install extra python packages for scoreboard
-      become: true
-      become_user: pi
-      ansible.builtin.pip:
-        virtualenv: /home/pi/nhlsb-venv
-        virtualenv_python: python3
-        virtualenv_site_packages: true
-        extra_args: "{{ pypi_proxy }}"
-        name:
           - archey4
           - tzlocal
           - lastversion
@@ -405,7 +342,11 @@
       ansible.builtin.command: /home/pi/nhl-led-scoreboard/install_bindings.sh
       args:
         chdir: /home/pi/nhl-led-scoreboard
-      register: my_output # <- Registers the command output.
+      environment:
+        # Crucial for Debian Trixie aarch64 compatibility across models
+        EXTRA_CXXFLAGS: "-march=armv8-a -mtune=cortex-a53"
+        HARDWARE_DESC: "regular"
+      register: my_output
       changed_when: my_output.rc != 0
 
     - name: Remove install_bindings.sh
@@ -415,7 +356,7 @@
         path: /home/pi/nhl-led-scoreboard/install_bindings.sh
         state: absent
 
-    - name: Create direnv setup to auto activate venv
+    - name: Create direnv setup
       become: true
       become_user: pi
       ansible.builtin.copy:
@@ -431,45 +372,25 @@
       become: true
       become_user: pi
       ansible.builtin.command: direnv allow ~/nhl-led-scoreboard
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
+      changed_when: false
 
-    - name: Download nhl_setup executable for 32bit systems
+    - name: Download nhl_setup executable
       become: true
       become_user: pi
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.32"
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.{{ '64' if (ansible_architecture == 'aarch64' or ansible_architecture == 'arm64') else '32' }}"
         dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
-      when: ansible_architecture != 'aarch64' and ansible_architecture != 'arm64'
 
-    - name: Download nhl_setup executable for 64bit systems
-      become: true
-      become_user: pi
-      ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.64"
-        dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
-        mode: '0755'
-      when: ansible_architecture == 'aarch64' or ansible_architecture == 'arm64'
-
-    - name: Update .nhlledportal/status file
+    - name: Update .nhlledportal/status
       become: true
       become_user: pi
       ansible.builtin.shell: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
       args:
         chdir: /home/pi/sbtools
-      register: my_output # <- Registers the command output.
-      changed_when: my_output.rc != 0
+      changed_when: false
 
-    - name: Remove 51cache file (delete file)
-
-      ansible.builtin.file:
-        path: /etc/apt/apt.conf.d/51cache
-        state: absent
-      when: use_apt_proxy
-
-    - name: Clean up apt cache
-      become: true
+    - name: Final cleanup
       ansible.builtin.apt:
         autoclean: true
         autoremove: true
