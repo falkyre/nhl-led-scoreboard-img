@@ -26,13 +26,12 @@ jobs:
           platforms: linux/arm64
 
       - name: Build in Trixie Container
-        # REPLACED: We now run docker directly to avoid API version conflicts
         run: |
-          docker run --rm --platform linux/arm64 \
+            docker run --rm --platform linux/arm64 \
             -v ${{ github.workspace }}:/work \
             debian:trixie \
             /bin/bash -c '
-            set -e  # Fail on error
+            set -e
 
             # --- DEFINE FLAGS ---
             SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
@@ -60,9 +59,13 @@ jobs:
               libwebp-dev \
               git
 
-            # --- BUILD WHEEL ---
+            # --- PRE-COMPILE CYTHON ---
+            # This generates the missing .cpp files before the build tool runs
             cd bindings/python
-            
+            cython3 --cplus -3 rgbmatrix/core.pyx
+            cython3 --cplus -3 rgbmatrix/graphics.pyx
+
+            # --- BUILD WHEEL ---
             echo "[build-system]
             requires = [\"setuptools>=42\", \"wheel\", \"Cython\"]
             build-backend = \"setuptools.build_meta\"
@@ -83,7 +86,7 @@ jobs:
             make -C utils led-image-viewer
             cp utils/led-image-viewer /work/dist/
             '
-
+            
       - name: Delete Old Release
         uses: dev-drprasad/delete-tag-and-release@v1.0
         with:
