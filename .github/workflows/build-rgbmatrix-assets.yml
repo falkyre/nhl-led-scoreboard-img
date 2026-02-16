@@ -27,28 +27,23 @@ jobs:
 
       - name: Build in Trixie Container
         run: |
-            docker run --rm --platform linux/arm64 \
+          docker run --rm --platform linux/arm64 \
             -v ${{ github.workspace }}:/work \
             debian:trixie \
             /bin/bash -c '
             set -e
 
-            # --- DEFINE FLAGS ---
+            # --- 1. SETUP ENVIRONMENT ---
+            # Safe flags for Pi Zero 2W / Pi 4 compatibility
             SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
             HARDWARE_DESC="regular"
             
+            # Export basic flags
             export CFLAGS="$SAFE_FLAGS"
             export CXXFLAGS="$SAFE_FLAGS"
             export HARDWARE_DESC="$HARDWARE_DESC"
 
-            # --- PATCHING ---
-            cd /work/submodules/rpi-rgb-led-matrix
-            
-            sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
-            sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
-            sed -i "s|^HARDWARE_DESC=.*|HARDWARE_DESC=$HARDWARE_DESC|g" lib/Makefile
-
-            # --- DEPENDENCIES ---
+            # --- 2. INSTALL DEPENDENCIES ---
             apt-get update && apt-get install -y \
               build-essential \
               python3-full \
@@ -59,13 +54,35 @@ jobs:
               libwebp-dev \
               git
 
-            # --- PRE-COMPILE CYTHON ---
-            # This generates the missing .cpp files before the build tool runs
+            # --- 3. PILLOW HEADER FIX ---
+            # Install binary Pillow for Python runtime
+            pip install pillow --break-system-packages
+            
+            # Download Pillow SOURCE to get "Imaging.h" (needed for compilation)
+            # We download it to /tmp/pillow-src and extract it
+            mkdir -p /tmp/pillow-src
+            pip download pillow --no-binary=:all: --no-deps -d /tmp/pillow-src
+            tar -xzf /tmp/pillow-src/Pillow-*.tar.gz -C /tmp/pillow-src
+            
+            # Find the "src/libImaging" folder and add it to CFLAGS
+            PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
+            export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
+            echo "Added Pillow headers from: $PILLOW_INCLUDE"
+
+            # --- 4. PATCH MAKEFILES ---
+            cd /work/submodules/rpi-rgb-led-matrix
+            
+            sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
+            sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
+            sed -i "s|^HARDWARE_DESC=.*|HARDWARE_DESC=$HARDWARE_DESC|g" lib/Makefile
+
+            # --- 5. PRE-COMPILE CYTHON ---
             cd bindings/python
             cython3 --cplus -3 rgbmatrix/core.pyx
             cython3 --cplus -3 rgbmatrix/graphics.pyx
 
-            # --- BUILD WHEEL ---
+            # --- 6. BUILD WHEEL ---
+            # Note: We escape quotes for the internal bash script
             echo "[build-system]
             requires = [\"setuptools>=42\", \"wheel\", \"Cython\"]
             build-backend = \"setuptools.build_meta\"
@@ -81,12 +98,12 @@ jobs:
             pip install build --break-system-packages
             python3 -m build --wheel --outdir /work/dist
 
-            # --- BUILD UTILITY ---
+            # --- 7. BUILD C++ UTILITY ---
             cd /work/submodules/rpi-rgb-led-matrix
             make -C utils led-image-viewer
             cp utils/led-image-viewer /work/dist/
             '
-            
+
       - name: Delete Old Release
         uses: dev-drprasad/delete-tag-and-release@v1.0
         with:
