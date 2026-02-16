@@ -1,0 +1,111 @@
+name: Build RGB Matrix Assets (Trixie)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'submodules/rpi-rgb-led-matrix/**'
+      - '.github/workflows/build-rgbmatrix-assets.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build_trixie:
+    name: Build Trixie Assets (Py3.13 / arm64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/arm64
+
+      - name: Build in Trixie Container
+        uses: addnab/docker-run-action@v3
+        with:
+          image: debian:trixie
+          options: --platform linux/arm64 -v ${{ github.workspace }}:/work
+          run: |
+            # --- DEFINE FLAGS & ENV VARS ---
+            # These flags ensure compatibility with Pi Zero 2 W (Cortex-A53)
+            # while maintaining modern C++ ABI compatibility for Trixie.
+            SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
+            HARDWARE_DESC="regular"
+
+            # Export for Python tools (pip/build) which read env vars
+            export CFLAGS="$SAFE_FLAGS"
+            export CXXFLAGS="$SAFE_FLAGS"
+            export HARDWARE_DESC="$HARDWARE_DESC"
+
+            # --- PREPARE & PATCH ---
+            cd /work/submodules/rpi-rgb-led-matrix
+            
+            # 1. Patch the Makefiles directly (The "Sed" Fix)
+            # This forces 'make' to use our flags, even if it ignores env vars.
+            sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
+            sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
+
+            # Force HARDWARE_DESC to prevent auto-detection failure in QEMU
+            sed -i "s|^HARDWARE_DESC=.*|HARDWARE_DESC=$HARDWARE_DESC|g" lib/Makefile
+
+            # 2. Install Build Dependencies
+            apt-get update && apt-get install -y \
+              build-essential \
+              python3-full \
+              python3-dev \
+              python3-pip \
+              cython3 \
+              libgraphicsmagick++-dev \
+              libwebp-dev \
+              git
+
+            # --- BUILD 1: PYTHON WHEEL ---
+            cd bindings/python
+            
+            # Create pyproject.toml dynamically
+            echo '[build-system]
+            requires = ["setuptools>=42", "wheel", "Cython"]
+            build-backend = "setuptools.build_meta"
+            
+            [project]
+            name = "rgbmatrix"
+            version = "0.0.1"
+            description = "Python bindings for rpi-rgb-led-matrix"
+            readme = "README.md"
+            requires-python = ">=3.11"
+            dependencies = ["Pillow"]' > pyproject.toml
+
+            # Build the wheel (pip/build use exported CFLAGS)
+            pip install build --break-system-packages
+            python3 -m build --wheel --outdir /work/dist
+
+            # --- BUILD 2: C++ UTILITY ---
+            cd /work/submodules/rpi-rgb-led-matrix
+            
+            # Build led-image-viewer (Makefile is already patched)
+            make -C utils led-image-viewer
+            
+            # Copy binary to dist folder for upload
+            cp utils/led-image-viewer /work/dist/
+
+      - name: Delete Old Release
+        uses: dev-drprasad/delete-tag-and-release@v1.0
+        with:
+          tag_name: latest-trixie
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          delete_release: true
+
+      - name: Publish Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Latest Trixie (Py3.13) Assets"
+          tag_name: latest-trixie
+          files: |
+            dist/*.whl
+            dist/led-image-viewer
+          prerelease: true
