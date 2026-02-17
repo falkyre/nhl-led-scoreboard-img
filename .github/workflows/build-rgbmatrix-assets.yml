@@ -46,11 +46,11 @@ jobs:
             set -e
 
             # --- 1. SETUP ENVIRONMENT ---
-            # Added "+nosve" to ensure the compiler doesn"t generate instructions
-            # that will crash the Pi Zero 2 W (Cortex-A53).
+            # We add "+nosve" to ensure NO SVE instructions are generated.
             SAFE_FLAGS="-march=armv8-a+nosve -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
             HARDWARE_DESC="regular"
             
+            # Export these for setup.py and generic build tools
             export CFLAGS="$SAFE_FLAGS"
             export CXXFLAGS="$SAFE_FLAGS"
             export HARDWARE_DESC="$HARDWARE_DESC"
@@ -83,32 +83,35 @@ jobs:
             PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
             export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
 
-            # --- 4. PATCH MAKEFILES ---
-            # We use absolute path to ensure we are in the right place
+            # --- 4. THE NUCLEAR PATCH ---
             cd /work/submodules/rpi-rgb-led-matrix
             
-            # Clean first to ensure no bad artifacts exist
+            # A. SCRUB "native" FLAGS (The Fix)
+            # Instead of deleting lines (which might miss multi-flag lines), we replace the text with empty space.
+            # We do this on EVERY Makefile in the repo.
+            find . -name "Makefile" -exec sed -i "s/-march=native//g" {} +
+            find . -name "Makefile" -exec sed -i "s/-mtune=native//g" {} +
+
+            # B. INJECT SAFE FLAGS (For C and C++)
+            # We inject into DEFINES so it applies to both "cc" (C) and "g++" (C++) compilation.
+            # This fixes the fact that hardware-mapping.c was still using native flags in your log.
+            sed -i "s|^DEFINES+=|DEFINES+=$SAFE_FLAGS |g" lib/Makefile
+            sed -i "s|^DEFINES=|DEFINES=$SAFE_FLAGS |g" lib/Makefile
+
+            # C. Clean up any previous attempts
             make clean
             make -C lib clean
 
-            # A. Remove "native" detection lines
-            sed -i "/-march=native/d" lib/Makefile
-            sed -i "/-march=native/d" utils/Makefile
-
-            # B. Force CXXFLAGS at the top of the file
-            sed -i "s|^CXXFLAGS\s*=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
-            sed -i "s|^CXXFLAGS\s*=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
-
-            # C. Patch setup.py
+            # D. Patch setup.py
             sed -i "s/-march=native/-march=armv8-a/g" bindings/python/setup.py
             sed -i "s/-mtune=native/-mtune=cortex-a53/g" bindings/python/setup.py
 
             # --- 5. BUILD CORE LIBRARY ---
-            # Using Absolute Path logic implicitly by staying in the repo root
+            # We do not pass flags here; we trust the patched Makefile.
             make -C lib HARDWARE_DESC=regular
 
             # --- 6. BUILD PYTHON WHEEL ---
-            # FIX: Use Absolute Path to prevent "No such file" error
+            # Use Absolute Path to prevent "No such file" error
             cd /work/submodules/rpi-rgb-led-matrix/bindings/python
             
             cython3 --cplus -3 rgbmatrix/core.pyx
@@ -130,7 +133,7 @@ jobs:
             python3 -m build --wheel --no-isolation --outdir /work/dist
 
             # --- 7. BUILD UTILITY ---
-            # FIX: Use Absolute Path to return to root
+            # Use Absolute Path to return to root
             cd /work/submodules/rpi-rgb-led-matrix
             
             make -C utils led-image-viewer HARDWARE_DESC=regular
