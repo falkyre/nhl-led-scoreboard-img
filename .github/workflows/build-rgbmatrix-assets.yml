@@ -46,11 +46,11 @@ jobs:
             set -e
 
             # --- 1. SETUP ENVIRONMENT ---
-            # We add "+nosve" to ensure NO SVE instructions are generated.
+            # SAFE_FLAGS: Force Cortex-A53 (Pi Zero 2 / Pi 3) and DISABLE SVE (+nosve)
+            # This prevents the Illegal Instruction crash.
             SAFE_FLAGS="-march=armv8-a+nosve -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
             HARDWARE_DESC="regular"
             
-            # Export these for setup.py and generic build tools
             export CFLAGS="$SAFE_FLAGS"
             export CXXFLAGS="$SAFE_FLAGS"
             export HARDWARE_DESC="$HARDWARE_DESC"
@@ -83,21 +83,26 @@ jobs:
             PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
             export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
 
-            # --- 4. PREPARE SOURCE ---
+            # --- 4. PATCHING SOURCE (The Root Cause Fix) ---
             cd /work/submodules/rpi-rgb-led-matrix
+            
+            # Clean first
             make clean
             make -C lib clean
 
-            # Patch setup.py just to be safe (for the Python wheel step)
-            sed -i "s/-march=native/-march=armv8-a/g" bindings/python/setup.py
+            # A. Patch config.mk
+            # This file defines CPU_ARCH_FLAGS which defaults to "-march=native" inside QEMU.
+            # We replace that specific text with our SAFE_FLAGS.
+            sed -i "s|-march=native -mtune=native|$SAFE_FLAGS|g" config.mk
+
+            # B. Patch setup.py
+            # The python bindings have their own hardcoded flags in setup.py
+            sed -i "s/-march=native/-march=armv8-a+nosve/g" bindings/python/setup.py
             sed -i "s/-mtune=native/-mtune=cortex-a53/g" bindings/python/setup.py
 
-            # --- 5. BUILD CORE LIBRARY (THE FIX) ---
-            # We override OPTIMIZE. This replaces the Makefile"s internal "-march=native"
-            # with our safe flags. We also include -fPIC which is required for Python bindings.
-            make -C lib \
-              HARDWARE_DESC=regular \
-              OPTIMIZE="-O3 -g -fPIC $SAFE_FLAGS"
+            # --- 5. BUILD CORE LIBRARY ---
+            # Now we just run make normally. It will read our patched config.mk.
+            make -C lib HARDWARE_DESC=regular
 
             # --- 6. BUILD PYTHON WHEEL ---
             cd /work/submodules/rpi-rgb-led-matrix/bindings/python
@@ -123,11 +128,7 @@ jobs:
             # --- 7. BUILD UTILITY ---
             cd /work/submodules/rpi-rgb-led-matrix
             
-            # Override OPTIMIZE here too
-            make -C utils led-image-viewer \
-              HARDWARE_DESC=regular \
-              OPTIMIZE="-O3 -g -fPIC $SAFE_FLAGS"
-            
+            make -C utils led-image-viewer HARDWARE_DESC=regular
             cp utils/led-image-viewer /work/dist/
             '
 
