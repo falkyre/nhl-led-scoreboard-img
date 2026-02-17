@@ -58,7 +58,6 @@ jobs:
             export HARDWARE_DESC="$HARDWARE_DESC"
 
             # --- 2. INSTALL DEPENDENCIES ---
-            # Added "curl" to the list so we can fetch the Pillow URL
             apt-get update && apt-get install -y \
               build-essential \
               python3-full \
@@ -77,31 +76,38 @@ jobs:
 
             # --- 3. PILLOW HEADER FIX ---
             echo "Fetching Pillow source URL..."
-            # We use curl to query PyPI JSON API
             PILLOW_URL=$(curl -s https://pypi.org/pypi/Pillow/json | jq -r ".urls[] | select(.packagetype==\"sdist\") | .url" | head -n 1)
             
             echo "Downloading $PILLOW_URL..."
             mkdir -p /tmp/pillow-src
             wget -qO- $PILLOW_URL | tar xz -C /tmp/pillow-src
             
-            # Find the "src/libImaging" folder and add it to CFLAGS
             PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
             export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
-            echo "Using Pillow headers at: $PILLOW_INCLUDE"
 
-            # --- 4. PATCH MAKEFILES ---
+            # --- 4. PATCH & PREPARE ---
             cd /work/submodules/rpi-rgb-led-matrix
             
+            # Patch Makefiles to use our SAFE_FLAGS
             sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
             sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
             sed -i "s|^HARDWARE_DESC=.*|HARDWARE_DESC=$HARDWARE_DESC|g" lib/Makefile
 
-            # --- 5. PRE-COMPILE CYTHON ---
+            # REMOVE "native" flags from setup.py to prevent overriding our safe flags
+            # (If we don't do this, the wheel might crash on a Pi Zero 2)
+            sed -i "s/\"-march=native\",//g" bindings/python/setup.py
+            sed -i "s/\"-mtune=native\",//g" bindings/python/setup.py
+
+            # --- 5. BUILD CORE LIBRARY (The Missing Step!) ---
+            # We must build the C++ library first so the linker can find -lrgbmatrix
+            make -C lib
+
+            # --- 6. PRE-COMPILE CYTHON ---
             cd bindings/python
             cython3 --cplus -3 rgbmatrix/core.pyx
             cython3 --cplus -3 rgbmatrix/graphics.pyx
 
-            # --- 6. BUILD WHEEL ---
+            # --- 7. BUILD WHEEL ---
             echo "[build-system]
             requires = [\"setuptools>=42\", \"wheel\", \"Cython\"]
             build-backend = \"setuptools.build_meta\"
@@ -114,11 +120,10 @@ jobs:
             requires-python = \">=3.11\"
             dependencies = [\"Pillow\"]" > pyproject.toml
 
-            # Using --no-isolation to use system packages
             pip install build --break-system-packages
             python3 -m build --wheel --no-isolation --outdir /work/dist
 
-            # --- 7. BUILD C++ UTILITY ---
+            # --- 8. BUILD C++ UTILITY ---
             cd /work/submodules/rpi-rgb-led-matrix
             make -C utils led-image-viewer
             cp utils/led-image-viewer /work/dist/
