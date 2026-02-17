@@ -75,8 +75,7 @@ jobs:
 
             # --- 3. PILLOW HEADER FIX ---
             echo "Fetching Pillow source URL..."
-            # FIXED: Use grep instead of jq to avoid quote/parenthesis syntax errors
-            # We look for the first URL ending in .tar.gz (which is the source code)
+            # grep finds the tar.gz link to avoid syntax errors
             PILLOW_URL=$(curl -s https://pypi.org/pypi/Pillow/json | grep -o "https://[^\"]*tar.gz" | head -n 1)
             
             echo "Downloading $PILLOW_URL..."
@@ -94,10 +93,10 @@ jobs:
             sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
             sed -i "s|^HARDWARE_DESC=.*|HARDWARE_DESC=$HARDWARE_DESC|g" lib/Makefile
 
-            # REMOVE "native" flags from setup.py
-            # We use generic matching to avoid quote-nesting issues
-            sed -i "s/-march=native//g" bindings/python/setup.py
-            sed -i "s/-mtune=native//g" bindings/python/setup.py
+            # FIXED: Replace "native" with specific flags instead of deleting them.
+            # This prevents empty strings ("") from crashing the compiler.
+            sed -i "s/-march=native/-march=armv8-a/g" bindings/python/setup.py
+            sed -i "s/-mtune=native/-mtune=cortex-a53/g" bindings/python/setup.py
 
             # --- 5. BUILD CORE LIBRARY ---
             make -C lib
