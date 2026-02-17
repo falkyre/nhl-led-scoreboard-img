@@ -20,6 +20,17 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Cache Apt Packages
+        uses: actions/cache@v4
+        with:
+          path: apt-cache
+          key: apt-cache-trixie-${{ hashFiles('.github/workflows/build-rgbmatrix-assets.yml') }}
+          restore-keys: |
+            apt-cache-trixie-
+
+      - name: Create Cache Directory
+        run: mkdir -p apt-cache
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
@@ -29,45 +40,45 @@ jobs:
         run: |
           docker run --rm --platform linux/arm64 \
             -v ${{ github.workspace }}:/work \
+            -v ${{ github.workspace }}/apt-cache:/var/cache/apt/archives \
             debian:trixie \
             /bin/bash -c '
             set -e
 
+            # --- 0. CONFIGURE APT CACHING ---
+            rm -f /etc/apt/apt.conf.d/docker-clean
+            echo "Binary::apt::APT::Keep-Downloaded-Packages \"true\";" > /etc/apt/apt.conf.d/keep-cache
+
             # --- 1. SETUP ENVIRONMENT ---
-            # Safe flags for Pi Zero 2W / Pi 4 compatibility
             SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
             HARDWARE_DESC="regular"
             
-            # Export basic flags
             export CFLAGS="$SAFE_FLAGS"
             export CXXFLAGS="$SAFE_FLAGS"
             export HARDWARE_DESC="$HARDWARE_DESC"
 
-            # --- 2. INSTALL DEPENDENCIES ---
+            # --- 2. INSTALL DEPENDENCIES (Use APT for Pillow!) ---
             apt-get update && apt-get install -y \
               build-essential \
               python3-full \
               python3-dev \
               python3-pip \
+              python3-pillow \
               cython3 \
               libgraphicsmagick++-dev \
               libwebp-dev \
               git
 
             # --- 3. PILLOW HEADER FIX ---
-            # Install binary Pillow for Python runtime
-            pip install pillow --break-system-packages
-            
-            # Download Pillow SOURCE to get "Imaging.h" (needed for compilation)
-            # We download it to /tmp/pillow-src and extract it
+            # We skip "pip install pillow" because we used apt above.
+            # We ONLY download the source to get the "Imaging.h" header file.
             mkdir -p /tmp/pillow-src
             pip download pillow --no-binary=:all: --no-deps -d /tmp/pillow-src
             tar -xzf /tmp/pillow-src/Pillow-*.tar.gz -C /tmp/pillow-src
             
-            # Find the "src/libImaging" folder and add it to CFLAGS
+            # Point compiler to the headers
             PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
             export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
-            echo "Added Pillow headers from: $PILLOW_INCLUDE"
 
             # --- 4. PATCH MAKEFILES ---
             cd /work/submodules/rpi-rgb-led-matrix
@@ -82,7 +93,6 @@ jobs:
             cython3 --cplus -3 rgbmatrix/graphics.pyx
 
             # --- 6. BUILD WHEEL ---
-            # Note: We escape quotes for the internal bash script
             echo "[build-system]
             requires = [\"setuptools>=42\", \"wheel\", \"Cython\"]
             build-backend = \"setuptools.build_meta\"
@@ -95,14 +105,21 @@ jobs:
             requires-python = \">=3.11\"
             dependencies = [\"Pillow\"]" > pyproject.toml
 
+            # CRITICAL CHANGE: --no-isolation
+            # This forces the build to use the "python3-pillow" we installed via apt
+            # instead of trying to create a new venv and compile Pillow from scratch.
             pip install build --break-system-packages
-            python3 -m build --wheel --outdir /work/dist
+            python3 -m build --wheel --no-isolation --outdir /work/dist
 
             # --- 7. BUILD C++ UTILITY ---
             cd /work/submodules/rpi-rgb-led-matrix
             make -C utils led-image-viewer
             cp utils/led-image-viewer /work/dist/
             '
+
+      - name: Fix Cache Permissions
+        if: always()
+        run: sudo chown -R $USER apt-cache
 
       - name: Delete Old Release
         uses: dev-drprasad/delete-tag-and-release@v1.0
