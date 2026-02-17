@@ -129,6 +129,7 @@
           - libgraphicsmagick++-q16-12
           - libgraphicsmagick++-dev
         state: present
+        install_recommends: no
 
     - name: Remove OS packages that will cause issues
       ansible.builtin.apt:
@@ -413,3 +414,44 @@
         autoclean: true
         autoremove: true
         clean: true
+
+    - name: Remove build dependencies
+      ansible.builtin.apt:
+        name:
+          - build-essential
+          - cmake
+          - python3-dev
+          - libgraphicsmagick++-dev
+          - libwebp-dev
+        state: absent
+        autoremove: true
+        purge: true
+
+    - name: Cleanup apt lists
+      ansible.builtin.file:
+        path: /var/lib/apt/lists
+        state: absent
+
+    - name: Recreate apt lists directory
+      ansible.builtin.file:
+        path: /var/lib/apt/lists
+        state: directory
+        mode: '0755'
+
+    - name: Remove documentation and man pages
+      ansible.builtin.shell: |
+        rm -rf /usr/share/doc/*
+        rm -rf /usr/share/man/*
+        rm -rf /usr/share/info/*
+        rm -rf /usr/share/groff/*
+        rm -rf /usr/share/lintian/*
+        rm -rf /usr/share/linda/*
+      ignore_errors: true
+
+    - name: Git garbage collection
+      become: true
+      become_user: pi
+      ansible.builtin.shell: git gc --aggressive --prune=now
+      args:
+        chdir: /home/pi/nhl-led-scoreboard
+      ignore_errors: true
