@@ -58,8 +58,7 @@ jobs:
             export HARDWARE_DESC="$HARDWARE_DESC"
 
             # --- 2. INSTALL DEPENDENCIES ---
-            # Added "jq" to parse PyPI JSON
-            # Added "python3-setuptools" & "python3-wheel" for --no-isolation build
+            # Added "curl" to the list so we can fetch the Pillow URL
             apt-get update && apt-get install -y \
               build-essential \
               python3-full \
@@ -73,11 +72,12 @@ jobs:
               libwebp-dev \
               git \
               jq \
-              wget
+              wget \
+              curl
 
-            # --- 3. PILLOW HEADER FIX (The "No-Pip" Method) ---
-            # Instead of asking pip (which triggers a build), we ask PyPI API directly.
+            # --- 3. PILLOW HEADER FIX ---
             echo "Fetching Pillow source URL..."
+            # We use curl to query PyPI JSON API
             PILLOW_URL=$(curl -s https://pypi.org/pypi/Pillow/json | jq -r ".urls[] | select(.packagetype==\"sdist\") | .url" | head -n 1)
             
             echo "Downloading $PILLOW_URL..."
@@ -114,8 +114,7 @@ jobs:
             requires-python = \">=3.11\"
             dependencies = [\"Pillow\"]" > pyproject.toml
 
-            # Using --no-isolation prevents it from trying to re-build Pillow
-            # It will use the system "python3-pillow" and our downloaded headers.
+            # Using --no-isolation to use system packages
             pip install build --break-system-packages
             python3 -m build --wheel --no-isolation --outdir /work/dist
 
