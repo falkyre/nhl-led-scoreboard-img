@@ -34,6 +34,11 @@ if [ -f "user-config" ]; then
     cat "user-config" >> "$BUILD_DIR/config"
 fi
 
+if [ -n "$USE_BETA" ]; then
+    echo "Setting USE_BETA='$USE_BETA'"
+    echo "USE_BETA='$USE_BETA'" >> "$BUILD_DIR/config"
+fi
+
 # Setup custom stage
 # We want to run our stage after stage2 (Lite system)
 # Check if stage-nhl already exists in pi-gen, remove it to ensure fresh copy

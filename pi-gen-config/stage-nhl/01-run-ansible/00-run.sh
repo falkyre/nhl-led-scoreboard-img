@@ -34,6 +34,11 @@ if [ -n "$PYPI_PROXY" ]; then
     EXTRA_VARS="$EXTRA_VARS pypi_proxy='$PYPI_PROXY'"
 fi
 
+if [ "$USE_BETA" == "true" ]; then
+    echo "Using Beta Branch"
+    EXTRA_VARS="$EXTRA_VARS use_beta=true"
+fi
+
 # Configure pip to use the cache if it exists
 if [ -d "/tmp/pip_cache" ]; then
     echo "Configuring pip to use /tmp/pip_cache"

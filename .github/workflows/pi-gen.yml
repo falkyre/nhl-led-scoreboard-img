@@ -15,6 +15,11 @@ on:
         options:
         - Test
         - Release
+      use_beta:
+        description: 'Use Beta Branch for Scoreboard?'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -83,6 +88,7 @@ jobs:
           # despite being on a high-performance GitHub runner
           EXTRA_CXXFLAGS: "-march=armv8-a -mtune=cortex-a53"
           HARDWARE_DESC: "regular"
+          USE_BETA: ${{ github.event.inputs.use_beta }}
         run: |
           chmod +x build-image.sh
           ./build-image.sh
