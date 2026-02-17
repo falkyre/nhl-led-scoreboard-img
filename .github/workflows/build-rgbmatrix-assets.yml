@@ -50,6 +50,7 @@ jobs:
             echo "Binary::apt::APT::Keep-Downloaded-Packages \"true\";" > /etc/apt/apt.conf.d/keep-cache
 
             # --- 1. SETUP ENVIRONMENT ---
+            # Your exact flags from pi-gen.yml
             SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
             HARDWARE_DESC="regular"
             
@@ -71,11 +72,11 @@ jobs:
               libwebp-dev \
               git \
               wget \
-              curl
+              curl \
+              grep
 
             # --- 3. PILLOW HEADER FIX ---
             echo "Fetching Pillow source URL..."
-            # grep finds the tar.gz link to avoid syntax errors
             PILLOW_URL=$(curl -s https://pypi.org/pypi/Pillow/json | grep -o "https://[^\"]*tar.gz" | head -n 1)
             
             echo "Downloading $PILLOW_URL..."
@@ -85,28 +86,30 @@ jobs:
             PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
             export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
 
-            # --- 4. PATCH & PREPARE ---
+            # --- 4. PATCH MAKEFILES (Matching your script 1:1) ---
             cd /work/submodules/rpi-rgb-led-matrix
             
-            # Patch Makefiles to use our SAFE_FLAGS
+            # Delete the specific line that forces native optimization
+            sed -i "/DEFINES+=-march=native/d" lib/Makefile
+
+            # Force our SAFE_FLAGS at the top of CXXFLAGS in both Makefiles
             sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
             sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
-            sed -i "s|^HARDWARE_DESC=.*|HARDWARE_DESC=$HARDWARE_DESC|g" lib/Makefile
 
-            # FIXED: Replace "native" with specific flags instead of deleting them.
-            # This prevents empty strings ("") from crashing the compiler.
+            # Patch setup.py to replace hardcoded native flags with our safe ones
+            # (This ensures the wheel gets the same treatment as the C++ lib)
             sed -i "s/-march=native/-march=armv8-a/g" bindings/python/setup.py
             sed -i "s/-mtune=native/-mtune=cortex-a53/g" bindings/python/setup.py
 
-            # --- 5. BUILD CORE LIBRARY ---
-            make -C lib
+            # --- 5. BUILD CORE LIBRARY (Step 2 in your script) ---
+            make -C lib HARDWARE_DESC=regular
 
             # --- 6. PRE-COMPILE CYTHON ---
             cd bindings/python
             cython3 --cplus -3 rgbmatrix/core.pyx
             cython3 --cplus -3 rgbmatrix/graphics.pyx
 
-            # --- 7. BUILD WHEEL ---
+            # --- 7. BUILD WHEEL (Replaces Step 3) ---
             echo "[build-system]
             requires = [\"setuptools>=42\", \"wheel\", \"Cython\"]
             build-backend = \"setuptools.build_meta\"
@@ -122,9 +125,10 @@ jobs:
             pip install build --break-system-packages
             python3 -m build --wheel --no-isolation --outdir /work/dist
 
-            # --- 8. BUILD C++ UTILITY ---
+            # --- 8. BUILD UTILITY (Step 4 in your script) ---
             cd /work/submodules/rpi-rgb-led-matrix
-            make -C utils led-image-viewer
+            make -C utils led-image-viewer HARDWARE_DESC=regular
+            
             cp utils/led-image-viewer /work/dist/
             '
 
