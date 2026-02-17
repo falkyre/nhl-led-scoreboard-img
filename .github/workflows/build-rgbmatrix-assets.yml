@@ -46,11 +46,11 @@ jobs:
             set -e
 
             # --- 1. SETUP ENVIRONMENT ---
-            # Exact flags from your working script
-            SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
+            # Added "+nosve" to ensure the compiler doesn"t generate instructions
+            # that will crash the Pi Zero 2 W (Cortex-A53).
+            SAFE_FLAGS="-march=armv8-a+nosve -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
             HARDWARE_DESC="regular"
             
-            # Export these for setup.py (which respects env vars)
             export CFLAGS="$SAFE_FLAGS"
             export CXXFLAGS="$SAFE_FLAGS"
             export HARDWARE_DESC="$HARDWARE_DESC"
@@ -83,29 +83,34 @@ jobs:
             PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
             export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
 
-            # --- 4. PATCH MAKEFILES (The Critical Fix) ---
+            # --- 4. PATCH MAKEFILES ---
+            # We use absolute path to ensure we are in the right place
             cd /work/submodules/rpi-rgb-led-matrix
             
-            # A. Remove "native" detection lines (handling potential spaces)
+            # Clean first to ensure no bad artifacts exist
+            make clean
+            make -C lib clean
+
+            # A. Remove "native" detection lines
             sed -i "/-march=native/d" lib/Makefile
             sed -i "/-march=native/d" utils/Makefile
 
             # B. Force CXXFLAGS at the top of the file
-            # We use \s* to match "CXXFLAGS=" OR "CXXFLAGS ="
             sed -i "s|^CXXFLAGS\s*=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
             sed -i "s|^CXXFLAGS\s*=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
 
-            # C. Patch setup.py to remove native flags
+            # C. Patch setup.py
             sed -i "s/-march=native/-march=armv8-a/g" bindings/python/setup.py
             sed -i "s/-mtune=native/-mtune=cortex-a53/g" bindings/python/setup.py
 
             # --- 5. BUILD CORE LIBRARY ---
-            # DO NOT pass CXXFLAGS here. Trust the patched Makefile.
+            # Using Absolute Path logic implicitly by staying in the repo root
             make -C lib HARDWARE_DESC=regular
 
             # --- 6. BUILD PYTHON WHEEL ---
-            # We build this BEFORE utils to ensure setup.py doesn't mess up our lib
-            cd bindings/python
+            # FIX: Use Absolute Path to prevent "No such file" error
+            cd /work/submodules/rpi-rgb-led-matrix/bindings/python
+            
             cython3 --cplus -3 rgbmatrix/core.pyx
             cython3 --cplus -3 rgbmatrix/graphics.pyx
             
@@ -125,10 +130,10 @@ jobs:
             python3 -m build --wheel --no-isolation --outdir /work/dist
 
             # --- 7. BUILD UTILITY ---
+            # FIX: Use Absolute Path to return to root
             cd /work/submodules/rpi-rgb-led-matrix
-            # Again, DO NOT pass CXXFLAGS here. Trust the patched Makefile.
-            make -C utils led-image-viewer HARDWARE_DESC=regular
             
+            make -C utils led-image-viewer HARDWARE_DESC=regular
             cp utils/led-image-viewer /work/dist/
             '
 
