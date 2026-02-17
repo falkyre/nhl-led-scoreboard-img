@@ -9,6 +9,8 @@
     locale: en_US.UTF-8
     wifi_country: CA
     gh_repo: "https://github.com/falkyre/nhl-led-scoreboard.git"
+    # Repo where the compiled assets (wheel/viewer) are stored
+    assets_repo: "falkyre/nhl-led-scoreboard-img"
     use_beta: false
     gh_branch: "2026.x.x-beta"
     system_hostname: scoreboard
@@ -117,6 +119,7 @@
           - pastebinit
           - fastfetch
           - jq
+          - curl  # Added curl for API queries
           - neovim
           - zsh
           - direnv
@@ -305,6 +308,13 @@
         depth: 1
         version: "{{ gh_branch if use_beta else 'HEAD' }}"
 
+    - name: Fetch scoreboard submodules
+      become: true
+      become_user: pi
+      ansible.builtin.command: git submodule update --init --recursive
+      args:
+        chdir: /home/pi/nhl-led-scoreboard
+
     - name: Install required python packages
       become: true
       become_user: pi
@@ -328,33 +338,41 @@
           - rich-cli
           - cairosvg
 
-    - name: Copy rgb matrix install_bindings.sh
+    # --- UPDATED SECTION START ---
+    - name: Install RGB Matrix binaries (Viewer & Wheel)
       become: true
       become_user: pi
-      ansible.builtin.copy:
-        src: ./files/sb_image/install_bindings.sh
-        dest: /home/pi/nhl-led-scoreboard
-        mode: "0755"
-
-    - name: Install rgb matrix python bindings
-      become: true
-      become_user: pi
-      ansible.builtin.command: /home/pi/nhl-led-scoreboard/install_bindings.sh
+      shell: |
+        # Define API URL for the assets repository
+        API_URL="https://api.github.com/repos/{{ assets_repo }}/releases/tags/latest-trixie"
+        
+        # 1. Fetch URLs for the Wheel and the Viewer using jq
+        # We grab the first asset ending in .whl (auto-detects version)
+        WHEEL_URL=$(curl -s $API_URL | jq -r '.assets[] | select(.name | endswith(".whl")) | .browser_download_url' | head -n 1)
+        # We grab the asset named 'led-image-viewer'
+        VIEWER_URL=$(curl -s $API_URL | jq -r '.assets[] | select(.name == "led-image-viewer") | .browser_download_url' | head -n 1)
+        
+        # 2. Download files
+        echo "Downloading Wheel: $WHEEL_URL"
+        wget -q -O /tmp/rgbmatrix.whl "$WHEEL_URL"
+        
+        echo "Downloading Viewer: $VIEWER_URL"
+        wget -q -O /home/pi/sbtools/led-image-viewer "$VIEWER_URL"
+        
+        # 3. Setup Viewer
+        chmod +x /home/pi/sbtools/led-image-viewer
+        
+        # 4. Install Wheel into venv
+        # We use the pip inside the venv to ensure it installs there
+        /home/pi/nhlsb-venv/bin/pip install /tmp/rgbmatrix.whl --force-reinstall
+        
+        # 5. Cleanup
+        rm -f /tmp/rgbmatrix.whl
       args:
-        chdir: /home/pi/nhl-led-scoreboard
-      environment:
-        # Crucial for Debian Trixie aarch64 compatibility across models
-        EXTRA_CXXFLAGS: "-march=armv8-a -mtune=cortex-a53"
-        HARDWARE_DESC: "regular"
-      register: my_output
-      changed_when: my_output.rc != 0
-
-    - name: Remove install_bindings.sh
-      become: true
-      become_user: pi
-      ansible.builtin.file:
-        path: /home/pi/nhl-led-scoreboard/install_bindings.sh
-        state: absent
+        executable: /bin/bash
+      register: rgb_install
+      changed_when: "'Successfully installed' in rgb_install.stdout"
+    # --- UPDATED SECTION END ---
 
     - name: Create direnv setup
       become: true
@@ -394,4 +412,4 @@
       ansible.builtin.apt:
         autoclean: true
         autoremove: true
-        clean: true
+        clean: truen

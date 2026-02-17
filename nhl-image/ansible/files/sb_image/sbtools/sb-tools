@@ -272,7 +272,8 @@ do_sup_conf() {
   echo "echo 'Watch your display for $(tput setaf 3)$(cat /home/pi/.nhlledportal/status)$(tput sgr0) to be displayed'" >> /home/pi/sbtools/testMatrix.sh
   echo "echo 'This will run for about 15 seconds and then exit itself'" >> /home/pi/sbtools/testMatrix.sh
   echo "cd /home/pi/nhl-led-scoreboard/submodules/matrix/bindings/python/samples" >> /home/pi/sbtools/testMatrix.sh
-  echo "sudo /home/pi/nhlsb-venv/bin/python3 runtext.py $board_command -t '$(cat /home/pi/.nhlledportal/status)' >/dev/null 2>&1" >> /home/pi/sbtools/testMatrix.sh
+  # Next line requires Nov 2025 commits for rgb-led-matrix library or it won't work
+  echo "sudo /home/pi/nhlsb-venv/bin/python3 runtext.py $board_command -y 20 -C 255,255,0 -l 1 -t '$(cat /home/pi/.nhlledportal/status)' >/dev/null 2>&1" >> /home/pi/sbtools/testMatrix.sh
   echo "clear" >> /home/pi/sbtools/testMatrix.sh
   echo "exit" >> /home/pi/sbtools/testMatrix.sh
   chmod +x /home/pi/sbtools/testMatrix.sh
