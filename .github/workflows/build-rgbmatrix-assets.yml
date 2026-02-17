@@ -45,20 +45,20 @@ jobs:
             /bin/bash -c '
             set -e
 
-            # --- 0. CONFIGURE APT CACHING ---
-            rm -f /etc/apt/apt.conf.d/docker-clean
-            echo "Binary::apt::APT::Keep-Downloaded-Packages \"true\";" > /etc/apt/apt.conf.d/keep-cache
-
             # --- 1. SETUP ENVIRONMENT ---
-            # Your exact flags from pi-gen.yml
+            # Exact flags from your working script
             SAFE_FLAGS="-march=armv8-a -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
             HARDWARE_DESC="regular"
             
+            # Export these for setup.py (which respects env vars)
             export CFLAGS="$SAFE_FLAGS"
             export CXXFLAGS="$SAFE_FLAGS"
             export HARDWARE_DESC="$HARDWARE_DESC"
 
             # --- 2. INSTALL DEPENDENCIES ---
+            rm -f /etc/apt/apt.conf.d/docker-clean
+            echo "Binary::apt::APT::Keep-Downloaded-Packages \"true\";" > /etc/apt/apt.conf.d/keep-cache
+            
             apt-get update && apt-get install -y \
               build-essential \
               python3-full \
@@ -76,40 +76,39 @@ jobs:
               grep
 
             # --- 3. PILLOW HEADER FIX ---
-            echo "Fetching Pillow source URL..."
+            echo "Fetching Pillow source..."
             PILLOW_URL=$(curl -s https://pypi.org/pypi/Pillow/json | grep -o "https://[^\"]*tar.gz" | head -n 1)
-            
-            echo "Downloading $PILLOW_URL..."
             mkdir -p /tmp/pillow-src
             wget -qO- $PILLOW_URL | tar xz -C /tmp/pillow-src
-            
             PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
             export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
 
-            # --- 4. PATCH MAKEFILES (Matching your script 1:1) ---
+            # --- 4. PATCH MAKEFILES (The Critical Fix) ---
             cd /work/submodules/rpi-rgb-led-matrix
             
-            # Delete the specific line that forces native optimization
-            sed -i "/DEFINES+=-march=native/d" lib/Makefile
+            # A. Remove "native" detection lines (handling potential spaces)
+            sed -i "/-march=native/d" lib/Makefile
+            sed -i "/-march=native/d" utils/Makefile
 
-            # Force our SAFE_FLAGS at the top of CXXFLAGS in both Makefiles
-            sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
-            sed -i "s|^CXXFLAGS=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
+            # B. Force CXXFLAGS at the top of the file
+            # We use \s* to match "CXXFLAGS=" OR "CXXFLAGS ="
+            sed -i "s|^CXXFLAGS\s*=|CXXFLAGS=$SAFE_FLAGS |g" lib/Makefile
+            sed -i "s|^CXXFLAGS\s*=|CXXFLAGS=$SAFE_FLAGS |g" utils/Makefile
 
-            # Patch setup.py to replace hardcoded native flags with our safe ones
-            # (This ensures the wheel gets the same treatment as the C++ lib)
+            # C. Patch setup.py to remove native flags
             sed -i "s/-march=native/-march=armv8-a/g" bindings/python/setup.py
             sed -i "s/-mtune=native/-mtune=cortex-a53/g" bindings/python/setup.py
 
-            # --- 5. BUILD CORE LIBRARY (Step 2 in your script) ---
+            # --- 5. BUILD CORE LIBRARY ---
+            # DO NOT pass CXXFLAGS here. Trust the patched Makefile.
             make -C lib HARDWARE_DESC=regular
 
-            # --- 6. PRE-COMPILE CYTHON ---
+            # --- 6. BUILD PYTHON WHEEL ---
+            # We build this BEFORE utils to ensure setup.py doesn't mess up our lib
             cd bindings/python
             cython3 --cplus -3 rgbmatrix/core.pyx
             cython3 --cplus -3 rgbmatrix/graphics.pyx
-
-            # --- 7. BUILD WHEEL (Replaces Step 3) ---
+            
             echo "[build-system]
             requires = [\"setuptools>=42\", \"wheel\", \"Cython\"]
             build-backend = \"setuptools.build_meta\"
@@ -125,8 +124,9 @@ jobs:
             pip install build --break-system-packages
             python3 -m build --wheel --no-isolation --outdir /work/dist
 
-            # --- 8. BUILD UTILITY (Step 4 in your script) ---
+            # --- 7. BUILD UTILITY ---
             cd /work/submodules/rpi-rgb-led-matrix
+            # Again, DO NOT pass CXXFLAGS here. Trust the patched Makefile.
             make -C utils led-image-viewer HARDWARE_DESC=regular
             
             cp utils/led-image-viewer /work/dist/
