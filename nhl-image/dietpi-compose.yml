@@ -1,0 +1,17 @@
+services:
+  builder:
+    # USE A NATIVE IMAGE (Debian Bookworm)
+    image: debian:bookworm
+    container_name: nhl-dietpi-builder
+    
+    # Still required for loopback devices
+    privileged: true
+    
+    volumes:
+      - .:/build
+      - /dev:/dev
+    
+    working_dir: /build
+    
+    # Keep it alive
+    command: ["tail", "-f", "/dev/null"]

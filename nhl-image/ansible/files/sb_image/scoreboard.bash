@@ -55,7 +55,7 @@ alias sb-restart='supervisorctl restart scoreboard'
 alias sb-status='supervisorctl status scoreboard'
 alias sb-tools='/home/pi/sbtools/sb-tools'
 alias sb-changelog='cd /home/pi/nhl-led-scoreboard;latest=$(git tag --sort=-v:refname | head -1);previous=$(git tag --sort=-v:refname | head -2 | tail -1);echo "$(tput bold)$(tput smul)Changes since $previous$(tput sgr0)";git log --oneline --decorate $previous..$latest;cd ~'
-alias sb-sysinfo='neofetch --off'
+alias sb-sysinfo='fastfetch -l none'
 alias sb-upgrade='/home/pi/nhl-led-scoreboard/scripts/sbtools/sb-upgrade'
 alias sb-resetwifi='sudo /usr/sbin/comitup-cli d'
 

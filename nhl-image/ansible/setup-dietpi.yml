@@ -1,0 +1,644 @@
+- name: Setup DietPi - Scoreboard setup
+  hosts: all
+  become: true
+  become_user: root
+  vars:
+    # --- DietPi Configuration Variables ---
+    keyboard_keymap: "us"
+    timezone: "America/Toronto"
+    locale: "en_US.UTF-8"
+    wifi_country: "CA"
+    system_hostname: "scoreboard"
+    
+    # --- Project Variables ---
+    gh_repo: "https://github.com/falkyre/nhl-led-scoreboard.git"
+    # Repo where the compiled assets (wheel/viewer) are stored
+    assets_repo: "falkyre/nhl-led-scoreboard-img"
+    use_beta: false
+    gh_branch: "2026.x.x-beta"
+    apt_proxy: ""
+    use_apt_proxy: false
+    pypi_proxy: ""
+    # Ensure VERSION file exists in your packer working directory or hardcode this
+    imgver: "{{ lookup('file', 'VERSION').splitlines()[0].split(':')[-1] | default('dev') }}"
+
+  tasks:
+    # ---------------------------------------------------------
+    # 1. DIETPI SYSTEM CONFIGURATION (Replaces raspi-config)
+    # ---------------------------------------------------------
+    - name: Configure DietPi Automation Settings (dietpi.txt)
+      ansible.builtin.lineinfile:
+        path: /boot/dietpi.txt
+        regexp: "^{{ item.key }}="
+        line: "{{ item.key }}={{ item.value }}"
+        state: present
+      loop:
+        # --- MASTER SWITCH ---
+        - { key: 'AUTO_SETUP_AUTOMATED', value: "1" } 
+        # --- SYSTEM BASICS ---
+        - { key: 'AUTO_SETUP_NET_HOSTNAME', value: "{{ system_hostname }}" }
+        - { key: 'AUTO_SETUP_KEYBOARD_LAYOUT', value: "{{ keyboard_keymap }}" }
+        - { key: 'AUTO_SETUP_GLOBAL_PASSWORD', value: 'scoreboard' }
+        - { key: 'AUTO_SETUP_TIMEZONE', value: "{{ timezone }}" }
+        - { key: 'AUTO_SETUP_LOCALE', value: "{{ locale }}" }
+        
+        # --- SILENCE INTERACTIVE PROMPTS (The "Missing Pieces") ---
+        # 0=Opt-out. If -1, it asks interactively.
+        - { key: 'SURVEY_OPTED_IN', value: "0" }
+        
+        # 0=Disable. If 1, it asks if you want to disable it on first boot.
+        - { key: 'CONFIG_SERIAL_CONSOLE_ENABLE', value: "0" }
+        
+        # Force OpenSSH (-2). If 0 or unset, it might ask.
+        - { key: 'AUTO_SETUP_SSH_SERVER_INDEX', value: "-2" }
+        
+        # Force "None" for these to prevent selection menus
+        - { key: 'AUTO_SETUP_WEB_SERVER_INDEX', value: "0" }
+        - { key: 'AUTO_SETUP_DESKTOP_INDEX', value: "0" }
+        - { key: 'AUTO_SETUP_BROWSER_INDEX', value: "0" }
+
+        # --- NETWORK (Comitup/NetworkManager Setup) ---
+        # Disable DietPi's internal ifupdown logic so it doesn't fight NetworkManager
+        - { key: 'AUTO_SETUP_NET_WIFI_ENABLED', value: "0" }
+        - { key: 'AUTO_SETUP_NET_ETHERNET_ENABLED', value: "0" }
+        
+        # --- HARDWARE & BOOT ---
+        - { key: 'AUTO_SETUP_HEADLESS', value: "1" }
+        - { key: 'AUTO_SETUP_SWAPFILE_SIZE', value: "0" }
+        - { key: 'AUTO_UNMASK_LOGIND', value: "1" }
+
+    
+    # ---------------------------------------------------------
+    # 2. SYSTEM & APT SETUP
+    # ---------------------------------------------------------
+    - name: Setup apt proxy
+      ansible.builtin.copy:
+        src: ./files/sb_image/51cache
+        dest: /etc/apt/apt.conf.d/
+        mode: "0644"
+      when: use_apt_proxy
+
+    - name: Update apt proxy in 51cache file
+      ansible.builtin.replace:
+        path: /etc/apt/apt.conf.d/51cache
+        regexp: 'APT_PROXY'
+        replace: "{{ apt_proxy }}"
+      when: use_apt_proxy
+
+    - name: Install git and build essential
+      ansible.builtin.apt:
+        name:
+          - git
+          - build-essential
+          - curl 
+          - wget
+        update_cache: yes
+        state: present
+
+    - name: Enable SSH (DietPi usually has dropbear, we ensure openssh if needed)
+      ansible.builtin.apt:
+        name: openssh-server
+        state: present
+
+    # ---------------------------------------------------------
+    # 3. USER MANAGEMENT (Creating the 'pi' user)
+    # ---------------------------------------------------------
+    - name: Add temporary password for root user
+      ansible.builtin.user:
+        name: root
+        password: "{{ 'letiretlebut' | password_hash('sha512') }}"
+
+    - name: Create pi user encrypted password
+      ansible.builtin.shell:
+        cmd: set -o pipefail && echo "scoreboard" | openssl passwd -6 -stdin
+        executable: /bin/bash
+      register: pi_passwd
+      changed_when: pi_passwd.rc != 0
+
+    - name: Create pi user
+      ansible.builtin.user:
+        name: pi
+        password: "{{ pi_passwd.stdout }}"
+        shell: /bin/bash
+        groups: sudo,video,input,render,dialout
+        append: yes
+        state: present
+    
+    - name: Ensure dietpi group exists
+      ansible.builtin.group:
+        name: dietpi
+        state: present
+
+    - name: Add pi user to dietpi group
+      ansible.builtin.user:
+        name: pi
+        groups: dietpi
+        append: yes
+
+    # DietPi doesn't use userconf the same way, but keeping this doesn't hurt
+    - name: Add pi user name to userconf (Legacy/Backup)
+      ansible.builtin.copy:
+        dest: /boot/userconf
+        content: 'pi:{{ pi_passwd.stdout }}'
+        mode: preserve
+        force: yes
+
+    - name: Allow pi user to have passwordless sudo
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/pi
+        content: 'pi ALL=(ALL:ALL) NOPASSWD: ALL'
+        mode: "0440"
+
+    # ---------------------------------------------------------
+    # 4. BOOT & KERNEL TWEAKS (Robust Path Discovery)
+    # ---------------------------------------------------------
+    
+    # 1. Check for the new RPi OS path (Bookworm/Trixie)
+    - name: Check for cmdline.txt in /boot/firmware
+      ansible.builtin.stat:
+        path: /boot/firmware/cmdline.txt
+      register: cmdline_firmware
+
+    # 2. Check for the classic DietPi path
+    - name: Check for cmdline.txt in /boot
+      ansible.builtin.stat:
+        path: /boot/cmdline.txt
+      register: cmdline_classic
+
+    # 3. Dynamically set the correct path variable
+    - name: Set cmdline_path variable
+      ansible.builtin.set_fact:
+        cmdline_path: "{{ '/boot/firmware/cmdline.txt' if cmdline_firmware.stat.exists else '/boot/cmdline.txt' }}"
+
+    # 4. Fail if neither exists (Safety Check)
+    - name: Fail if cmdline.txt not found
+      ansible.builtin.fail:
+        msg: "Could not find cmdline.txt in /boot or /boot/firmware"
+      when: not cmdline_firmware.stat.exists and not cmdline_classic.stat.exists
+
+    # 5. Perform the check using the dynamic variable
+    - name: Check if isolcpus exists in cmdline.txt
+      ansible.builtin.command: grep -q "isolcpus=3" {{ cmdline_path }}
+      register: cmdline_check
+      ignore_errors: true
+      changed_when: false
+
+    # 6. Apply the fix to the correct file
+    - name: Append isolcpus if missing
+      ansible.builtin.shell: sed -i 's/$/ isolcpus=3/' {{ cmdline_path }}
+      when: cmdline_check.rc != 0
+
+    - name: Blacklist snd_bcm module
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/blacklist-rgb-matrix.conf
+        content: |
+          blacklist snd_bcm2835
+        mode: preserve
+
+    # ---------------------------------------------------------
+    # 5. DOTFILES & CRON
+    # ---------------------------------------------------------
+    - name: Copy global bash.bashrc
+      ansible.builtin.copy:
+        src: ./files/sb_image/bash.bashrc
+        dest: /etc/
+        mode: "0644"
+
+    - name: Create bashrc.d directory
+      ansible.builtin.file:
+        path: /etc/bashrc.d
+        state: directory
+        mode: "0755"
+
+    - name: Copy scoreboard.bash to bashrc.d
+      ansible.builtin.copy:
+        src: ./files/sb_image/scoreboard.bash
+        dest: /etc/bashrc.d/
+        mode: "0644"
+
+    - name: Setup cron.scoreboard
+      ansible.builtin.copy:
+        src: ./files/sb_image/get_version
+        dest: /etc/cron.scoreboard
+        mode: "0755"
+
+    - name: Setup crontab to call cron.scoreboard on reboots
+      ansible.builtin.copy:
+        src: ./files/sb_image/crontab
+        dest: /etc/
+        backup: true
+        mode: preserve
+
+    - name: Setup pi user crontab
+      ansible.builtin.cron:
+        user: pi
+        name: "Check scoreboard version"
+        minute: "0"
+        hour: "3"
+        job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
+
+    # ---------------------------------------------------------
+    # 6. SOFTWARE INSTALLATION
+    # ---------------------------------------------------------
+    - name: Install aptfile
+      ansible.builtin.copy:
+        src: ./files/sb_image/aptfile
+        dest: /usr/local/bin
+        mode: "0755"
+
+    - name: Install OS packages needed for scoreboard
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - cmake
+          - cython3
+          - python3-pip
+          - python3-cairosvg
+          - python3-dev
+          - python3-setuptools
+          - python3-numpy
+          - python3-pandas
+          - python3-pil
+          - python3-pygame
+          - python3-tk
+          - python3-gpiozero
+          - python3-virtualenv
+          - python3-venv
+          - supervisor
+          - pastebinit
+          - fastfetch
+          - jq
+          - curl  # Added curl for API queries
+          - neovim
+          - zsh
+          - direnv
+          - libwebp-dev
+          - dbus
+          - libsixel-bin
+          - libgraphicsmagick++-q16-12
+          - libgraphicsmagick++-dev
+          - network-manager
+        state: present
+        install_recommends: no
+
+    - name: Remove conflicting OS packages
+      ansible.builtin.apt:
+        name:
+          - bluez
+          - bluez-firmware
+          - pi-bluetooth
+          - triggerhappy
+          # DietPi specific cleanup (if present)
+          - connman 
+        state: absent
+        purge: yes
+
+    # ---------------------------------------------------------
+    # 7. NETWORK & COMITUP
+    # ---------------------------------------------------------
+    - name: Enable NetworkManager service
+      ansible.builtin.systemd:
+        name: NetworkManager
+        enabled: true
+        masked: false
+
+    - name: Disable Supervisor service (Manual start logic in app)
+      ansible.builtin.systemd:
+        name: supervisor
+        enabled: false
+        masked: false
+
+    - name: Disable conflicting network services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        masked: true
+        enabled: false
+        state: stopped
+      with_items:
+        - dhcpcd
+        - dnsmasq
+        - systemd-resolved
+        - dhcpd
+        - wpa-supplicant
+        - NetworkManager-wait-online
+      ignore_errors: true # Ignore if service doesn't exist on DietPi
+
+    # DietPi uses /etc/network/interfaces differently, safe to delete if using NM
+    - name: Delete network interfaces file
+      ansible.builtin.file:
+        path: /etc/network/interfaces
+        state: absent
+
+    - name: Install comitup deb package
+      ansible.builtin.apt:
+        deb: https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb
+        dpkg_options: "force-all"
+
+    - name: Install comitup packages
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - comitup
+          - comitup-watch
+
+    - name: Copy scoreboard comitup.conf file
+      ansible.builtin.copy:
+        src: ./files/comitup-conf/comitup.conf
+        dest: /etc/
+        backup: true
+        mode: "0755"
+
+    - name: Extract scoreboard template into comitup
+      ansible.builtin.unarchive:
+        src: ./files/comitup-conf/scoreboard_ui.tar.gz
+        dest: /usr/share/comitup/web/templates
+
+    - name: Update comitup template path
+      ansible.builtin.lineinfile:
+        path: /usr/share/comitup/web/comitupweb.py
+        regexp: '^TEMPLATE_PATH ='
+        line: TEMPLATE_PATH = "/usr/share/comitup/web/templates/scoreboard"
+
+    # ---------------------------------------------------------
+    # 8. CONTROL HUB & SERVICES
+    # ---------------------------------------------------------
+    - name: Install nls-controlhub source deb
+      ansible.builtin.apt:
+        deb: https://falkyre.github.io/nhl-setup/repo/nls-controlhub-apt-source_2026.02.0_all.deb
+        dpkg_options: "force-all"
+
+    - name: Install nls-controlhub packages
+      ansible.builtin.apt:
+        update_cache: true
+        name: nls-controlhub
+
+    - name: Copy nls_controlhub_cfg.toml
+      ansible.builtin.copy:
+        src: "./files/sb_image/nls_controlhub_cfg.toml"
+        dest: "/etc/nls_controlhub/config.toml"
+        mode: "0644"
+
+    - name: Install scoreboard services
+      ansible.builtin.copy:
+        src: "./files/sb_image/{{ item }}"
+        dest: /etc/systemd/system
+        mode: "0644"
+      with_items:
+        - sb_splash.service
+        - sb_autosettz.service
+        - wifi-on.service
+
+    - name: Enable scoreboard services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        masked: false
+      with_items:
+        - sb_splash.service
+        - sb_autosettz.service
+        - wifi-on.service
+
+    - name: Copy supervisord configs
+      ansible.builtin.copy:
+        src: ./files/sb_image/{{ item.src }}
+        dest: "{{ item.dest }}"
+        mode: preserve
+      loop:
+        - { src: 'supervisord.conf', dest: '/etc/supervisor/' }
+        - { src: 'scoreboard.conf', dest: '/etc/supervisor/conf.d/' }
+        - { src: 'scoreboard-emulated.conf', dest: '/etc/supervisor/conf.d/' }
+
+    # ---------------------------------------------------------
+    # 9. USER HOME CONFIG (PI USER)
+    # ---------------------------------------------------------
+    - name: Copy sbtools directory
+      become: true
+      become_user: pi
+      ansible.builtin.copy:
+        src: ./files/sb_image/sbtools
+        dest: ~/
+        mode: preserve
+
+    - name: Setup fastfetch and portal directories
+      become: true
+      become_user: pi
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      with_items:
+        - ~/.config/fastfetch
+        - ~/.nhlledportal
+
+    - name: Copy fastfetch config
+      become: true
+      become_user: pi
+      ansible.builtin.copy:
+        src: ./files/sb_image/.config/fastfetch/config.jsonc
+        dest: ~/.config/fastfetch/config.jsonc
+        mode: "0755"
+
+    - name: Setup .nhlledportal
+      become: true
+      become_user: pi
+      ansible.builtin.file:
+        path: "~/.nhlledportal"
+        state: directory
+        mode: "0755"
+
+    - name: Create startup flags
+      become: true
+      become_user: pi
+      ansible.builtin.file:
+        path: "~/.nhlledportal/{{ item }}"
+        state: touch
+        mode: "0755"
+      with_items:
+        - setTZ
+        - SETUP
+
+    - name: Set image version
+      become: true
+      become_user: pi
+      ansible.builtin.copy:
+        dest: ~/.nhlledportal/imgver
+        content: 'You are running the image version {{ imgver }}'
+        mode: preserve
+
+    - name: Setup bash and gitconfig
+      become: true
+      become_user: pi
+      ansible.builtin.copy:
+        src: "./files/sb_image/{{ item }}"
+        dest: ~/
+        mode: "0644"
+      with_items:
+        - .gitconfig
+        - .bashrc
+
+    # ---------------------------------------------------------
+    # 10. REPO & PYTHON SETUP
+    # ---------------------------------------------------------
+    - name: Download scoreboard repo
+      become: true
+      become_user: pi
+      ansible.builtin.git:
+        repo: "{{ gh_repo }}"
+        dest: ~/nhl-led-scoreboard
+        recursive: true
+        single_branch: true
+        depth: 1
+        track_submodules: true
+        version: "{{ gh_branch if use_beta else omit }}"
+    
+    - name: Fetch scoreboard submodules
+      become: true
+      become_user: pi
+      ansible.builtin.command: git submodule update --init --recursive
+      args:
+        chdir: /home/pi/nhl-led-scoreboard
+
+
+    # VIRTUALENV SETUP (Required for Trixie/PEP 668)
+    - name: Create and Populate Virtualenv
+      become: true
+      become_user: pi
+      ansible.builtin.pip:
+        virtualenv: /home/pi/nhlsb-venv
+        virtualenv_python: python3
+        virtualenv_site_packages: true # Need system packages for some libs
+        extra_args: "{{ pypi_proxy }}"
+        requirements: /home/pi/nhl-led-scoreboard/requirements.txt
+
+    - name: Upgrade PIP in venv
+      become: true
+      become_user: pi
+      ansible.builtin.pip:
+        virtualenv: /home/pi/nhlsb-venv
+        name: pip
+        state: forcereinstall
+
+    - name: Install extra tools in venv
+      become: true
+      become_user: pi
+      ansible.builtin.pip:
+        virtualenv: /home/pi/nhlsb-venv
+        name:
+          - archey4
+          - tzlocal
+          - lastversion
+          - rich-cli
+          - cairosvg
+
+    # ---------------------------------------------------------
+    # 11. HARDWARE BINDINGS & FINAL TOUCHES
+    # ---------------------------------------------------------
+    # --- UPDATED SECTION START ---
+    - name: Install RGB Matrix binaries (Viewer & Wheel)
+      become: true
+      become_user: pi
+      shell: |
+        # Define API URL for the assets repository
+        API_URL="https://api.github.com/repos/{{ assets_repo }}/releases/tags/latest-trixie"
+        
+        # 1. Fetch URLs for the Wheel and the Viewer using jq
+        # We grab the first asset ending in .whl (auto-detects version)
+        WHEEL_URL=$(curl -s $API_URL | jq -r '.assets[] | select(.name | endswith(".whl")) | .browser_download_url' | head -n 1)
+        # We grab the asset named 'led-image-viewer'
+        VIEWER_URL=$(curl -s $API_URL | jq -r '.assets[] | select(.name == "led-image-viewer") | .browser_download_url' | head -n 1)
+        
+        # 2. Download files
+        echo "Downloading Wheel: $WHEEL_URL"
+        wget -q -O /tmp/rgbmatrix.whl "$WHEEL_URL"
+        
+        echo "Downloading Viewer: $VIEWER_URL"
+        wget -q -O /home/pi/sbtools/led-image-viewer "$VIEWER_URL"
+        
+        # 3. Setup Viewer
+        chmod +x /home/pi/sbtools/led-image-viewer
+        
+        # 4. Install Wheel into venv
+        # We use the pip inside the venv to ensure it installs there
+        /home/pi/nhlsb-venv/bin/pip install /tmp/rgbmatrix.whl --force-reinstall
+        
+        # 5. Cleanup
+        rm -f /tmp/rgbmatrix.whl
+      args:
+        executable: /bin/bash
+      register: rgb_install
+      changed_when: "'Successfully installed' in rgb_install.stdout"
+    # --- UPDATED SECTION END ---
+
+    - name: Setup Direnv
+      become: true
+      become_user: pi
+      ansible.builtin.copy:
+        dest: /home/pi/nhl-led-scoreboard/.envrc
+        content: |
+          export VIRTUAL_ENV=/home/pi/nhlsb-venv
+          source /home/pi/nhlsb-venv/bin/activate
+          export PYVER=`python3 -V`
+          unset PS1
+        mode: "0755"
+
+    - name: Activate Direnv
+      become: true
+      become_user: pi
+      ansible.builtin.command: direnv allow ~/nhl-led-scoreboard
+      register: direnv_out
+      changed_when: direnv_out.rc != 0
+
+    - name: Download nhl_setup executable (64-bit)
+      become: true
+      become_user: pi
+      ansible.builtin.get_url:
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.bookworm.64"
+        dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
+        mode: '0755'
+      # DietPi Trixie is 64-bit only (ARMv8), so we can default to this.
+      # If you support 32-bit DietPi, keep the 'when' logic from before.
+
+    - name: Update status file
+      become: true
+      become_user: pi
+      ansible.builtin.shell: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
+      args:
+        chdir: /home/pi/sbtools
+      register: status_out
+      changed_when: status_out.rc != 0
+
+    - name: Cleanup Apt Cache
+      become: true
+      ansible.builtin.apt:
+        autoclean: true
+        autoremove: true
+        clean: true
+    
+    - name: Cleanup apt lists
+      ansible.builtin.file:
+        path: /var/lib/apt/lists
+        state: absent
+
+    - name: Recreate apt lists directory
+      ansible.builtin.file:
+        path: /var/lib/apt/lists
+        state: directory
+        mode: '0755'
+
+    - name: Remove documentation and man pages
+      ansible.builtin.shell: |
+        rm -rf /usr/share/doc/*
+        rm -rf /usr/share/man/*
+        rm -rf /usr/share/info/*
+        rm -rf /usr/share/groff/*
+        rm -rf /usr/share/lintian/*
+        rm -rf /usr/share/linda/*
+      ignore_errors: true
+
+    - name: Git garbage collection
+      become: true
+      become_user: pi
+      ansible.builtin.shell: git gc --aggressive --prune=now
+      args:
+        chdir: /home/pi/nhl-led-scoreboard
+      ignore_errors: true
