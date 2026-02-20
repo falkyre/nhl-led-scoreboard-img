@@ -11,6 +11,7 @@
     system_hostname: "scoreboard"
     
     # --- Project Variables ---
+    sb_user: "pi"
     gh_repo: "https://github.com/falkyre/nhl-led-scoreboard.git"
     # Repo where the compiled assets (wheel/viewer) are stored
     assets_repo: "falkyre/nhl-led-scoreboard-img"
@@ -50,7 +51,8 @@
         - { key: 'CONFIG_SERIAL_CONSOLE_ENABLE', value: "0" }
         
         # Force OpenSSH (-2). If 0 or unset, it might ask.
-        - { key: 'AUTO_SETUP_SSH_SERVER_INDEX', value: "-2" }
+        # 
+        # - { key: 'AUTO_SETUP_SSH_SERVER_INDEX', value: "-2" }
         
         # Force "None" for these to prevent selection menus
         - { key: 'AUTO_SETUP_WEB_SERVER_INDEX', value: "0" }
@@ -115,9 +117,9 @@
       register: pi_passwd
       changed_when: pi_passwd.rc != 0
 
-    - name: Create pi user
+    - name: Create scoreboard user
       ansible.builtin.user:
-        name: pi
+        name: "{{ sb_user }}"
         password: "{{ pi_passwd.stdout }}"
         shell: /bin/bash
         groups: sudo,video,input,render,dialout
@@ -129,24 +131,24 @@
         name: dietpi
         state: present
 
-    - name: Add pi user to dietpi group
+    - name: Add scoreboard user to dietpi group
       ansible.builtin.user:
-        name: pi
+        name: "{{ sb_user }}"
         groups: dietpi
         append: yes
 
     # DietPi doesn't use userconf the same way, but keeping this doesn't hurt
-    - name: Add pi user name to userconf (Legacy/Backup)
+    - name: Add scoreboard user name to userconf (Legacy/Backup)
       ansible.builtin.copy:
         dest: /boot/userconf
-        content: 'pi:{{ pi_passwd.stdout }}'
+        content: '{{ sb_user }}:{{ pi_passwd.stdout }}'
         mode: preserve
         force: yes
 
-    - name: Allow pi user to have passwordless sudo
+    - name: Allow scoreboard user to have passwordless sudo
       ansible.builtin.copy:
-        dest: /etc/sudoers.d/pi
-        content: 'pi ALL=(ALL:ALL) NOPASSWD: ALL'
+        dest: /etc/sudoers.d/{{ sb_user }}
+        content: '{{ sb_user }} ALL=(ALL:ALL) NOPASSWD: ALL'
         mode: "0440"
 
     # ---------------------------------------------------------
@@ -229,13 +231,13 @@
         backup: true
         mode: preserve
 
-    - name: Setup pi user crontab
+    - name: Setup scoreboard user crontab
       ansible.builtin.cron:
-        user: pi
+        user: "{{ sb_user }}"
         name: "Check scoreboard version"
         minute: "0"
         hour: "3"
-        job: "/home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status"
+        job: "/home/{{ sb_user }}/sbtools/checkUpdate.sh > /home/{{ sb_user }}/.nhlledportal/status"
 
     # ---------------------------------------------------------
     # 6. SOFTWARE INSTALLATION
@@ -413,7 +415,7 @@
     # ---------------------------------------------------------
     - name: Copy sbtools directory
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.copy:
         src: ./files/sb_image/sbtools
         dest: ~/
@@ -421,7 +423,7 @@
 
     - name: Setup fastfetch and portal directories
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
@@ -432,7 +434,7 @@
 
     - name: Copy fastfetch config
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.copy:
         src: ./files/sb_image/.config/fastfetch/config.jsonc
         dest: ~/.config/fastfetch/config.jsonc
@@ -440,7 +442,7 @@
 
     - name: Setup .nhlledportal
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.file:
         path: "~/.nhlledportal"
         state: directory
@@ -448,7 +450,7 @@
 
     - name: Create startup flags
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.file:
         path: "~/.nhlledportal/{{ item }}"
         state: touch
@@ -459,7 +461,7 @@
 
     - name: Set image version
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.copy:
         dest: ~/.nhlledportal/imgver
         content: 'You are running the image version {{ imgver }}'
@@ -467,7 +469,7 @@
 
     - name: Setup bash and gitconfig
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.copy:
         src: "./files/sb_image/{{ item }}"
         dest: ~/
@@ -481,7 +483,7 @@
     # ---------------------------------------------------------
     - name: Download scoreboard repo
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.git:
         repo: "{{ gh_repo }}"
         dest: ~/nhl-led-scoreboard
@@ -489,40 +491,40 @@
         single_branch: true
         depth: 1
         track_submodules: true
-        version: "{{ gh_branch if use_beta else omit }}"
+        version: "{{ gh_branch if use_beta | bool else 'main' }}"
     
     - name: Fetch scoreboard submodules
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.command: git submodule update --init --recursive
       args:
-        chdir: /home/pi/nhl-led-scoreboard
+        chdir: /home/{{ sb_user }}/nhl-led-scoreboard
 
 
     # VIRTUALENV SETUP (Required for Trixie/PEP 668)
     - name: Create and Populate Virtualenv
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.pip:
-        virtualenv: /home/pi/nhlsb-venv
+        virtualenv: /home/{{ sb_user }}/nhlsb-venv
         virtualenv_python: python3
         virtualenv_site_packages: true # Need system packages for some libs
         extra_args: "{{ pypi_proxy }}"
-        requirements: /home/pi/nhl-led-scoreboard/requirements.txt
+        requirements: /home/{{ sb_user }}/nhl-led-scoreboard/requirements.txt
 
     - name: Upgrade PIP in venv
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.pip:
-        virtualenv: /home/pi/nhlsb-venv
+        virtualenv: /home/{{ sb_user }}/nhlsb-venv
         name: pip
         state: forcereinstall
 
     - name: Install extra tools in venv
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.pip:
-        virtualenv: /home/pi/nhlsb-venv
+        virtualenv: /home/{{ sb_user }}/nhlsb-venv
         name:
           - archey4
           - tzlocal
@@ -536,7 +538,7 @@
     # --- UPDATED SECTION START ---
     - name: Install RGB Matrix binaries (Viewer & Wheel)
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       shell: |
         # Define API URL for the assets repository
         API_URL="https://api.github.com/repos/{{ assets_repo }}/releases/tags/latest-trixie"
@@ -552,14 +554,14 @@
         wget -q -O /tmp/rgbmatrix.whl "$WHEEL_URL"
         
         echo "Downloading Viewer: $VIEWER_URL"
-        wget -q -O /home/pi/sbtools/led-image-viewer "$VIEWER_URL"
+        wget -q -O /home/{{ sb_user }}/sbtools/led-image-viewer "$VIEWER_URL"
         
         # 3. Setup Viewer
-        chmod +x /home/pi/sbtools/led-image-viewer
+        chmod +x /home/{{ sb_user }}/sbtools/led-image-viewer
         
         # 4. Install Wheel into venv
         # We use the pip inside the venv to ensure it installs there
-        /home/pi/nhlsb-venv/bin/pip install /tmp/rgbmatrix.whl --force-reinstall
+        /home/{{ sb_user }}/nhlsb-venv/bin/pip install /tmp/rgbmatrix.whl --force-reinstall
         
         # 5. Cleanup
         rm -f /tmp/rgbmatrix.whl
@@ -571,39 +573,38 @@
 
     - name: Setup Direnv
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.copy:
-        dest: /home/pi/nhl-led-scoreboard/.envrc
+        dest: /home/{{ sb_user }}/nhl-led-scoreboard/.envrc
         content: |
-          export VIRTUAL_ENV=/home/pi/nhlsb-venv
-          source /home/pi/nhlsb-venv/bin/activate
+          export VIRTUAL_ENV=/home/{{ sb_user }}/nhlsb-venv
+          source /home/{{ sb_user }}/nhlsb-venv/bin/activate
           export PYVER=`python3 -V`
           unset PS1
         mode: "0755"
 
     - name: Activate Direnv
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.command: direnv allow ~/nhl-led-scoreboard
       register: direnv_out
       changed_when: direnv_out.rc != 0
 
     - name: Download nhl_setup executable (64-bit)
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.get_url:
-        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.bookworm.64"
-        dest: "/home/pi/nhl-led-scoreboard/nhl_setup"
+        url: "https://github.com/falkyre/nhl-setup/releases/latest/download/nhl_setup.64"
+        dest: "/home/{{ sb_user }}/nhl-led-scoreboard/nhl_setup"
         mode: '0755'
-      # DietPi Trixie is 64-bit only (ARMv8), so we can default to this.
-      # If you support 32-bit DietPi, keep the 'when' logic from before.
+    
 
     - name: Update status file
       become: true
-      become_user: pi
-      ansible.builtin.shell: /home/pi/sbtools/checkUpdate.sh > /home/pi/.nhlledportal/status
+      become_user: "{{ sb_user }}"
+      ansible.builtin.shell: /home/{{ sb_user }}/sbtools/checkUpdate.sh > /home/{{ sb_user }}/.nhlledportal/status
       args:
-        chdir: /home/pi/sbtools
+        chdir: /home/{{ sb_user }}/sbtools
       register: status_out
       changed_when: status_out.rc != 0
 
@@ -637,8 +638,38 @@
 
     - name: Git garbage collection
       become: true
-      become_user: pi
+      become_user: "{{ sb_user }}"
       ansible.builtin.shell: git gc --aggressive --prune=now
       args:
-        chdir: /home/pi/nhl-led-scoreboard
+        chdir: /home/{{ sb_user }}/nhl-led-scoreboard
       ignore_errors: true
+
+    # ---------------------------------------------------------
+    # FINAL POLISH: Disable DietPi Login Scripts (Appliance Mode)
+    # ---------------------------------------------------------
+    # This prevents the "File cannot be written" error and hides 
+    # the ASCII banner/update checks for a cleaner "Product" feel.
+
+    - name: Disable DietPi Login Script in bash.bashrc
+      ansible.builtin.replace:
+        path: /etc/bash.bashrc
+        # Find the line that triggers dietpi-login
+        regexp: '^(.*dietpi-login.*)$'
+        # Comment it out
+        replace: '# \1'
+      
+    - name: Disable DietPi Login Script in profile.d (if present)
+      ansible.builtin.file:
+        path: /etc/profile.d/dietpi-login.sh
+        state: absent
+      ignore_errors: true
+
+    # Optional: Ensure your custom user has a clean .bashrc
+    # (Sometimes DietPi skel adds weird things)
+    - name: Ensure custom user has standard .bashrc
+      ansible.builtin.copy:
+        src: "./files/sb_image/.bashrc"
+        dest: "/home/{{ sb_user }}/.bashrc"
+        owner: "{{ sb_user }}"
+        group: "{{ sb_user }}"
+        force: no

@@ -108,9 +108,31 @@ EOF
 # -i 'localhost,': Defines the inventory host as "localhost"
 # -c chroot: Tells Ansible to use the Chroot connector
 # -e ansible_host=$MOUNT_DIR: Tells Ansible WHERE the chroot is located (/mnt/rpi)
+
+USER_CONFIG="../user-config"
+if [ ! -f "$USER_CONFIG" ] && [ -f "user-config" ]; then
+    USER_CONFIG="user-config"
+fi
+
+ANSIBLE_EXTRA_ARGS=()
+if [ -f "$USER_CONFIG" ]; then
+    source "$USER_CONFIG"
+    if [ -n "$APT_PROXY" ]; then
+        ANSIBLE_EXTRA_ARGS+=("-e" "apt_proxy=$APT_PROXY")
+        ANSIBLE_EXTRA_ARGS+=("-e" "use_apt_proxy=true")
+    fi
+    if [ -n "$PYPI_PROXY" ]; then
+        ANSIBLE_EXTRA_ARGS+=("-e" "pypi_proxy=$PYPI_PROXY")
+    fi
+    if [ -n "$USE_BETA" ]; then
+        ANSIBLE_EXTRA_ARGS+=("-e" "use_beta=$USE_BETA")
+    fi
+fi
+
 ansible-playbook -i 'localhost,' -c chroot \
     -e "ansible_host=$MOUNT_DIR" \
     -e "ansible_python_interpreter=/usr/bin/python3" \
+    "${ANSIBLE_EXTRA_ARGS[@]}" \
     ansible/setup-dietpi.yml
 
 # Note: If Ansible fails, the script STOPS here, and the 'trap' runs automatically.
@@ -129,13 +151,13 @@ EOF
 echo ">>> SUCCESS! Image built: $LOCAL_IMG"
 # The 'trap' will now run automatically to unmount everything.
 
-echo ">>> [8/8] Compressing Image (Best Quality)..."
+# echo ">>> [8/8] Compressing Image (Best Quality)..."
 # -9: Max compression level
 # -e: Extreme mode (tries harder to find duplicate data)
 # -T0: Use ALL CPU cores (makes it much faster)
 # -v: Verbose (shows percentage progress)
 # -k: Keep the original .img file (remove -k if you want to delete the raw image)
 # xz -9 -e -T0 -v -k "$LOCAL_IMG"
-#ls -lh "$LOCAL_IMG.xz"
+# ls -lh "$LOCAL_IMG.xz"
 
 echo ">>> SUCCESS! Image built and compressed:"
