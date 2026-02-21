@@ -129,7 +129,7 @@ if [ -f "$USER_CONFIG" ]; then
     fi
 fi
 
-ansible-playbook -i 'localhost,' -c chroot \
+ansible-playbook -v -i 'localhost,' -c chroot \
     -e "ansible_host=$MOUNT_DIR" \
     -e "ansible_python_interpreter=/usr/bin/python3" \
     "${ANSIBLE_EXTRA_ARGS[@]}" \

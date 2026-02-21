@@ -50,10 +50,10 @@
         # 0=Disable. If 1, it asks if you want to disable it on first boot.
         - { key: 'CONFIG_SERIAL_CONSOLE_ENABLE', value: "0" }
         
-        # Force OpenSSH (-2). If 0 or unset, it might ask.
-        # 
-        # - { key: 'AUTO_SETUP_SSH_SERVER_INDEX', value: "-2" }
+        # Don't install ssh, ansible already does.
         
+        - { key: 'AUTO_SETUP_SSH_SERVER_INDEX', value: "-2" }
+
         # Force "None" for these to prevent selection menus
         - { key: 'AUTO_SETUP_WEB_SERVER_INDEX', value: "0" }
         - { key: 'AUTO_SETUP_DESKTOP_INDEX', value: "0" }
@@ -66,10 +66,16 @@
         
         # --- HARDWARE & BOOT ---
         - { key: 'AUTO_SETUP_HEADLESS', value: "1" }
-        - { key: 'AUTO_SETUP_SWAPFILE_SIZE', value: "0" }
+        - { key: 'AUTO_SETUP_SWAPFILE_SIZE', value: "1" }
         - { key: 'AUTO_UNMASK_LOGIND', value: "1" }
 
-    
+        # - -- Updates
+        - { key: 'CONFIG_CHECK_DIETPI_UPDATES', value: "0" }
+        - { key: 'CONFIG_CHECK_APT_UPDATES', value: "1" }
+
+        # NTP Mode
+        - { key: 'CONFIG_NTP_MODE', value: "4" }
+        
     # ---------------------------------------------------------
     # 2. SYSTEM & APT SETUP
     # ---------------------------------------------------------
@@ -97,18 +103,19 @@
         update_cache: yes
         state: present
 
-    - name: Enable SSH (DietPi usually has dropbear, we ensure openssh if needed)
-      ansible.builtin.apt:
-        name: openssh-server
-        state: present
+    # - name: Enable SSH (DietPi usually has dropbear, we ensure openssh if needed)
+    #   ansible.builtin.apt:
+    #     name: openssh-server
+    #     state: present
+
+    # - name: Remove dropbear ssh
+    #   ansible.builtin.apt:
+    #     name: dropbear
+    #     state: absent
 
     # ---------------------------------------------------------
     # 3. USER MANAGEMENT (Creating the 'pi' user)
     # ---------------------------------------------------------
-    - name: Add temporary password for root user
-      ansible.builtin.user:
-        name: root
-        password: "{{ 'letiretlebut' | password_hash('sha512') }}"
 
     - name: Create pi user encrypted password
       ansible.builtin.shell:
@@ -196,6 +203,22 @@
         content: |
           blacklist snd_bcm2835
         mode: preserve
+
+    - name: Create /boot/scoreboard directory
+      ansible.builtin.file:
+        path: /boot/scoreboard
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copy import_readme.txt to /boot/scoreboard
+      ansible.builtin.copy:
+        src: ./files/sb_image/import_readme.txt
+        dest: /boot/scoreboard/
+        owner: root
+        group: root
+        mode: 0644
 
     # ---------------------------------------------------------
     # 5. DOTFILES & CRON
@@ -467,6 +490,14 @@
         content: 'You are running the image version {{ imgver }}'
         mode: preserve
 
+    - name: Disable dietpi login banner for sb_user
+      become: true
+      become_user: "{{ sb_user }}"
+      ansible.builtin.file:
+        path: ~/.hushlogin
+        state: touch
+        mode: "0644"
+
     - name: Setup bash and gitconfig
       become: true
       become_user: "{{ sb_user }}"
@@ -551,7 +582,8 @@
         
         # 2. Download files
         echo "Downloading Wheel: $WHEEL_URL"
-        wget -q -O /tmp/rgbmatrix.whl "$WHEEL_URL"
+        WHEEL_FILE=$(basename "$WHEEL_URL")
+        wget -q -O "/tmp/$WHEEL_FILE" "$WHEEL_URL"
         
         echo "Downloading Viewer: $VIEWER_URL"
         wget -q -O /home/{{ sb_user }}/sbtools/led-image-viewer "$VIEWER_URL"
@@ -561,10 +593,10 @@
         
         # 4. Install Wheel into venv
         # We use the pip inside the venv to ensure it installs there
-        /home/{{ sb_user }}/nhlsb-venv/bin/pip install /tmp/rgbmatrix.whl --force-reinstall
+        /home/{{ sb_user }}/nhlsb-venv/bin/pip install "/tmp/$WHEEL_FILE" --force-reinstall
         
         # 5. Cleanup
-        rm -f /tmp/rgbmatrix.whl
+        rm -f "/tmp/$WHEEL_FILE"
       args:
         executable: /bin/bash
       register: rgb_install
@@ -644,25 +676,6 @@
         chdir: /home/{{ sb_user }}/nhl-led-scoreboard
       ignore_errors: true
 
-    # ---------------------------------------------------------
-    # FINAL POLISH: Disable DietPi Login Scripts (Appliance Mode)
-    # ---------------------------------------------------------
-    # This prevents the "File cannot be written" error and hides 
-    # the ASCII banner/update checks for a cleaner "Product" feel.
-
-    - name: Disable DietPi Login Script in bash.bashrc
-      ansible.builtin.replace:
-        path: /etc/bash.bashrc
-        # Find the line that triggers dietpi-login
-        regexp: '^(.*dietpi-login.*)$'
-        # Comment it out
-        replace: '# \1'
-      
-    - name: Disable DietPi Login Script in profile.d (if present)
-      ansible.builtin.file:
-        path: /etc/profile.d/dietpi-login.sh
-        state: absent
-      ignore_errors: true
 
     # Optional: Ensure your custom user has a clean .bashrc
     # (Sometimes DietPi skel adds weird things)
@@ -673,3 +686,28 @@
         owner: "{{ sb_user }}"
         group: "{{ sb_user }}"
         force: no
+
+    - name: Ensure /boot/dietpi directory exists
+      ansible.builtin.file:
+        path: /boot/dietpi
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Modify dietpi-firstboot.bash to set install stage to 2
+      ansible.builtin.replace:
+        path: /var/lib/dietpi/services/dietpi-firstboot.bash
+        regexp: '^(\s*)echo 0 > /boot/dietpi/\.install_stage'
+        replace: |-
+          \g<1># echo 0 > /boot/dietpi/.install_stage
+          \g<1># Force to show that everything is installed for scoreboard
+          \g<1>echo 2 > /boot/dietpi/.install_stage
+
+    # 2. Force "Install Complete" State
+    # Writing "2" tells DietPi: "Setup is finished. Do not run the wizard."
+    - name: Force DietPi Install State to 'Completed'
+      ansible.builtin.copy:
+        content: "2"
+        dest: /boot/dietpi/.install_stage
+        mode: '0644'
