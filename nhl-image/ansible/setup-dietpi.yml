@@ -711,3 +711,9 @@
         content: "2"
         dest: /boot/dietpi/.install_stage
         mode: '0644'
+
+    - name: Unmask and enable systemd-logind.service
+      ansible.builtin.systemd:
+        name: systemd-logind.service
+        masked: false
+        enabled: true
