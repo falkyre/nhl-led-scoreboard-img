@@ -355,7 +355,8 @@
         
         # 2. Download files
         echo "Downloading Wheel: $WHEEL_URL"
-        wget -q -O /tmp/rgbmatrix.whl "$WHEEL_URL"
+        WHEEL_FILE=$(basename "$WHEEL_URL")
+        wget -q -O "/tmp/$WHEEL_FILE" "$WHEEL_URL"
         
         echo "Downloading Viewer: $VIEWER_URL"
         wget -q -O /home/pi/sbtools/led-image-viewer "$VIEWER_URL"
@@ -365,7 +366,7 @@
         
         # 4. Install Wheel into venv
         # We use the pip inside the venv to ensure it installs there
-        /home/pi/nhlsb-venv/bin/pip install /tmp/rgbmatrix.whl --force-reinstall
+        /home/pi/nhlsb-venv/bin/pip install "/tmp/$WHEEL_FILE" --force-reinstall
         
         # 5. Cleanup
         rm -f /tmp/rgbmatrix.whl
