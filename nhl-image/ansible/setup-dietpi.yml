@@ -103,15 +103,15 @@
         update_cache: yes
         state: present
 
-    # - name: Enable SSH (DietPi usually has dropbear, we ensure openssh if needed)
-    #   ansible.builtin.apt:
-    #     name: openssh-server
-    #     state: present
+    - name: Enable SSH (DietPi usually has dropbear, we ensure openssh if needed)
+      ansible.builtin.apt:
+        name: openssh-server
+        state: present
 
-    # - name: Remove dropbear ssh
-    #   ansible.builtin.apt:
-    #     name: dropbear
-    #     state: absent
+    - name: Remove dropbear ssh
+      ansible.builtin.apt:
+        name: dropbear
+        state: absent
 
     # ---------------------------------------------------------
     # 3. USER MANAGEMENT (Creating the 'pi' user)

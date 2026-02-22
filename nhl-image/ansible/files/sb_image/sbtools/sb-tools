@@ -296,9 +296,10 @@ do_enable_supervisor() {
    if [ "$TESTMATRIXRUN" = True ]; then
       whiptail --yesno "Enable supervisor systemd service.  This will reboot your pi after enabling service" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
       if [ $? -eq 0 ]; then # yes
-         sudo systemctl enable supervisor
-         sudo sync
-         sudo reboot
+
+        sudo systemctl enable supervisor
+        sudo sync
+        sudo reboot
       fi 
    else 
       whiptail --msgbox "testMatrix.sh has not been run successfully, please ensure your display works first" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT 
