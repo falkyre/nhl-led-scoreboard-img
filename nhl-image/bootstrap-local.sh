@@ -174,7 +174,7 @@ pishrink.sh -s -v "$LOCAL_IMG"
 echo ">>> [10/10] Compressing Image..."
 # We use -9 for best compression, but SKIP -e (extreme) to save CI time.
 # -T0 uses all cores (2 on GitHub Actions).
-xz -9 -T0 -v -k "$LOCAL_IMG"
+xz -9 -T0 -v "$LOCAL_IMG"
 
 echo ">>> SUCCESS! Image built and compressed:"
 ls -lh "$LOCAL_IMG.xz"
