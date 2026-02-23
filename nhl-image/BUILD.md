@@ -1,30 +1,44 @@
-# How to build the NHL Led Scoreboard raspberry pi OS image locally
-## To update the packer arm image to include ansible
+# How to build the NHL Led Scoreboard Raspberry Pi OS Image Locally
 
-See the [Dockerfile](https://github.com/falkyre/nhl-led-scoreboard-img/blob/packer/Dockerfile)
+The build process for the image has moved from Packer to a bash script (`bootstrap-local.sh`) that is executed inside a privileged Docker container.
 
-```
-docker image build --build-arg BUILDKIT_INLINE_CACHE=1 --progress=plain -t packer-builder-arm-ansible:vlatest .
-```
+This process enables anyone, including Windows and **MacOS** users, to build the image locally without needing a dedicated Linux machine.
 
-There are two things required for the build.  You need to have a defined packer build configuration.  We are using the Hasicorp HCL2 language for this.  See the [raspios.pkr.hcl](https://github.com/falkyre/nhl-led-scoreboard-img/blob/packer/nhl-image/raspios.pkr.hcl) 
+## Prerequisites
 
-Also required is the ansible playbook, this is defined in the provisoner "ansible" section.  The playbook is where the magic occurs for installing everything the image needs to run the scoreboard software.  See the [playbook](https://github.com/falkyre/nhl-led-scoreboard-img/blob/packer/nhl-image/ansible/setup-raspberry.yml)
+* **Docker Installed**: You need Docker Desktop, OrbStack (recommended for MacOS), or a native Docker installation.
+* Ensure your Docker environment supports running privileged containers and loopback devices.
 
-Once you have created the above image, you can now run your build.  
+## Build Instructions
 
-```
-docker run -e TZ=America/Winnipeg --rm -it --privileged -v /dev:/dev -v ${PWD}:/build packer-builder-arm-ansible:vlatest build raspios.pkr.hcl
-```
+1. **Navigate to the `nhl-image` directory:**
+   Open a terminal and make sure you are in the `nhl-image` directory of this repository.
+   ```bash
+   cd nhl-image
+   ```
 
-If you want to "test" your image without burning to an SD card and raspberry pi, you can use this docker image to mount the raspberry pi image and launch bash on it.  This uses Qemu to emulate the raspberry pi arm chip.  If you are running on a Mac M series chip (Apple Silicon), make sure that you are using the Rosetta Emulation in the Docker Desktop for this to run properly.  At this time, it does not appear that Podman is able to run the emulator.
+2. **Start the Builder Container:**
+   We use Docker Compose to spin up a Debian Bookworm container with the required privileges.
+   ```bash
+   docker compose -f dietpi-compose.yml up -d
+   ```
 
-```
-docker run --rm -it --privileged -v ${PWD}/rpios-scoreboard-V1.6.12.img:/usr/rpi/rpi.img -w /usr/rpi ryankurte/docker-rpi-emu:latest ./run.sh rpi.img /bin/bash
-```
-You can use this to ensure that everything has been installed in the proper locations and even test some commands (but not the actual scoreboard code)
+3. **Run the Build Script:**
+   Execute the `bootstrap-local.sh` script inside the running container. This script will download the base DietPi image, expand it, install dependencies via Ansible, shrink it, and compress it.
+   ```bash
+   docker compose -f dietpi-compose.yml exec builder bash bootstrap-local.sh
+   ```
 
-To speed image builds up, there are two proxy programs used.  One, apt-cacher-ng, is used to cache the OS packages.  The other is called proxpi and this caches PyPi python packages.  In the ansible playbook, they are defined under the variables section at the top of the playbook.  Once these were added to the build, the build time for the image dropped from about 1 hour down to about 15 minutes.
+4. **Cleanup:**
+   Once the build completes successfully (or if it fails and you want to clean up), you can tear down the builder container.
+   ```bash
+   docker compose -f dietpi-compose.yml down
+   ```
 
-[apt-cacher-ng](https://github.com/sameersbn/docker-apt-cacher-ng)
-[proxpi](https://github.com/EpicWink/proxpi)
+## Output
+
+After a successful run, your newly created image will be located in the `nhl-image` directory, named `nhl-scoreboard-dietpi.img.xz`. You can flash this directly to an SD card using tools like Balena Etcher or the Raspberry Pi Imager.
+
+## Caching / Variables
+
+If you'd like to use a proxy for APT packages, PyPI, or set specific Ansible variables during the build, you can create a `user-config` file in the `nhl-image` directory. `bootstrap-local.sh` reads this file to inject environment variables before executing Ansible.

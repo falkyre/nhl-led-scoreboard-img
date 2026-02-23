@@ -294,6 +294,8 @@
           - fastfetch
           - jq
           - curl  # Added curl for API queries
+          - zip
+          - unzip
           - neovim
           - zsh
           - direnv

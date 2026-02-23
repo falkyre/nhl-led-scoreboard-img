@@ -17,10 +17,10 @@
 
 </span>
 
-This project provides a free [Raspbian](https://www.raspberrypi.org/downloads/raspbian/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/falkyre/nhl-led-scoreboard) pre-installed.  This is built with the Hasicorp packer with the packer-builder-arm plugin (https://github.com/mkaczanowski/packer-builder-arm) in a docker image extended with ansible.  Ansible is used to do the provisioning of the image.  For more information, see the [BUILD](https://github.com/falkyre/nhl-led-scoreboard-img/tree/packer/nhl-image/BUILD.md) documentation.
+This project provides a free [DietPi](https://dietpi.com/) based Raspberry Pi image with [NHL LED Scoreboard](https://github.com/falkyre/nhl-led-scoreboard) pre-installed.  The magic is all done in the [bootstrap-local.sh](https://github.com/falkyre/nhl-led-scoreboard-img/blob/main/bootstrap-local.sh) script.  
 
-* Works on Raspberry Pi models - Zero 2w up to Raspberry pi 4
-* Built on Raspbian Lite (no desktop).  As of October 2025, current image build still runs on RaspiOS Bookworm lite (32bit).  Trixie is being worked on.
+* Works on Raspberry Pi models - Zero 2w up to Raspberry Pi 4
+* As of February 2026, all images are DietPi based.
 * Simple WiFi Setup (Ethernet setup not tested and should only be done by advanced users) using the [comitup](http://davesteele.github.io/comitup/) utility.
 
 This image also provides a command called `sb-tools` which helps you with various tools to run and configure the scoreboard in a text/terminal based GUI.  There are also a set of command line aliases that provide similar functionaity without a GUI.  See [Command Line Utilities](#NHL-Led-Scoreboard-command-line-utilities) for a list.
@@ -123,10 +123,13 @@ See the wiki [How to Find IP Address](https://github.com/falkyre/nhl-led-scorebo
 SSH is enabled by default. The default username is `pi` with password `scoreboard`.
 See the wiki [Connect with SSH](https://github.com/falkyre/nhl-led-scoreboard-img/wiki/Connect-with-SSH) for more information and links.
 
-## First login
-You will need to SSH to your Raspberry Pi to finalize some settings for getting the NHL LED Scoreboard to work.  On first login, you will be prompted to select a single team (to create a basic config.json), the size of your board and if you have the antiflicker mod for the adafruit boards, then it will run a test script that will display the latest version of the NHL LED Scoreboard software.  If that passes, you will be asked to enable the supervisor and then the raspberry pi will reboot.
+## Onboarding
 
-On reboot, if everything is working you will see a splash screen, then a loading image and the NHL LED Scoreboard will run wth the basic config.json created on the first initial log in.  If you want to change the config.json, either edit the file by hand or use the /home/pi/nhl-led-scoreboard/nhl_setup tool.
+To do initial configuration, after you get setup on WiFi and know your Raspberry Pi IP address, you can open `http://{Your Raspberry Pi IP}:8000` in your browser and follow the onboarding instructions there.
+
+If you wish to onboard via SSH, you can also do initial setup by ssh-ing to your Raspberry Pi and logging in as the `pi` user. On first login via SSH, you will be prompted to select a single team (to create a basic config.json), the size of your board and if you have the antiflicker mod for the adafruit boards, then it will run a test script that will display the latest version of the NHL LED Scoreboard software.  If that passes, you will be asked to enable the supervisor and then the raspberry pi will reboot.
+
+On reboot, if everything is working you will see a splash screen, then a loading image and the NHL LED Scoreboard will run with the basic config.json created on the first initial log in.  If you want to change the config.json, either edit the file by hand or use the /home/pi/nhl-led-scoreboard/nhl_setup tool.
 
 ## Community
 

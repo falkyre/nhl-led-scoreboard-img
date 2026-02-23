@@ -4,7 +4,7 @@ set -e
 # --- CONFIGURATION ---
 IMAGE_URL="https://dietpi.com/downloads/images/DietPi_RPi234-ARMv8-Trixie.img.xz"
 LOCAL_IMG="nhl-scoreboard-dietpi.img"
-# 8GB to be safe (Orbstack allocates sparsely, so it won't use 8GB of real disk)
+# 5GB to be safe (Orbstack allocates sparsely, so it won't use 5GB of real disk)
 TARGET_SIZE="5120M" 
 MOUNT_DIR="/mnt/rpi"
 LOOP_DEV="" 
@@ -32,13 +32,18 @@ cleanup_on_exit() {
 trap cleanup_on_exit EXIT INT
 # ------------------------------------------------
 
-echo ">>> [1/7] Installing tools..."
+echo ">>> [1/10] Installing tools..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-# Added 'python3-pip' and 'python3-venv' for Ansible installation
-apt-get install -y wget xz-utils parted kpartx git libopenjp2-7 python3-apt sudo e2fsprogs python3-pip python3-venv
+# Added 'python3-pip', 'python3-venv', 'curl' (for PiShrink)
+apt-get install -y wget xz-utils parted kpartx git libopenjp2-7 python3-apt sudo e2fsprogs python3-pip python3-venv curl
 
-echo ">>> [2/7] Preparing Base Image..."
+# --- NEW: Download PiShrink ---
+echo "    Downloading PiShrink..."
+wget -O /usr/local/bin/pishrink.sh https://raw.githubusercontent.com/Drewsif/PiShrink/master/pishrink.sh
+chmod +x /usr/local/bin/pishrink.sh
+
+echo ">>> [2/10] Preparing Base Image..."
 if [ ! -f "$LOCAL_IMG" ]; then
     echo "    Downloading DietPi..."
     wget -qO image.xz "$IMAGE_URL"
@@ -49,7 +54,7 @@ else
     echo "    Using existing $LOCAL_IMG"
 fi
 
-echo ">>> [3/7] Resizing Image (The Orbstack Fix)..."
+echo ">>> [3/10] Resizing Image (The Orbstack Fix)..."
 truncate -s $TARGET_SIZE "$LOCAL_IMG"
 LOOP_DEV=$(losetup -fP --show "$LOCAL_IMG")
 echo "    Attached to $LOOP_DEV"
@@ -72,7 +77,7 @@ e2fsck -f -y "$ROOT_DEV" || true
 echo "    Expanding filesystem..."
 resize2fs "$ROOT_DEV"
 
-echo ">>> [4/7] Mounting & Verifying..."
+echo ">>> [4/10] Mounting & Verifying..."
 mkdir -p "$MOUNT_DIR"
 mount "$ROOT_DEV" "$MOUNT_DIR"
 mkdir -p "$MOUNT_DIR/boot"
@@ -92,11 +97,11 @@ mount --bind /dev "$MOUNT_DIR/dev"
 mount --bind /sys "$MOUNT_DIR/sys"
 mount --bind /proc "$MOUNT_DIR/proc"
 
-echo ">>> [5/7] Installing Ansible Core via Pip..."
+echo ">>> [5/10] Installing Ansible Core via Pip..."
 # Install modern Ansible (2.16+) to avoid Python 3.12 compatibility issues
 pip3 install --break-system-packages "ansible-core>=2.16.0" ansible passlib
 
-echo ">>> [6/7] Running Ansible..."
+echo ">>> [6/10] Running Ansible..."
 # 1. Install dependencies INSIDE the image
 chroot "$MOUNT_DIR" /bin/bash <<EOF
 export DEBIAN_FRONTEND=noninteractive
@@ -104,11 +109,7 @@ apt-get update
 apt-get install -y python3 python3-apt libopenjp2-7 sudo
 EOF
 
-# 2. Run Ansible (THE FIX IS HERE)
-# -i 'localhost,': Defines the inventory host as "localhost"
-# -c chroot: Tells Ansible to use the Chroot connector
-# -e ansible_host=$MOUNT_DIR: Tells Ansible WHERE the chroot is located (/mnt/rpi)
-
+# 2. Setup Ansible Variables
 USER_CONFIG="../user-config"
 if [ ! -f "$USER_CONFIG" ] && [ -f "user-config" ]; then
     USER_CONFIG="user-config"
@@ -129,6 +130,7 @@ if [ -f "$USER_CONFIG" ]; then
     fi
 fi
 
+# 3. Run Ansible
 ansible-playbook -v -i 'localhost,' -c chroot \
     -e "ansible_host=$MOUNT_DIR" \
     -e "ansible_python_interpreter=/usr/bin/python3" \
@@ -137,7 +139,7 @@ ansible-playbook -v -i 'localhost,' -c chroot \
 
 # Note: If Ansible fails, the script STOPS here, and the 'trap' runs automatically.
 
-echo ">>> [7/7] Optimizing Image (Zero-fill)..."
+echo ">>> [7/10] Optimizing Image (Zero-fill)..."
 # This step only runs if Ansible SUCCEEDED.
 chroot "$MOUNT_DIR" /bin/bash <<EOF
 apt-get autoremove -y
@@ -148,16 +150,31 @@ dd if=/dev/zero of=/zerofile bs=1M status=progress 2>/dev/null || true
 rm -f /zerofile
 EOF
 
-echo ">>> SUCCESS! Image built: $LOCAL_IMG"
-# The 'trap' will now run automatically to unmount everything.
+echo ">>> [8/10] Unmounting..."
+umount "$MOUNT_DIR/dev"
+umount "$MOUNT_DIR/sys"
+umount "$MOUNT_DIR/proc"
+umount "$MOUNT_DIR/boot"
+umount "$MOUNT_DIR"
 
-# echo ">>> [8/8] Compressing Image (Best Quality)..."
-# -9: Max compression level
-# -e: Extreme mode (tries harder to find duplicate data)
-# -T0: Use ALL CPU cores (makes it much faster)
-# -v: Verbose (shows percentage progress)
-# -k: Keep the original .img file (remove -k if you want to delete the raw image)
-# xz -9 -e -T0 -v -k "$LOCAL_IMG"
-# ls -lh "$LOCAL_IMG.xz"
+# Explicitly detach loop device BEFORE running PiShrink
+if [ -n "$LOOP_DEV" ]; then
+    kpartx -d "$LOOP_DEV" 2>/dev/null || true
+    losetup -d "$LOOP_DEV" 2>/dev/null || true
+    echo "    Detached $LOOP_DEV"
+    LOOP_DEV="" # Clear var so trap doesn't retry
+fi
+
+echo ">>> [9/10] Running PiShrink..."
+# -s: Skip auto-expanding (DietPi handles this automatically on boot)
+# -v: Verbose output
+# This reduces the image size dramatically before compression
+pishrink.sh -s -v "$LOCAL_IMG"
+
+echo ">>> [10/10] Compressing Image..."
+# We use -9 for best compression, but SKIP -e (extreme) to save CI time.
+# -T0 uses all cores (2 on GitHub Actions).
+xz -9 -T0 -v -k "$LOCAL_IMG"
 
 echo ">>> SUCCESS! Image built and compressed:"
+ls -lh "$LOCAL_IMG.xz"
