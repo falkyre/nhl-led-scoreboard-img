@@ -1,0 +1,154 @@
+name: Build RGB Matrix Assets (Trixie)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'submodules/rpi-rgb-led-matrix/**'
+      - '.github/workflows/build-rgbmatrix-assets.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build_trixie:
+    name: Build Trixie Assets (Py3.13 / arm64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache Apt Packages
+        uses: actions/cache@v4
+        with:
+          path: apt-cache
+          key: apt-cache-trixie-${{ hashFiles('.github/workflows/build-rgbmatrix-assets.yml') }}
+          restore-keys: |
+            apt-cache-trixie-
+
+      - name: Create Cache Directory
+        run: mkdir -p apt-cache
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/arm64
+
+      - name: Build in Trixie Container
+        run: |
+          docker run --rm --platform linux/arm64 \
+            -v ${{ github.workspace }}:/work \
+            -v ${{ github.workspace }}/apt-cache:/var/cache/apt/archives \
+            debian:trixie \
+            /bin/bash -c '
+            set -e
+
+            # --- 1. SETUP ENVIRONMENT ---
+            # SAFE_FLAGS: Force Cortex-A53 (Pi Zero 2 / Pi 3) and DISABLE SVE (+nosve)
+            # This prevents the Illegal Instruction crash.
+            SAFE_FLAGS="-march=armv8-a+nosve -mtune=cortex-a53 -D_GLIBCXX_USE_CXX11_ABI=1"
+            HARDWARE_DESC="regular"
+            
+            export CFLAGS="$SAFE_FLAGS"
+            export CXXFLAGS="$SAFE_FLAGS"
+            export HARDWARE_DESC="$HARDWARE_DESC"
+
+            # --- 2. INSTALL DEPENDENCIES ---
+            rm -f /etc/apt/apt.conf.d/docker-clean
+            echo "Binary::apt::APT::Keep-Downloaded-Packages \"true\";" > /etc/apt/apt.conf.d/keep-cache
+            
+            apt-get update && apt-get install -y \
+              build-essential \
+              python3-full \
+              python3-dev \
+              python3-pip \
+              python3-pillow \
+              python3-setuptools \
+              python3-wheel \
+              cython3 \
+              libgraphicsmagick++-dev \
+              libwebp-dev \
+              git \
+              wget \
+              curl \
+              grep
+
+            # --- 3. PILLOW HEADER FIX ---
+            echo "Fetching Pillow source..."
+            PILLOW_URL=$(curl -s https://pypi.org/pypi/Pillow/json | grep -o "https://[^\"]*tar.gz" | head -n 1)
+            mkdir -p /tmp/pillow-src
+            wget -qO- $PILLOW_URL | tar xz -C /tmp/pillow-src
+            PILLOW_INCLUDE=$(find /tmp/pillow-src -type d -name libImaging | head -n 1)
+            export CFLAGS="$CFLAGS -I$PILLOW_INCLUDE"
+
+            # --- 4. PATCHING SOURCE (The Root Cause Fix) ---
+            cd /work/submodules/rpi-rgb-led-matrix
+            
+            # Clean first
+            make clean
+            make -C lib clean
+
+            # A. Patch config.mk
+            # This file defines CPU_ARCH_FLAGS which defaults to "-march=native" inside QEMU.
+            # We replace that specific text with our SAFE_FLAGS.
+            sed -i "s|-march=native -mtune=native|$SAFE_FLAGS|g" config.mk
+
+            # B. Patch setup.py
+            # The python bindings have their own hardcoded flags in setup.py
+            sed -i "s/-march=native/-march=armv8-a+nosve/g" bindings/python/setup.py
+            sed -i "s/-mtune=native/-mtune=cortex-a53/g" bindings/python/setup.py
+
+            # --- 5. BUILD CORE LIBRARY ---
+            # Now we just run make normally. It will read our patched config.mk.
+            make -C lib HARDWARE_DESC=regular
+
+            # --- 6. BUILD PYTHON WHEEL ---
+            cd /work/submodules/rpi-rgb-led-matrix/bindings/python
+            
+            cython3 --cplus -3 rgbmatrix/core.pyx
+            cython3 --cplus -3 rgbmatrix/graphics.pyx
+            
+            echo "[build-system]
+            requires = [\"setuptools>=42\", \"wheel\", \"Cython\"]
+            build-backend = \"setuptools.build_meta\"
+            
+            [project]
+            name = \"rgbmatrix\"
+            version = \"0.0.1\"
+            description = \"Python bindings\"
+            readme = \"README.md\"
+            requires-python = \">=3.11\"
+            dependencies = [\"Pillow\"]" > pyproject.toml
+
+            pip install build --break-system-packages
+            python3 -m build --wheel --no-isolation --outdir /work/dist
+
+            # --- 7. BUILD UTILITY ---
+            cd /work/submodules/rpi-rgb-led-matrix
+            
+            make -C utils led-image-viewer HARDWARE_DESC=regular
+            cp utils/led-image-viewer /work/dist/
+            '
+
+      - name: Fix Cache Permissions
+        if: always()
+        run: sudo chown -R $USER apt-cache
+
+      - name: Delete Old Release
+        uses: dev-drprasad/delete-tag-and-release@v1.0
+        with:
+          tag_name: latest-trixie
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          delete_release: true
+
+      - name: Publish Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Latest Trixie (Py3.13) Assets"
+          tag_name: latest-trixie
+          files: |
+            dist/*.whl
+            dist/led-image-viewer
+          prerelease: true
