@@ -1,9 +1,8 @@
 name: Create Release - Image
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       run_type:
@@ -22,6 +21,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && (startsWith(github.event.release.tag_name, 'v') || startsWith(github.event.release.tag_name, 'V')))
 
     steps:
     - uses: actions/checkout@v4
@@ -47,19 +47,19 @@ jobs:
         docker run --rm --privileged \
           -v ${{ github.workspace }}:/build \
           -v /dev:/dev \
-          -w /build \
+          -w /build/nhl-image \
           debian:bookworm \
           bash -c "apt-get update && apt-get install -y qemu-user-static && bash bootstrap-local.sh"
 
     # 3. VERIFY OUTPUT
     - name: Check Build Output
       run: |
-        ls -lh nhl-scoreboard-dietpi.img.xz
+        ls -lh nhl-image/nhl-scoreboard-dietpi.img.xz
 
     # 4. RENAME ARTIFACT
     - name: Rename compressed image to include version
       run: |
-        mv nhl-scoreboard-dietpi.img.xz dietpi-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
+        mv nhl-image/nhl-scoreboard-dietpi.img.xz dietpi-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
 
     # 5. GENERATE CHANGELOG
     - name: Create changelog text
@@ -79,7 +79,7 @@ jobs:
 
     # 7. CREATE RELEASE (Release Mode or Tag Push)
     - name: GH Release
-      if: github.event.inputs.run_type == 'Release' || startsWith(github.ref, 'refs/tags/v')
+      if: github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && (startsWith(github.event.release.tag_name, 'v') || startsWith(github.event.release.tag_name, 'V')))
       uses: softprops/action-gh-release@v1
       with:
         prerelease: true
