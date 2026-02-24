@@ -26,6 +26,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Cache Pip Packages
+      uses: actions/cache@v4
+      with:
+        path: pip-cache
+        key: pip-cache-bookworm-${{ hashFiles('.github/workflows/dietpi-release.yml') }}
+        restore-keys: |
+          pip-cache-bookworm-
+
+    - name: Cache Apt Packages
+      uses: actions/cache@v4
+      with:
+        path: apt-cache
+        key: apt-cache-bookworm-${{ hashFiles('.github/workflows/dietpi-release.yml') }}
+        restore-keys: |
+          apt-cache-bookworm-
+
+    - name: Create Cache Directories
+      run: mkdir -p pip-cache apt-cache
+
     # 1. SETUP QEMU
     # This installs the ARM emulators into the kernel.
     # It allows the standard x86 runner to execute ARM binaries transparently.
@@ -34,9 +53,18 @@ jobs:
       with:
         platforms: arm64
 
-    - name: Get the version (git tag)
-      uses: maltoze/get-version-action@v1
+    - name: Get the version
       id: get_version
+      run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            if [[ $VERSION == v* ]]; then
+              VERSION=${VERSION:1}
+            fi
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "version=TESTVERSION" >> $GITHUB_OUTPUT
+          fi
 
     # 2. BUILD THE IMAGE
     # We use 'docker run' with --privileged to allow loopback mounting.
@@ -46,10 +74,12 @@ jobs:
       run: |
         docker run --rm --privileged \
           -v ${{ github.workspace }}:/build \
+          -v ${{ github.workspace }}/apt-cache:/var/cache/apt/archives \
+          -v ${{ github.workspace }}/pip-cache:/root/.cache/pip \
           -v /dev:/dev \
           -w /build/nhl-image \
           debian:bookworm \
-          bash -c "apt-get update && apt-get install -y qemu-user-static && bash bootstrap-local.sh"
+          bash -c "rm -f /etc/apt/apt.conf.d/docker-clean && echo 'Binary::apt::APT::Keep-Downloaded-Packages \"true\";' > /etc/apt/apt.conf.d/keep-cache && apt-get update && apt-get install -y qemu-user-static && bash bootstrap-local.sh"
 
     # 3. VERIFY OUTPUT
     - name: Check Build Output
@@ -79,10 +109,15 @@ jobs:
 
     # 7. CREATE RELEASE (Release Mode or Tag Push)
     - name: GH Release
-      if: github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && (startsWith(github.event.release.tag_name, 'v') || startsWith(github.event.release.tag_name, 'V')))
+      if: github.event.inputs.run_type == 'Release' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/V')
       uses: softprops/action-gh-release@v1
       with:
         prerelease: true
         generate_release_notes: true
         body: ${{ steps.changelog.outputs.changes }}
         files: dietpi-scoreboard-${{ steps.get_version.outputs.version }}.img.xz
+
+    # 8. FIX CACHE PERMISSIONS
+    - name: Fix Cache Permissions
+      if: always()
+      run: sudo chown -R $USER pip-cache apt-cache
