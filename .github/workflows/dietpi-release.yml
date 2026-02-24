@@ -1,4 +1,4 @@
-name: Create Release - Image
+name: Create Release - Dietpi Image
 
 on:
   release:
